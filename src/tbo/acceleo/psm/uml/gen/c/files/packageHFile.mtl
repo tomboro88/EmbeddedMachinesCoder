@@ -3,13 +3,17 @@
 
 [import tbo::acceleo::psm::uml::gen::c::common::documentation /]
 [import tbo::acceleo::psm::uml::gen::c::common::utils /]
-
+[import tbo::acceleo::psm::uml::gen::c::common::uml_c /]
 
 [template public generatePackageH(aPackage : Package)
  {ownedPackageHeaders : Collection(String) 
          = aPackage.packagedElement->filter(Package
          )->select(p : Package | p.visibility = VisibilityKind::public
-         )->collect(p:Package|p.get_package_h_path());}]
+         )->collect(p:Package|p.get_package_h_path());
+  containedElements : Sequence(PackageableElement) 
+     = aPackage.eContents(PackageableElement)->select(p : PackageableElement | 
+      not p.oclIsKindOf(Package)).eAllContents()->filter(PackageableElement);
+  indentation : Integer = getProperty('indent_width').toInteger();}]
 
 [file (get_package_h_qualified_path(aPackage), false, 'UTF-8')]
 [documentationHFile(aPackage)/]
@@ -23,6 +27,8 @@ extern "C" {
     [for (s : String | ownedPackageHeaders)]
 #    include "[s/]"
     [/for]
+
+[ uml_c_literal_list(containedElements, VisibilityKind::public, indentation)/]
 
 #ifdef  __cplusplus
 }

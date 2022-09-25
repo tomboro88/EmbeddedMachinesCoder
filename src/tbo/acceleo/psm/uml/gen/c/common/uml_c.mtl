@@ -151,12 +151,18 @@
     p.type.name + if uml_c_property_by_ref(p) then '*' else '' endif/]
 
 [**
- * @brief Provides C declaration of an UML LiteralSpecification.
+ * Generate definitions of literals from the given sequence.
  */]
-[template public uml_c_literal_definition(ls : LiteralSpecification) 
-  ?(not (ls.name.oclIsUndefined() or ls.name.oclIsInvalid()))]
-[documentationElement(ls)/]
-#define [ls.name.toUpper()/] [ls.eGet('value')/]
+[template public uml_c_literal_list(aCollection:Collection(OclAny),
+                                    visibility : VisibilityKind,
+                                    indentation : Integer)]
+[for (ls : LiteralSpecification | 
+               aCollection->filter(LiteralSpecification)) 
+         separator(lineSeparator())
+         ?( (not ls.name->oclIsUndefined()) and (not ls.name->isEmpty())
+            and (ls.visibility = visibility))]
+[uml_c_literal_definition(ls,indentation)/]
+[/for]
 [/template]
 
 [**
@@ -284,4 +290,14 @@ typedef struct
       else ' '+sep
       endif)/][p.name/][if ((p.name.size() + m.size()+1)
                              >(line_width-s.size()-1))][sep/][/if][m/];
+[/template]
+
+[**
+ * @brief Provides C declaration of an UML LiteralSpecification.
+ */]
+[template private uml_c_literal_definition(ls : LiteralSpecification,
+                                          indentation : Integer) 
+  ?(not (ls.name.oclIsUndefined() or ls.name.oclIsInvalid()))]
+[indent(indentation)/][documentationElement(ls)/]
+#[indent(indentation)/]define [ls.name.toUpper()/] [ls.eGet('value')/]
 [/template]
