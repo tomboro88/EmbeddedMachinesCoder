@@ -151,6 +151,66 @@
     p.type.name + if uml_c_property_by_ref(p) then '*' else '' endif/]
 
 [**
+ * Get a set of packages on which the given element depends. 
+ */]
+[query private uml_c_get_dependency_packages(aNamedElement : NamedElement)
+: Set(Package) = aNamedElement.clientDependency.supplier->collect(
+       n:NamedElement | if n.oclIsKindOf(Package) then n.oclAsType(Package) 
+       else n.eContainer(Package)endif)->asSet()/]
+
+[**
+ * @brief Get all subpackages of a package with a specified visibility. 
+ */]
+[query private uml_c_visible_subpackages(aPackage : Package,
+                                   aVisibility : VisibilityKind) : Set(Package)
+         =  aPackage.packagedElement->filter(Package
+            )->select(p:Package | p.visibility = aVisibility)/]
+
+[**
+ * @brief Get all children of a package with a specified visibility. 
+ */]
+[query private uml_c_visible_children(aPackage : Package, 
+                                      aVisibility : VisibilityKind) 
+    : Set(PackageableElement) 
+     = aPackage.packagedElement->select(p : PackageableElement | 
+      p.visibility = aVisibility)/]
+
+[**
+ * @brief Get a set of packages on which all non-Package children of the package
+ * depend. 
+ */]
+[query private uml_c_visible_dependencies(aPackage : Package,
+                               aVisibility : VisibilityKind) : Set(Package) = 
+   aPackage.uml_c_get_dependency_packages()->union(
+   uml_c_visible_children(aPackage, aVisibility).uml_c_get_dependency_packages()
+   )->union(uml_c_visible_children(aPackage, aVisibility)
+       ->reject(p:PackageableElement | p.oclIsKindOf(Package)
+       ).eAllContents(NamedElement
+       ).uml_c_get_dependency_packages())->asSet()/]
+
+[**
+ * Get all subpackages visible in the package header file. 
+ */]
+[query public uml_c_header_subpackages(aPackage:Package):Set(Package) =
+      uml_c_visible_subpackages(aPackage, VisibilityKind::public)->union(
+      uml_c_visible_subpackages(aPackage, VisibilityKind::protected))->union(
+      uml_c_visible_subpackages(aPackage, VisibilityKind::_package))->asSet()/]
+
+[**
+ * @brief Get all Package dependencies visible in the Package header file. 
+ */]
+[query public uml_c_header_dependencies(aPackage:Package):Set(Package) =
+    uml_c_visible_dependencies(aPackage, VisibilityKind::public)->union(
+    uml_c_visible_dependencies(aPackage, VisibilityKind::protected))->union(
+    uml_c_visible_dependencies(aPackage, VisibilityKind::_package))->asSet()/]
+
+[query public uml_c_source_subpackages(aPackage:Package):Set(Package) =
+      uml_c_visible_subpackages(aPackage, VisibilityKind::private)/]
+
+[query public uml_c_source_dependencies(aPackage:Package):Set(Package) =
+    uml_c_visible_dependencies(aPackage, VisibilityKind::private)/]
+
+[**
  * Generate definitions of literals from the given sequence.
  */]
 [template public uml_c_literal_list(aCollection:Collection(OclAny),
@@ -165,6 +225,43 @@
 [/for]
 [/template]
 
+[**
+ * Includes a file.
+ * @param aFile The string with the path to the file.
+ * @param indentation The number of spaces the include directive should be 
+ * indented. 
+ */]
+[template public uml_c_include_local_file(aFile : String, 
+                                          indentation : Integer)]
+#[indent(indentation)/]include "[aFile/]"
+[/template]
+
+[**
+ * Includes a file.
+ * @param aFile The string with the path to the file.
+ * @param indentation The number of spaces the include directive should be 
+ * indented. 
+ */]
+[template public uml_c_include_global_file(aFile : String, 
+                                           indentation : Integer)]
+#[indent(indentation)/]include <[aFile/]>
+[/template]
+
+[template public uml_c_include_dependencies(external_packages:Set(Package),
+                                            sub_packages:Set(Package),
+                                            indentation : Integer)]
+[if (external_packages.name->includes('AnsiCLibrary'))]
+[uml_c_include_global_file('stdint.h', indentation)/]
+[/if]
+[for (s : String | external_packages->reject(
+   p:Package|p.name = 'AnsiCLibrary'
+                )->removeAll(sub_packages).get_package_h_qualified_path())]
+[uml_c_include_global_file(s, indentation)/]
+[/for]
+[for (s : String | sub_packages.get_package_h_path())]
+[uml_c_include_local_file(s, indentation)/]
+[/for]
+[/template]
 [**
  * Provides C declaration of a class.
  * @param aClass The class that should be declared.

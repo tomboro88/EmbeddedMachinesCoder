@@ -6,10 +6,8 @@
 [import tbo::acceleo::psm::uml::gen::c::common::uml_c /]
 
 [template public generatePackageH(aPackage : Package)
- {ownedPackageHeaders : Collection(String) 
-         = aPackage.packagedElement->filter(Package
-         )->select(p : Package | p.visibility = VisibilityKind::public
-         )->collect(p:Package|p.get_package_h_path());
+ {visible_subpackages : Set(Package) = uml_c_header_subpackages(aPackage);
+  visible_dependencies : Set(Package) = uml_c_header_dependencies(aPackage);
   containedElements : Sequence(PackageableElement) 
      = aPackage.eContents(PackageableElement)->select(p : PackageableElement | 
       not p.oclIsKindOf(Package)).eAllContents()->filter(PackageableElement);
@@ -24,10 +22,9 @@
 #ifdef  __cplusplus
 extern "C" {
 #endif
-    [for (s : String | ownedPackageHeaders)]
-#    include "[s/]"
-    [/for]
 
+[uml_c_include_dependencies(visible_dependencies, visible_subpackages, 
+                            indentation)/]
 [ uml_c_literal_list(containedElements, VisibilityKind::public, indentation)/]
 
 #ifdef  __cplusplus
@@ -35,5 +32,7 @@ extern "C" {
 #endif
 
 #endif  /* [aPackage.name.header_guard()/] */
+
+/*** end of file ***/
 [/file]
 [/template]
