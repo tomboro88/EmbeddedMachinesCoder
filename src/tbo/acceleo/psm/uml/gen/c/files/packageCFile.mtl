@@ -10,7 +10,9 @@
    uml_c_header_dependencies(aPackage))->asSet();
    source_subpackages : Set(Package) = uml_c_source_subpackages(aPackage);
    source_dependencies  : Set(Package) = uml_c_source_dependencies(aPackage)
-      ->removeAll(header_packages);}]
+      ->removeAll(header_packages);
+   sourceClassifiers : Sequence(Classifier) = 
+    aPackage.uml_c_source_classifiers();}]
 
 [file (get_package_c_qualified_path(aPackage), false, 'UTF-8')]
 [documentationCFile('The ' + aPackage.name + ' package source file.')/]
@@ -27,7 +29,7 @@
  * Data type, constant, and macro definitions.
  *
  ******************************************************************************/
-
+[uml_c_declare_structs(sourceClassifiers, 0)/]
 /*******************************************************************************
  * 
  * Private function prototypes.

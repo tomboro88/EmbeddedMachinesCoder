@@ -8,7 +8,7 @@
  *     separator. 
  */]
 [query public indent_newlines(aString : String, line_prefix : String) : String =
-  aString.replaceAll('\\r\\n|[\\r\\n]', lineSeparator()+line_prefix)/]
+  aString.replaceAll('\\r\\n|[\\r\\n]', utils_newline()+line_prefix)/]
 
 [**
  * @brief Returns the guard definition for the header file. 
@@ -48,3 +48,15 @@
  */]
 [query public indent(length:Integer) : String = 
  if length > 0 then ' ' + indent(length-1) else '' endif/]
+
+[query private utils_concat(aSequence : Sequence(String)):String
+= if aSequence->isEmpty() then '' 
+  else aSequence->first().concat(utils_concat(aSequence->drop(1))) endif/]
+
+[query public utils_newline(traceabilityContext : OclAny): String = 
+utils_files_newline().characters()
+->select(s : String | Set{'\r','\n'}->includes(s))->utils_concat()/]
+
+[template private utils_files_newline(traceabilityContext : OclAny)]
+
+[/template]

@@ -151,65 +151,75 @@
     p.type.name + if uml_c_property_by_ref(p) then '*' else '' endif/]
 
 [**
- * Get a set of packages on which the given element depends. 
- */]
-[query private uml_c_get_dependency_packages(aNamedElement : NamedElement)
-: Set(Package) = aNamedElement.clientDependency.supplier->collect(
-       n:NamedElement | if n.oclIsKindOf(Package) then n.oclAsType(Package) 
-       else n.eContainer(Package)endif)->asSet()/]
-
-[**
- * @brief Get all subpackages of a package with a specified visibility. 
- */]
-[query private uml_c_visible_subpackages(aPackage : Package,
-                                   aVisibility : VisibilityKind) : Set(Package)
-         =  aPackage.packagedElement->filter(Package
-            )->select(p:Package | p.visibility = aVisibility)/]
-
-[**
- * @brief Get all children of a package with a specified visibility. 
- */]
-[query private uml_c_visible_children(aPackage : Package, 
-                                      aVisibility : VisibilityKind) 
-    : Set(PackageableElement) 
-     = aPackage.packagedElement->select(p : PackageableElement | 
-      p.visibility = aVisibility)/]
-
-[**
- * @brief Get a set of packages on which all non-Package children of the package
- * depend. 
- */]
-[query private uml_c_visible_dependencies(aPackage : Package,
-                               aVisibility : VisibilityKind) : Set(Package) = 
-   aPackage.uml_c_get_dependency_packages()->union(
-   uml_c_visible_children(aPackage, aVisibility).uml_c_get_dependency_packages()
-   )->union(uml_c_visible_children(aPackage, aVisibility)
-       ->reject(p:PackageableElement | p.oclIsKindOf(Package)
-       ).eAllContents(NamedElement
-       ).uml_c_get_dependency_packages())->asSet()/]
-
-[**
  * Get all subpackages visible in the package header file. 
  */]
 [query public uml_c_header_subpackages(aPackage:Package):Set(Package) =
-      uml_c_visible_subpackages(aPackage, VisibilityKind::public)->union(
-      uml_c_visible_subpackages(aPackage, VisibilityKind::protected))->union(
-      uml_c_visible_subpackages(aPackage, VisibilityKind::_package))->asSet()/]
+    request_visible_subpackages(aPackage, VisibilityKind::public)->union(
+    request_visible_subpackages(aPackage, VisibilityKind::protected))->union(
+    request_visible_subpackages(aPackage, VisibilityKind::_package))->asSet()/]
 
 [**
  * @brief Get all Package dependencies visible in the Package header file. 
  */]
 [query public uml_c_header_dependencies(aPackage:Package):Set(Package) =
-    uml_c_visible_dependencies(aPackage, VisibilityKind::public)->union(
-    uml_c_visible_dependencies(aPackage, VisibilityKind::protected))->union(
-    uml_c_visible_dependencies(aPackage, VisibilityKind::_package))->asSet()/]
+    request_visible_dependencies(aPackage, VisibilityKind::public)->union(
+    request_visible_dependencies(aPackage, VisibilityKind::protected))->union(
+    request_visible_dependencies(aPackage, VisibilityKind::_package))->asSet()/]
 
+[**
+ * Get all subpackages visible in the package source file. 
+ */]
 [query public uml_c_source_subpackages(aPackage:Package):Set(Package) =
-      uml_c_visible_subpackages(aPackage, VisibilityKind::private)/]
+      request_visible_subpackages(aPackage, VisibilityKind::private)/]
 
+[**
+ * @brief Get all Package dependencies visible in the Package source file. 
+ */]
 [query public uml_c_source_dependencies(aPackage:Package):Set(Package) =
-    uml_c_visible_dependencies(aPackage, VisibilityKind::private)/]
+    request_visible_dependencies(aPackage, VisibilityKind::private)/]
 
+[query private uml_c_sort_classifiers(aSeq : Sequence(Classifier)) : 
+  Sequence(Classifier)
+  = if aSeq->size() <=1 then aSeq
+    else 
+      let aRest : Sequence(Classifier) = aSeq->drop(1) in
+      let aFirst : Classifier = aSeq->first() in
+      if aRest->exists(c:Classifier | 
+        aFirst.attribute.type->includes(c.oclAsType(Type)))
+      then aRest->uml_c_sort_classifiers()->append(aFirst)
+      else aRest->uml_c_sort_classifiers()->prepend(aFirst)
+      endif
+    endif/]
+
+[**
+ * Get a Sequence of classifiers that should be declared in the header file. 
+ */]
+[query public uml_c_header_classifiers(aPackage : Package): 
+  Sequence(Classifier) = 
+  let containedClassifiers : Sequence(Classifier) = 
+      aPackage.request_direct_children()->selectByKind(Classifier) in
+  let allClassifiers : Sequence(Classifier) = 
+      aPackage.request_non_packaged_children()->selectByKind(Classifier) in
+  let visibleClassifiers : Sequence(Classifier) = 
+    containedClassifiers->select(c:Classifier | 
+    Set{VisibilityKind::public, VisibilityKind::protected, 
+    VisibilityKind::_package}->includes(c.visibility)) in
+    visibleClassifiers->union(visibleClassifiers.attribute.type
+    ->selectByKind(Classifier))
+    ->select(c:Classifier|allClassifiers->includes(c))->asOrderedSet()
+    ->asSequence()/]
+
+[**
+ * Get a Sequence of classifiers that should be declared in the source file. 
+ */]
+[query public uml_c_source_classifiers(aPackage : Package): 
+  Sequence(Classifier) = 
+  let allClassifiers : Sequence(Classifier) = 
+      aPackage.request_non_packaged_children()->selectByKind(Classifier) in
+  let headerClassifiers : Sequence(Classifier) = 
+      uml_c_header_classifiers(aPackage) in
+    allClassifiers->select(c:Classifier | 
+    not headerClassifiers->includes(c))/]
 [**
  * Generate definitions of literals from the given sequence.
  */]
@@ -218,7 +228,7 @@
                                     indentation : Integer)]
 [for (ls : LiteralSpecification | 
                aCollection->filter(LiteralSpecification)) 
-         separator(lineSeparator())
+         separator(utils_newline())
          ?( (not ls.name->oclIsUndefined()) and (not ls.name->isEmpty())
             and (ls.visibility = visibility))]
 [uml_c_literal_definition(ls,indentation)/]
@@ -268,18 +278,30 @@
  * @param indentation The number of spaces the declaration is indented from 
  * the left margin.
  */]
-[template public uml_c_class_decl(aClass : Class, indentation : Integer)
-  ?(not aClass.attribute->select(p : Property | not p.isStatic)->isEmpty())]
-[documentationElement(aClass)/]
+[template public uml_c_struct_decl(aClassifier : Classifier, 
+                                  indentation : Integer)
+  ?(aClassifier.request_has_attributes())
+  {attr_indentation : Integer = getProperty('indent_width').toInteger();
+   spaces : String = indent(attr_indentation);}]
+[documentationElement(aClassifier)/]
 typedef struct
 {
-    [for (p: Property | aClass.ownedAttribute)]
-    [documentationElement(p)/]
-    [uml_c_property_decl(p,indentation + 4)/]
-    [/for]
-} [aClass.name/];
+[for (p: Property | aClassifier.attribute)]
+[spaces/][documentationElement(p)/]
+[spaces/][uml_c_property_decl(p,indentation + attr_indentation)/]
+[/for]
+} [aClassifier.name/];
 [/template]
 
+[template public uml_c_declare_structs(aSeq:Sequence(Classifier),
+                                           indentation:Integer)
+     {aSorted : Sequence(Classifier) = aSeq->uml_c_sort_classifiers();}]
+[for (aClassifier : Classifier | aSorted)
+ separator(utils_newline()+utils_newline())
+ ?(request_has_attributes())]
+[indent(indentation)/][uml_c_struct_decl(aClassifier, indentation)
+/][/for]
+[/template]
 [**
  * Provides C declaration of an operation.
  * @param anOperation The operation that should be declared.
@@ -326,7 +348,7 @@ typedef struct
                                  indentation : Integer)
   {line_width : Integer = getProperty('line_width').oclAsType(Integer) 
                           - indentation;
-   line_sep : String = '\\'+lineSeparator();
+   line_sep : String = '\\'+utils_newline();
    alt_indent : Integer = 8;
    default_param_width: Integer = line_width-2-prefix.size();
    alt_param_width: Integer = line_width-1-alt_indent;
@@ -358,7 +380,7 @@ typedef struct
 [/template]
 
 [**
- * This template forms a full property type specification string. 
+ * This template forms a full property multiplicity specification string. 
  */]
 [template private uml_c_property_multiplicity(p : Property)
     ?((p.upper <> *) and (p.upper <> 1) and (p.upper <> 0) and 
@@ -380,8 +402,8 @@ typedef struct
     {s : String = '                               ';
      t : String = p.uml_c_property_type();
      m : String = p.uml_c_property_multiplicity();
-     sep : String = '\\' +lineSeparator() + s + ' ';
-     line_width : Integer = getProperty('line_width').oclAsType(Integer) 
+     sep : String = '\\' +utils_newline() + s + ' ';
+     line_width : Integer = getProperty('line_width').toInteger() 
                           - indentation;}]
 [t/][(if t.size() <= s.size() then s.substring(t.size()) 
       else ' '+sep

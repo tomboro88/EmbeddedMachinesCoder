@@ -30,7 +30,7 @@
          then 'in,out' else aDirection endif + ']' /]
 
 [query private doxygen_brief (aString : String) : String = 
-'@brief ' + aString + lineSeparator()/]
+'@brief ' + aString + utils_newline()/]
 
 [query private doxygen_file (aString : String) : String = 
 '@file ' + aString/]
@@ -68,9 +68,9 @@
 [if (b_is_not_empty)
 ][before_comments.doxygen_line_prefix()
 /][/if][for (aComment: Comment | setComments)
-                       separator(lineSeparator()+ spaces.doxygen_line_prefix())
+                       separator(utils_newline()+ spaces.doxygen_line_prefix())
 ][aComment._body.doxygen_newlines(spaces)/][/for][if (b_is_not_empty)
-][lineSeparator()/][/if]
+][utils_newline()/][/if]
 [/template]
 
 [**
