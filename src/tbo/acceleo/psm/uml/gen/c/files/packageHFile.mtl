@@ -9,8 +9,8 @@
 [template public generatePackageH(aPackage : Package)
  {visible_subpackages : Set(Package) = uml_c_header_subpackages(aPackage);
   visible_dependencies : Set(Package) = uml_c_header_dependencies(aPackage);
-  nonPackagedChildren : Sequence(PackageableElement) = 
-    aPackage.request_non_packaged_children();
+  headerLiteralSpecifications : Sequence(LiteralSpecification) = 
+    uml_c_header_literal_specifications(aPackage);
   headerClassifiers : Sequence(Classifier) = 
     aPackage.uml_c_header_classifiers();
   indentation : Integer = getProperty('indent_width').toInteger();}]
@@ -27,7 +27,8 @@ extern "C" {
 
 [uml_c_include_dependencies(visible_dependencies, visible_subpackages, 
                             indentation)/]
-[uml_c_literal_list(nonPackagedChildren, VisibilityKind::public, indentation)/]
+[uml_c_literal_list(headerLiteralSpecifications, indentation)/]
+
 [uml_c_declare_structs(headerClassifiers, indentation)/]
 
 #ifdef  __cplusplus

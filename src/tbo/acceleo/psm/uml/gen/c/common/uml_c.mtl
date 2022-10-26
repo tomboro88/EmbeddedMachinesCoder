@@ -191,22 +191,44 @@
       endif
     endif/]
 
+[query public uml_c_header_visibility(traceabilityContext : OclAny) : 
+      Set(VisibilityKind) = 
+      Set{VisibilityKind::public, VisibilityKind::protected, 
+      VisibilityKind::_package}/]
+
+[**
+ * @brief Returns a Sequence of namespaces that should b visible in a header
+ * file if the input namespace itself should also be visible in the header.
+ */]
+[query public uml_c_header_namespaces(aNamespace:Namespace) : 
+  Sequence(Namespace) = 
+  if uml_c_header_visibility()->includes(aNamespace.visibility) 
+  then aNamespace.eContents(Namespace).uml_c_header_namespaces()
+  ->append(aNamespace)
+  else Sequence{} endif/]
+
+[**
+ * @brief Returns a sequence of all namespaces that should be visible in 
+ * the package header. 
+ */]
+[query public uml_c_pkg_header_namespaces(aPackage : Package) : 
+   Sequence(Namespace) = 
+      aPackage.request_direct_children()->selectByKind(Namespace)
+      .uml_c_header_namespaces()/]
 [**
  * Get a Sequence of classifiers that should be declared in the header file. 
  */]
 [query public uml_c_header_classifiers(aPackage : Package): 
   Sequence(Classifier) = 
-  let containedClassifiers : Sequence(Classifier) = 
-      aPackage.request_direct_children()->selectByKind(Classifier) in
   let allClassifiers : Sequence(Classifier) = 
       aPackage.request_non_packaged_children()->selectByKind(Classifier) in
+  let visibleNamespaces : Sequence(Namespace) = 
+      aPackage.uml_c_pkg_header_namespaces() in
   let visibleClassifiers : Sequence(Classifier) = 
-    containedClassifiers->select(c:Classifier | 
-    Set{VisibilityKind::public, VisibilityKind::protected, 
-    VisibilityKind::_package}->includes(c.visibility)) in
+    visibleNamespaces->selectByKind(Classifier) in
     visibleClassifiers->union(visibleClassifiers.attribute.type
-    ->selectByKind(Classifier))
-    ->select(c:Classifier|allClassifiers->includes(c))->asOrderedSet()
+    ->selectByKind(Classifier)
+    ->select(c:Classifier|allClassifiers->includes(c)))->asOrderedSet()
     ->asSequence()/]
 
 [**
@@ -220,19 +242,33 @@
       uml_c_header_classifiers(aPackage) in
     allClassifiers->select(c:Classifier | 
     not headerClassifiers->includes(c))/]
+
+[query public uml_c_is_visible_in_header(aPackage:Package, 
+                                         aNamedElement : NamedElement) 
+ : Boolean = 
+ let anc : Sequence(NamedElement) = aNamedElement.ancestors(NamedElement) in
+ aNamedElement.getNearestPackage() = aPackage and 
+ anc->dropRight(anc->size() - anc->indexOf(aPackage.oclAsType(NamedElement))+1)
+ ->prepend(aNamedElement)->collect(n:NamedElement|n.visibility)
+ ->forAll(v : VisibilityKind | uml_c_header_visibility()->includes(v))/]
+
+[query public uml_c_header_literal_specifications(aPackage : Package)
+  : Sequence(LiteralSpecification) = 
+  let headerProperties : Sequence(Property) 
+      = uml_c_header_classifiers(aPackage).attribute in
+  request_non_packaged_children(aPackage)->filter(LiteralSpecification)
+  ->select(ls : LiteralSpecification | uml_c_is_visible_in_header(aPackage, ls)
+  or ls.ancestors(Property)->exists(p:Property|headerProperties->includes(p)))/]
+
 [**
  * Generate definitions of literals from the given sequence.
  */]
-[template public uml_c_literal_list(aCollection:Collection(OclAny),
-                                    visibility : VisibilityKind,
-                                    indentation : Integer)]
-[for (ls : LiteralSpecification | 
-               aCollection->filter(LiteralSpecification)) 
-         separator(utils_newline())
-         ?( (not ls.name->oclIsUndefined()) and (not ls.name->isEmpty())
-            and (ls.visibility = visibility))]
-[uml_c_literal_definition(ls,indentation)/]
-[/for]
+[template public uml_c_literal_list(
+           aCollection:Collection(LiteralSpecification),indentation : Integer)]
+[for (ls : LiteralSpecification | aCollection) 
+         separator(utils_newline() + utils_newline())
+         ?( (not ls.name->oclIsUndefined()) and (not ls.name->isEmpty()))]
+[uml_c_literal_definition(ls,indentation)/][/for]
 [/template]
 
 [**
@@ -273,8 +309,8 @@
 [/for]
 [/template]
 [**
- * Provides C declaration of a class.
- * @param aClass The class that should be declared.
+ * Provides C declaration of a classifier.
+ * @param aClassifier The classifier that should be declared.
  * @param indentation The number of spaces the declaration is indented from 
  * the left margin.
  */]
