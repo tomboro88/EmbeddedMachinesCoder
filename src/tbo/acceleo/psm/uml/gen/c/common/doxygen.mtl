@@ -53,21 +53,26 @@
 [/template]
 
 [**
- * Concatenates a set of comments with additoinal prefix into a documentation 
- * block.  
- * @param setComments The comments that should be concatenated.
+ * Concatenates the element's comments with additional prefix into a 
+ * documentation block.  
+ * @param anElement The element that should be commented.
  * @param before_comments The text that should be inserted before the first 
  * comment.
  */]
-[template private doxygen_comments(setComments : Set(Comment),
+[template private doxygen_comments(anElement : Element,
                      before_comments : String)
-                     {spaces : String = '    '.first(before_comments.size());
+                     {seqComments : Sequence(Comment) 
+                      = anElement.ancestors()->prepend(anElement)
+                        ->last().eAllContents(Comment)
+                        ->select(aComment : Comment 
+                            | aComment.annotatedElement->includes(anElement));
+                      spaces : String = '    '.first(before_comments.size());
                       b_is_not_empty : Boolean = 
                                 (before_comments.size()>0) 
-                                 or (not setComments->isEmpty());}]
+                                 or (not seqComments->isEmpty());}]
 [if (b_is_not_empty)
 ][before_comments.doxygen_line_prefix()
-/][/if][for (aComment: Comment | setComments)
+/][/if][for (aComment: Comment | seqComments)
                        separator(utils_newline()+ spaces.doxygen_line_prefix())
 ][aComment._body.doxygen_newlines(spaces)/][/for][if (b_is_not_empty)
 ][utils_newline()/][/if]
@@ -79,7 +84,7 @@
  */]
 [template public doxygen_documentation(anElement: Element) 
                                                     post(doxygen_block())]
-[doxygen_comments(anElement.ownedComment,'')
+[doxygen_comments(anElement,'')
 /][if (anElement.oclIsKindOf(Operation))]
 [if (not anElement.oclAsType(Operation).isStatic)]
 [doxygen_param(ParameterDirectionKind::_in, 'p_obj').doxygen_line_prefix()
@@ -87,10 +92,10 @@
 [/if]
 [for (aParameter : Parameter | 
                       request_parameter_only(anElement.oclAsType(Operation)))
-][doxygen_comments(aParameter.ownedComment, doxygen_param(aParameter))
+][doxygen_comments(aParameter, doxygen_param(aParameter))
 /][/for][if (not anElement.oclAsType(Operation).type.oclIsUndefined())]
 [doxygen_comments(
-   request_return_value(anElement.oclAsType(Operation))->first().ownedComment,
+   request_return_value(anElement.oclAsType(Operation))->first(),
    doxygen_return(''))/][/if]
 [/if]
 [/template]
@@ -102,7 +107,7 @@
                              post(doxygen_block())]
 [doxygen_file('').doxygen_line_prefix()/]
 [doxygen_line_prefix('')/]
-[doxygen_comments(anElement.ownedComment,'')/]
+[doxygen_comments(anElement,'')/]
 [/template]
 
 [**

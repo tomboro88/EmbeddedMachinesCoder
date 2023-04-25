@@ -30,28 +30,29 @@
  * @brief Get all subpackages of a package with a specified visibility. 
  */]
 [query public request_visible_subpackages(aPackage : Package,
-                                   aVisibility : VisibilityKind) : Set(Package)
+                            Visibilities : Set(VisibilityKind)) : Set(Package)
          =  aPackage.packagedElement->filter(Package
-            )->select(p:Package | p.visibility = aVisibility)/]
+            )->select(p:Package | Visibilities->includes(p.visibility))/]
 
 [**
  * @brief Get all children of a package with a specified visibility. 
  */]
 [query private request_visible_children(aPackage : Package, 
-                                      aVisibility : VisibilityKind) 
+                                      Visibilities : Set(VisibilityKind)) 
     : Set(PackageableElement) 
      = aPackage.packagedElement->select(p : PackageableElement | 
-      p.visibility = aVisibility)/]
+      Visibilities->includes(p.visibility))/]
 
 [**
  * @brief Get a set of packages on which all non-Package children of the package
  * depend. 
  */]
 [query public request_visible_dependencies(aPackage : Package,
-                               aVisibility : VisibilityKind) : Set(Package) = 
+                          Visibilities : Set(VisibilityKind)) : Set(Package) = 
    aPackage.request_dependency_packages()->union(
-   request_visible_children(aPackage, aVisibility).request_dependency_packages()
-   )->union(request_visible_children(aPackage, aVisibility)
+   request_visible_children(aPackage, Visibilities
+   ).request_dependency_packages()
+   )->union(request_visible_children(aPackage, Visibilities)
        ->reject(p:PackageableElement | p.oclIsKindOf(Package)
        ).eAllContents(NamedElement
        ).request_dependency_packages())->asSet()/]

@@ -9,7 +9,7 @@
  * Provides the type of the operation return value. 
  */]
 [query private uml_c_operation_return_type(anOperation : Operation) : String = 
-  if anOperation.visibility = VisibilityKind::private
+  if uml_c_source_visibility()->includes(anOperation.visibility)
   then 'static ' else '' endif + if anOperation.type.oclIsUndefined() 
   then 'void' 
   else uml_c_parameter_type(request_return_value(anOperation)->first()) endif /]
@@ -154,29 +154,25 @@
  * Get all subpackages visible in the package header file. 
  */]
 [query public uml_c_header_subpackages(aPackage:Package):Set(Package) =
-    request_visible_subpackages(aPackage, VisibilityKind::public)->union(
-    request_visible_subpackages(aPackage, VisibilityKind::protected))->union(
-    request_visible_subpackages(aPackage, VisibilityKind::_package))->asSet()/]
+    request_visible_subpackages(aPackage, uml_c_header_visibility())/]
 
 [**
  * @brief Get all Package dependencies visible in the Package header file. 
  */]
 [query public uml_c_header_dependencies(aPackage:Package):Set(Package) =
-    request_visible_dependencies(aPackage, VisibilityKind::public)->union(
-    request_visible_dependencies(aPackage, VisibilityKind::protected))->union(
-    request_visible_dependencies(aPackage, VisibilityKind::_package))->asSet()/]
+    request_visible_dependencies(aPackage, uml_c_header_visibility())/]
 
 [**
  * Get all subpackages visible in the package source file. 
  */]
 [query public uml_c_source_subpackages(aPackage:Package):Set(Package) =
-      request_visible_subpackages(aPackage, VisibilityKind::private)/]
+      request_visible_subpackages(aPackage, uml_c_source_visibility())/]
 
 [**
  * @brief Get all Package dependencies visible in the Package source file. 
  */]
 [query public uml_c_source_dependencies(aPackage:Package):Set(Package) =
-    request_visible_dependencies(aPackage, VisibilityKind::private)/]
+    request_visible_dependencies(aPackage, uml_c_source_visibility())/]
 
 [query private uml_c_sort_classifiers(aSeq : Sequence(Classifier)) : 
   Sequence(Classifier)
@@ -195,6 +191,10 @@
       Set(VisibilityKind) = 
       Set{VisibilityKind::public, VisibilityKind::protected, 
       VisibilityKind::_package}/]
+
+[query public uml_c_source_visibility(traceabilityContext : OclAny) : 
+      Set(VisibilityKind) = 
+      VisibilityKind.allInstances()->removeAll(uml_c_header_visibility())/]
 
 [**
  * @brief Returns a Sequence of namespaces that should b visible in a header
@@ -259,6 +259,20 @@
   request_non_packaged_children(aPackage)->filter(LiteralSpecification)
   ->select(ls : LiteralSpecification | uml_c_is_visible_in_header(aPackage, ls)
   or ls.ancestors(Property)->exists(p:Property|headerProperties->includes(p)))/]
+
+[query public uml_c_source_literal_specifications(aPackage : Package)
+  : Sequence(LiteralSpecification) = 
+  request_non_packaged_children(aPackage)->filter(LiteralSpecification)
+  ->removeAll(uml_c_header_literal_specifications(aPackage))/]
+
+[template public uml_c_get_literal_string(ls:LiteralSpecification)] 
+[let lun : LiteralUnlimitedNatural = ls.oclAsType(LiteralUnlimitedNatural)]
+[lun.value/]u[elselet lr:LiteralReal = ls.oclAsType(LiteralReal)]
+[lr.value/][elselet lb:LiteralBoolean = ls.oclAsType(LiteralBoolean)]
+[lb.value/][elselet li:LiteralInteger = ls.oclAsType(LiteralInteger)]
+[li.value/][elselet lstr:LiteralString = ls.oclAsType(LiteralString)]
+[lstr.value/][else][/let]
+[/template]
 
 [**
  * Generate definitions of literals from the given sequence.
@@ -454,5 +468,6 @@ typedef struct
                                           indentation : Integer) 
   ?(not (ls.name.oclIsUndefined() or ls.name.oclIsInvalid()))]
 [indent(indentation)/][documentationElement(ls)/]
-#[indent(indentation)/]define [ls.name.toUpper()/] [ls.eGet('value')/]
+#[indent(indentation)/]define [ls.name.toUpper()/] [
+  ls.uml_c_get_literal_string()/]
 [/template]
