@@ -24,8 +24,12 @@
  * Include statements.
  * 
  ******************************************************************************/
+//[protected('includes top')]
+//[/protected]
 #include "[get_package_h_filename(aPackage)/]"
-[uml_c_include_dependencies(source_dependencies, source_subpackages, 0)/]
+[uml_c_include_dependencies(source_dependencies, source_subpackages, 0)
+/]//[protected('includes bottom')]
+//[/protected]
 /*******************************************************************************
  *
  * Data type, constant, and macro definitions.

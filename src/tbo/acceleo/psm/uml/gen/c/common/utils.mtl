@@ -57,6 +57,13 @@
 utils_files_newline().characters()
 ->select(s : String | Set{'\r','\n'}->includes(s))->utils_concat()/]
 
+[**
+ * @brief this template is a template of a newline character.
+ * 
+ * It allows to use the same new line delimiter that is used in the source
+ * files of this generator. Then the new line delimiters in the generated files
+ * can be consistent.
+ */]
 [template private utils_files_newline(traceabilityContext : OclAny)]
 
 [/template]

@@ -25,8 +25,13 @@
 extern "C" {
 #endif
 
+//[protected('includes top')]
+//[/protected]
 [uml_c_include_dependencies(visible_dependencies, visible_subpackages, 
                             indentation)/]
+//[protected('includes bottom')]
+//[/protected]
+
 [uml_c_literal_list(headerLiteralSpecifications, indentation)/]
 
 [uml_c_declare_structs(headerClassifiers, indentation)/]
