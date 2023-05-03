@@ -5,14 +5,26 @@
 [import tbo::acceleo::psm::uml::gen::c::common::utils/]
 [import tbo::acceleo::psm::uml::gen::c::request::request/]
 
+[query private uml_c_function_visibility(vis:VisibilityKind):String = 
+if vis = VisibilityKind::private then 'static ' else '' endif/]
+
 [**
  * Provides the type of the operation return value. 
  */]
 [query private uml_c_operation_return_type(anOperation : Operation) : String = 
-  if anOperation.visibility = VisibilityKind::private
-  then 'static ' else '' endif + if anOperation.type.oclIsUndefined() 
+  if anOperation.type.oclIsUndefined() 
   then 'void' 
   else uml_c_parameter_type(request_return_value(anOperation)->first()) endif /]
+
+[**
+ * Provides the type of the behavior return value. 
+ */]
+[query private uml_c_behavior_return_type(aBehavior : Behavior) : String = 
+  if aBehavior.specification.oclIsUndefined() or 
+     not aBehavior.specification.oclIsKindOf(Operation) 
+  then 'void' 
+  else uml_c_operation_return_type(aBehavior.specification.oclAsType(Operation))
+  endif /]
 
 [**
  * This query decides if a parameter is passed by copy or by reference. 
@@ -53,7 +65,7 @@
  */]
 [query private uml_c_parameter_self(o : Operation) : String = 
     uml_c_param_decl(if o.isQuery then 'const ' else '' endif 
-          + uml_c_get_type_name(o.request_operation_owner_classifier())
+          + o.featuringClassifier.uml_c_get_type_name()
           + '*', 'p_obj') /]
 
 [**
@@ -386,8 +398,13 @@ typedef struct
 
 [template public uml_c_get_operation_full_name(anOperation : Operation)
 ][anOperation.eContainer(Package).name + '_' 
-  + anOperation.request_operation_owner_classifier().name 
+  + anOperation.featuringClassifier.name 
   + '_' + anOperation.name/][/template]
+
+[template public uml_c_get_behavior_full_name(aBehavior : Behavior)
+][aBehavior.eContainer(Package).name + '_' 
+  + aBehavior._context.name 
+  + '_' + aBehavior.name/][/template]
 
 [template public uml_c_declare_structs(aSeq:Sequence(Classifier),
                                            indentation:Integer)
@@ -398,6 +415,7 @@ typedef struct
 [indent(indentation)/][uml_c_struct_decl(aClassifier, indentation)
 /][/for]
 [/template]
+
 [**
  * Provides C declaration of an operation.
  * @param anOperation The operation that should be declared.
@@ -406,9 +424,25 @@ typedef struct
  */]
 [template public uml_c_operation_decl(anOperation : Operation,
                                         indentation : Integer)]
-[uml_c_format_param_list(uml_c_operation_return_type(anOperation) 
+[uml_c_format_param_list(anOperation.visibility.uml_c_function_visibility() 
+                         + uml_c_operation_return_type(anOperation) 
                          + ' ' + anOperation.uml_c_get_operation_full_name(),
                          uml_c_param_strings(anOperation),
+                         indentation)/];
+[/template]
+
+[**
+ * Provides C declaration of a Behavior.
+ * @param aBehavior The Behavior that should be declared.
+ * @param indentation The number of spaces the declaration is indented from 
+ * left margin. 
+ */]
+[template public uml_c_behavior_decl(aBehavior : Behavior,
+                                        indentation : Integer)]
+[uml_c_format_param_list( aBehavior.visibility.uml_c_function_visibility()
+     + aBehavior.uml_c_behavior_return_type() 
+       + ' ' + aBehavior.uml_c_get_behavior_full_name(),
+         uml_c_param_strings(aBehavior.specification.oclAsType(Operation)),
                          indentation)/];
 [/template]
 
@@ -419,7 +453,8 @@ typedef struct
                                       indentation : Integer)
     {indent_width : Integer = getProperty('indent_width').toInteger();}]
 [documentationElement(anOperation,indentation)/]
-[uml_c_operation_return_type(anOperation)/]
+[anOperation.visibility.uml_c_function_visibility() 
+ + uml_c_operation_return_type(anOperation)/]
 [uml_c_format_param_list(anOperation.name,
                                 uml_c_param_strings(anOperation),indentation)/]
 {
@@ -525,9 +560,61 @@ typedef struct
 [for (aClassifier : Classifier | aSeq) separator(utils_newline()) 
       ?(not aClassifier.ownedMember->filter(Operation)->isEmpty())]
 [for (o: Operation | aClassifier.ownedMember->filter(Operation)
-                     ->sortedBy(o:Operation|o.name))
+                     ->sortedBy(o:Operation|o.name.toLower()))
      ?(vis->includes(o.visibility))]
 [indent(indentation)/][uml_c_operation_decl(o,indentation)/]
+[/for]
+[/for]
+[/template]
+
+[template public uml_c_declare_behaviors(aSeq:Sequence(Classifier),
+                                          vis : Set(VisibilityKind), 
+                                          indentation : Integer)]
+[for (aClassifier : Classifier | aSeq) separator(utils_newline()) 
+      ?(not aClassifier.ownedMember->filter(Behavior)->isEmpty())]
+[for (b: Behavior | aClassifier.ownedMember->filter(Behavior)
+                     ->sortedBy(b:Behavior|b.name.toLower()))
+     ?(vis->includes(b.visibility) and (not b.specification.oclIsUndefined())
+       and b.specification.oclIsKindOf(Operation))]
+[indent(indentation)/][uml_c_behavior_decl(b,indentation)/]
+[/for]
+[/for]
+[/template]
+
+[**
+ * Provides the C definition of a Behavior. 
+ */]
+[template public uml_c_behavior_definition(aBehavior : Behavior,
+                                      indentation : Integer)
+    {indent_width : Integer = getProperty('indent_width').toInteger();}]
+[documentationElement(aBehavior,indentation)/]
+[aBehavior.visibility.uml_c_function_visibility() 
+ + aBehavior.uml_c_behavior_return_type()/]
+[uml_c_format_param_list(aBehavior.uml_c_get_behavior_full_name(),
+         uml_c_param_strings(aBehavior.specification.oclAsType(Operation)),
+         indentation)/]
+{
+    [let ob : OpaqueBehavior = aBehavior]
+    [if (ob.language->includes('C'))]
+    [let bd : String = ob._body->at(ob.language->indexOf('C'))]
+[indent(indent_width)/][bd.indent_newlines(indent(indent_width))/]
+    [/let]
+    [/if]
+    [/let]
+}
+[/template]
+
+[template public uml_c_define_behaviors(aSeq:Sequence(Classifier),
+                                          vis : Set(VisibilityKind), 
+                                          indentation : Integer)]
+[for (aClassifier : Classifier | aSeq) separator(utils_newline()) 
+      ?(not aClassifier.ownedMember->filter(Behavior)->isEmpty())]
+[for (b: Behavior | aClassifier.ownedMember->filter(Behavior)
+                     ->sortedBy(b:Behavior|b.name.toLower()))
+     separator(utils_newline())
+     ?(vis->includes(b.visibility) and (not b.specification.oclIsUndefined())
+       and b.specification.oclIsKindOf(Operation))]
+[indent(indentation)/][uml_c_behavior_definition(b,indentation)/]
 [/for]
 [/for]
 [/template]

@@ -46,12 +46,15 @@
 [uml_c_declare_structs(sourceClassifiers, 0)/]
 /*******************************************************************************
  * 
- * Protected and package function prototypes.
+ * Non-private function prototypes.
  * 
  ******************************************************************************/
 [uml_c_declare_operations(allClassifiers, 
                           Set{VisibilityKind::protected, 
                               VisibilityKind::_package}, 0)/]
+[uml_c_declare_behaviors(allClassifiers, Set{VisibilityKind::protected,
+                                             VisibilityKind::_package,
+                                             VisibilityKind::public}, 0)/]
 /*******************************************************************************
  * 
  * Private function prototypes.
@@ -59,6 +62,7 @@
  ******************************************************************************/
 [uml_c_declare_operations(allClassifiers, 
                           Set{VisibilityKind::private}, 0)/]
+[uml_c_declare_behaviors(allClassifiers, Set{VisibilityKind::private}, 0)/]
 /*******************************************************************************
  * 
  * Static data declarations.
@@ -70,13 +74,15 @@
  * Public function bodies.
  * 
  ******************************************************************************/
-
+[uml_c_define_behaviors(allClassifiers, Set{VisibilityKind::public}, 0)/]
 /*******************************************************************************
  * 
- * Private function bodies.
+ * Non-public function bodies.
  * 
  ******************************************************************************/
-
+[uml_c_define_behaviors(allClassifiers, Set{VisibilityKind::_package,
+                                            VisibilityKind::private,
+                                            VisibilityKind::protected}, 0)/]
 /*** end of file ***/
 [/file]
 [/template]

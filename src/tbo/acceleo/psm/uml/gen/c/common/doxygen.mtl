@@ -135,19 +135,20 @@
 [template public doxygen_documentation(anElement: Element, line_width : Integer) 
                                                     post(doxygen_block())]
 [doxygen_comments(anElement,'',line_width)
-/][if (anElement.oclIsKindOf(Operation))]
-[if (not anElement.oclAsType(Operation).isStatic)]
+/][let anOp : Operation = if anElement.oclIsKindOf(Behavior) then 
+               anElement.oclAsType(Behavior).specification else anElement endif]
+[if (not anOp.isStatic)]
 [doxygen_param(ParameterDirectionKind::_in, 'p_obj').doxygen_line_prefix()
 /]The pointer to the self object.
 [/if]
 [for (aParameter : Parameter | 
-                      request_parameter_only(anElement.oclAsType(Operation)))
+                      request_parameter_only(anOp))
 ][doxygen_comments(aParameter, doxygen_param(aParameter),line_width)
-/][/for][if (not anElement.oclAsType(Operation).type.oclIsUndefined())]
+/][/for][if (not anOp.type.oclIsUndefined())]
 [doxygen_comments(
-   request_return_value(anElement.oclAsType(Operation))->first(),
+   request_return_value(anOp)->first(),
    doxygen_return(''),line_width)/][/if]
-[/if]
+[/let]
 [/template]
 
 [**

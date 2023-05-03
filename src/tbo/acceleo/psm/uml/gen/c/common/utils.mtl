@@ -62,7 +62,7 @@ utils_files_newline().characters()
   aSeq->select(n:NamedElement| ((not n.name.oclIsUndefined()) 
                            and (not n.name.oclIsInvalid()) 
                            and (not n.name->isEmpty())) )
-    ->sortedBy(n:NamedElement|n.name)/]
+    ->sortedBy(n:NamedElement|n.name.toLower())/]
 [**
  * @brief this template is a template of a newline character.
  * 
