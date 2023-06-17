@@ -169,18 +169,24 @@
     and aBehavior.specification.oclIsKindOf(Operation) 
  /]
 
+[query public request_has_virtual_operation_spec(b : Behavior,
+                                         vis : Set(VisibilityKind)) : Boolean =
+    b.request_has_operation_spec(vis) 
+    and b.specification.oclAsType(Operation).request_is_virtual_operation()
+ /]
+
 [query public request_behaviors(aClassifier : Classifier) : Set(Behavior) = 
   aClassifier.ownedMember->filter(Behavior)/]
 
-[query public request_operation_behaviors(aClassifier:Classifier, 
+[query public request_virtual_behaviors(aClassifier:Classifier, 
                                           vis : Set(VisibilityKind)) 
 : Set(Behavior) = aClassifier.request_behaviors()
-        ->select(b : Behavior | b.request_has_operation_spec(vis))/]
+        ->select(b : Behavior | b.request_has_virtual_operation_spec(vis))/]
 
-[query public request_have_operation_behaviors(aSeq : Sequence(Classifier),
+[query public request_have_virtual_behaviors(aSeq : Sequence(Classifier),
                                                vis : Set(VisibilityKind)) 
  : Boolean = not aSeq->select(c : Classifier | 
-                          not c.request_operation_behaviors(vis)->isEmpty())
+                          not c.request_virtual_behaviors(vis)->isEmpty())
              ->isEmpty()/]
 
 [query public request_has_default_values(aClassifier : Classifier) : Boolean = 

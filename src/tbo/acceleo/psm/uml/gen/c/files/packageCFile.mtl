@@ -179,7 +179,7 @@ static inline bool
 [uml_c_define_operations(allClassifiers, Set{VisibilityKind::public}, 0)/]
 [/if]
 [if allClassifiers
-    ->request_have_operation_behaviors(Set{VisibilityKind::public})]
+    ->request_have_virtual_behaviors(Set{VisibilityKind::public})]
 [uml_c_define_behaviors(allClassifiers, Set{VisibilityKind::public}, 0)/]
 [/if]
 /*******************************************************************************
@@ -199,7 +199,7 @@ static inline bool
                                             VisibilityKind::protected}, 0)/]
 [/if]
 [if allClassifiers
-    ->request_have_operation_behaviors(Set{VisibilityKind::_package,
+    ->request_have_virtual_behaviors(Set{VisibilityKind::_package,
                                             VisibilityKind::private,
                                             VisibilityKind::protected})]
 [uml_c_define_behaviors(allClassifiers, Set{VisibilityKind::_package,

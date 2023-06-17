@@ -712,12 +712,13 @@ static const [uml_c_get_vtable_type_name(aClassifier)
 [utils_indent(indent_width*2)/]}
 [utils_indent(indent_width)/]}
     [else]
-    [for (b: Behavior | anOperation.method
-               ->select(b:Behavior|anOperation.featuringClassifier
-                         ->includes(b._context.oclAsType(Classifier))))]
-[prefix/][uml_c_format_param_list(b.uml_c_get_behavior_full_name(),
-             uml_c_arg_strings(anOperation),indentation + prefix.size() + 1)/];
-    [/for]
+    [let b:Behavior = 
+                anOperation.method->any(b:Behavior|not b.oclIsUndefined())]
+    [if 1 = anOperation.method->size() and anOperation.featuringClassifier
+      ->includes(b._context.oclAsType(Classifier))]
+[uml_c_implement_behavior(b,'C',indentation)/]
+    [/if]
+    [/let]
     [/if]
 }
 [/template]
@@ -838,7 +839,7 @@ static const [uml_c_get_vtable_type_name(aClassifier)
 [query public uml_c_behaviors_need_declaration(aClassifier : Classifier,
                                     vis : Set(VisibilityKind)) : Set(Behavior)
  = aClassifier.request_behaviors()
-        ->select(b : Behavior | b.request_has_operation_spec(vis))/]
+        ->select(b : Behavior | b.request_has_virtual_operation_spec(vis))/]
 
 [query public uml_c_classifiers_behaviors_need_declaration(
        aSeq : Sequence(Classifier), vis : Set(VisibilityKind)) : Boolean
@@ -894,8 +895,8 @@ static const [uml_c_get_vtable_type_name(aClassifier)
                                           vis : Set(VisibilityKind), 
                                           indentation : Integer)]
 [for (aClassifier : Classifier | aSeq) separator(utils_newline()) 
-      ?(not aClassifier.request_operation_behaviors(vis)->isEmpty())]
-[for (b: Behavior | aClassifier.request_operation_behaviors(vis)
+      ?(not aClassifier.request_virtual_behaviors(vis)->isEmpty())]
+[for (b: Behavior | aClassifier.request_virtual_behaviors(vis)
                      ->sortedBy(b:Behavior|b.name.toLower()))
      separator(utils_newline())]
 [utils_indent(indentation)/][uml_c_behavior_definition(b,indentation)/]
