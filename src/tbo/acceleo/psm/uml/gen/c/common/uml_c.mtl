@@ -68,7 +68,7 @@ endif/]
  */]
 [query private uml_c_parameter_self(o : Operation) : String = 
     uml_c_param_decl(if o.isQuery then 'const ' else '' endif 
-          + o.featuringClassifier.uml_c_get_type_name()
+    + o.featuringClassifier.uml_c_get_type_name()
           + '*', utils_get_self_name()) /]
 
 [**
@@ -207,6 +207,29 @@ endif/]
  /]
 
 [**
+ * Creates the name of a bound template class./]
+[query private uml_c_get_bound_class_full_name(aTemplate: Type, aSpec: Type) 
+  : String = 
+ uml_c_get_element_full_name(aSpec) + '_' + aTemplate.name
+ /]
+
+[**
+ * Creates the struct name of a bound template class./]
+[query private uml_c_get_bound_struct_name(aTemplate: Type, aSpec: Type) 
+  : String = 
+ uml_c_get_bound_class_full_name(aTemplate,aSpec) 
+      + uml_c_get_struct_suffix(aSpec)
+ /]
+
+[**
+ * Creates the type name of a bound template class./]
+[query private uml_c_get_bound_type_name(aTemplate: Type, aSpec: Type) 
+  : String = 
+ uml_c_get_bound_class_full_name(aTemplate,aSpec) 
+      + uml_c_get_type_suffix(aSpec)
+ /]
+
+[**
  * Returns the name of the struct corresponding to the specific type.
  */]
 [query private uml_c_get_struct_name(aType: Type) : String = 
@@ -233,10 +256,28 @@ endif/]
  uml_c_get_vtable_name(aType) + uml_c_get_type_suffix(aType)/]
 
 [**
+ * Returns the name of the type corresponding to the given basename.
+ */]
+[query private uml_c_get_string_typedef_name(basename: String) : String = 
+ basename + uml_c_get_type_suffix()/]
+
+[**
+ * Returns the name of the struct corresponding to the given basename.
+ */]
+[query private uml_c_get_string_struct_name(basename: String) : String = 
+ basename + uml_c_get_struct_suffix()/]
+
+[**
  * Returns the name of the virtual table of the specific type.
  */]
 [query private uml_c_get_vtable_name(aType: Type) : String = 
  uml_c_get_element_full_name(aType) + '_vt'/]
+
+[**
+ * Returns the name of the virtual table of the bound type.
+ */]
+[query private uml_c_get_bound_vtable_name(aTemplate: Type, aSpec : Type) : 
+ String = uml_c_get_bound_class_full_name(aTemplate, aSpec) + '_vt'/]
 
 [**
  * This query forms a full property type specification string. 
@@ -355,10 +396,10 @@ endif/]
   request_non_packaged_children(aPackage)->filter(LiteralSpecification)
   ->removeAll(uml_c_header_literal_specifications(aPackage))/]
 
-[query public uml_c_get_type_suffix(aType:Type) : String 
+[query public uml_c_get_type_suffix(OclTraceabilityContext:OclAny) : String 
 = '_t'/]
 
-[query public uml_c_get_struct_suffix(aType:Type) : String 
+[query public uml_c_get_struct_suffix(OclTraceabilityContext:OclAny) : String 
 = '_s'/]
 
 [query private uml_c_get_vtable_entry_name(anOperation : Operation) : String = 
@@ -391,6 +432,53 @@ endif/]
            aSeq:Sequence(Classifier), vis : Set(VisibilityKind)) : Boolean
  = not aSeq->select(c:Classifier | 
     not c.uml_c_operations_need_declaration(vis)->isEmpty())->isEmpty()/]
+
+[query public uml_c_get_event_type_name(aClass : Class) : String
+ = uml_c_get_string_typedef_name(aClass.uml_c_get_element_full_name() 
+                   + '_evtype')/]
+
+[query public uml_c_get_event_base_name(aClass : Class) : String
+ = uml_c_get_string_typedef_name(aClass.uml_c_get_element_full_name() 
+                   + '_evbase')/]
+
+[query public uml_c_get_event_base_property_name(
+     OclTraceabilityContext : OclAny) : String
+ = 'evbase'/]
+
+[query public uml_c_get_event_enum(aClass : Class, ev : Event) : String = 
+ (aClass.uml_c_get_element_full_name() + '_' + ev.name).toUpper()/]
+
+[query public uml_c_get_event_typedef(aClass : Class, ev : Event) : String = 
+ (aClass.uml_c_get_element_full_name() + '_' + ev.name)
+  .uml_c_get_string_typedef_name()/]
+
+[query public uml_c_get_event_queue_typedef(aClass : Class, ev : Event) : 
+ String = 
+ (aClass.uml_c_get_element_full_name() + '_' + ev.name + '_queue')
+  .uml_c_get_string_typedef_name()/]
+
+[query public uml_c_get_event_queue_size(aClass : Class, ev : Event) : 
+ String = 
+ (aClass.uml_c_get_element_full_name() + '_' + ev.name + '_size')
+  .toUpper()/]
+
+[query public uml_c_get_event_count(aClass : Class) : String = 
+ (aClass.uml_c_get_element_full_name() + '_' + 'EVENT_COUNT').toUpper()/]
+
+[query public uml_c_get_region_size(aRegion : Region) : String = 
+ (aRegion.uml_c_get_region_full_name() + '_size').toUpper()/]
+
+[query public uml_c_get_entry_name(aState : State) : String = 
+ (aState.containingStateMachine().name + '_enter_' + aState.name).toLower()/]
+
+[query public uml_c_get_exit_name(aState : State) : String = 
+ (aState.containingStateMachine().name + '_exit_' + aState.name).toLower()/]
+
+[query public uml_c_get_region_exit_name(aRegion : Region) : String = 
+ (aRegion.containingStateMachine().name + '_exit_' + aRegion.name).toLower()/]
+
+[query public uml_c_get_region_typedef(aRegion : Region) : String = 
+ aRegion.uml_c_get_region_full_name().uml_c_get_string_typedef_name()/]
 
 [template public uml_c_get_literal_string(ls:LiteralSpecification)] 
 [let lun : LiteralUnlimitedNatural = ls]
@@ -455,7 +543,7 @@ endif/]
 
 [**
  * Provides the definition of the type associated with a given struct.
-*/]
+ */]
 [template public uml_c_struct_typedef(aClassifier : Classifier, 
                                       indentation : Integer)
           ?(aClassifier.request_needs_storage())]
@@ -477,6 +565,79 @@ typedef struct [s_name/] \
         [t_name/];
 [/template]
 
+[template public uml_c_enumerate_events(aClass : Class,
+                                        indentation : Integer)
+ {events : OrderedSet(Event)=aClass.request_class_events();
+  spaces : String = utils_get_indent_string();
+  total_indentation : Integer = indentation + spaces.size();}]
+[documentation_string('@brief The enumeration of all events handled by ' 
+  + aClass.name + ' Class.', indentation)/]
+typedef enum
+{
+[for (ev : Event | events) separator(','+utils_newline()) 
+       after(',' + utils_newline())]
+[spaces/][documentationElement(ev,total_indentation)/]
+[spaces/][uml_c_get_event_enum(aClass, ev)/][/for]
+[spaces/][documentation_string('@brief The number of all events handled by ' 
+  + aClass.name + ' Class.', indentation)/]
+[spaces/][uml_c_get_event_count(aClass)/]
+}[aClass.uml_c_get_event_type_name()/];
+
+[documentation_string('@brief The base type of the event in the event'
+ + ' pool of the ' + aClass.name + ' class.', total_indentation)/]
+typedef struct
+{
+[spaces/][documentation_string('@brief The type of the next event in the event'
+ + ' pool of the ' + aClass.name + ' class.', total_indentation)/]
+[spaces/][uml_c_property_decl_string(aClass.uml_c_get_event_type_name(),
+                                     utils_get_event_next_name(),'',
+                                     total_indentation)/]
+}[aClass.uml_c_get_event_base_name()/];
+
+[for (ev : Event | events) separator(utils_newline()) ]
+[documentation_string('@brief The struct with data of the ' + ev.name + 
+' event in the event pool of the ' + aClass.name + ' class.', 
+total_indentation)/]
+typedef struct
+{
+[spaces/][documentation_string('@brief The base data of the event.', 
+total_indentation)/]
+[spaces/][uml_c_property_decl_string(aClass.uml_c_get_event_base_name(),
+                                     uml_c_get_event_base_property_name(),'',
+                                     total_indentation)/]
+}[uml_c_get_event_typedef(aClass, ev)/];
+
+[documentation_string('@brief The struct with ' + ev.name + 
+' event queue in the event pool of the ' + aClass.name + ' class.', 
+total_indentation)/]
+typedef struct
+{
+[spaces/][documentation_string('@brief The index of the first element in' + 
+ ' the queue.', 
+total_indentation)/]
+[spaces/][uml_c_property_decl_string('size_t', 'head','', total_indentation)/]
+[spaces/][documentation_string('@brief The index of the last element in' + 
+ ' the queue.', 
+total_indentation)/]
+[spaces/][uml_c_property_decl_string('size_t', 'tail','', total_indentation)/]
+[spaces/][documentation_string('@brief The number of elements in' + 
+ ' the queue.', 
+total_indentation)/]
+[spaces/][uml_c_property_decl_string('size_t', 'count','', total_indentation)/]
+[if aClass.request_event_needs_defer(ev)]
+[spaces/][documentation_string('@brief The number of deferred elements in' + 
+ ' the queue.', total_indentation)/]
+[spaces/][uml_c_property_decl_string('size_t', 'deferred','', 
+ total_indentation)/]
+[/if]
+[spaces/][documentation_string('@brief The array of events in' + 
+ ' the queue.', total_indentation)/]
+[spaces/][uml_c_property_decl_string(uml_c_get_event_typedef(aClass, ev), 
+         'events','['+ uml_c_get_event_queue_size(aClass, ev) + ']', 
+ total_indentation)/]
+}[uml_c_get_event_queue_typedef(aClass, ev)/];
+[/for]
+[/template]
 [**
  * Provides C declaration of a classifier.
  * @param aClassifier The classifier that should be declared.
@@ -488,17 +649,89 @@ typedef struct [s_name/] \
   ?(aClassifier.request_needs_storage())
   {spaces : String = utils_get_indent_string();
    total_indentation : Integer = indentation + spaces.size();}]
+[if aClassifier.request_needs_intermediate_binding()]
+[for (tB : TemplateBinding | aClassifier.templateBinding
+             ->request_sorted_bindings())
+     ?(tB.signature.template.oclIsKindOf(Classifier))]
+[let tC : Classifier = tB.signature.template]
+[documentationElement(tB,indentation)/]
+struct [tC.uml_c_get_bound_struct_name(aClassifier)/]
+{
+};
+
+[/let]
+[/for]
+[/if]
+[let sm:StateMachine =  aClassifier]
+[uml_c_enumerate_states(sm,indentation)/]
+[/let]
+[let aClass : Class = aClassifier]
+[if aClassifier.request_needs_event_loop() ]
+[uml_c_enumerate_events(aClass, indentation)/]
+[/if]
+[/let]
 [documentationElement(aClassifier,indentation)/]
 struct [uml_c_get_struct_name(aClassifier)/]
 {
-[for (bC : Classifier | aClassifier.generalization.general->select(
+[if aClassifier.request_is_direct_binding()]
+[else][for (tC : Classifier | aClassifier.templateBinding
+                           .signature.template.oclAsType(Classifier)
+             ->sortedBy(aC : Classifier | aC.name.toLower()))
+            ?(tC.request_has_fields())]
+[spaces/][documentation_string('@brief ' + tC.name + ' template class data.', 
+                                total_indentation)/]
+[spaces/][uml_c_property_decl_string(tC.uml_c_get_bound_type_name(aClassifier),
+             tC.name, '', total_indentation)/]
+[/for][for (bC : Classifier | aClassifier.generalization.general->select(
           aC : Classifier | aC.request_needs_storage())
           ->sortedBy(aC : Classifier | aC.name.toLower()))]
 [spaces/][documentation_string('@brief ' + bC.name + ' base class data.', 
                                 total_indentation)/]
 [spaces/][uml_c_property_decl_string(bC.uml_c_get_type_name(),bC.name,'',
                                      total_indentation)/]
-[/for][for (p: Property | aClassifier.attribute)]
+[/for][let sm:StateMachine =  aClassifier]
+[for (r:Region| sm.request_all_orthogonal_regions())]
+[spaces/][documentationElement(r,indentation)/]
+[spaces/][uml_c_property_decl_string(
+        r.uml_c_get_region_full_name().uml_c_get_string_typedef_name(),r.name,
+                                     '', total_indentation)/]
+[/for]
+[/let][let aClass : Class = aClassifier]
+[if aClassifier.request_needs_event_loop() ]
+[spaces/][documentation_string('@brief The type of the first event in the event'
+ + ' pool of the ' + aClass.name + ' class.', 
+                                total_indentation)/]
+[spaces/][uml_c_property_decl_string(aClass.uml_c_get_event_type_name(),
+                                     utils_get_event_head_name(),'',
+                                     total_indentation)/]
+[spaces/][documentation_string('@brief The type of the last event in the event'
+ + ' pool of the ' + aClass.name + ' class.', total_indentation)/]
+[spaces/][uml_c_property_decl_string(aClass.uml_c_get_event_type_name(),
+                                     utils_get_event_tail_name(),'',
+                                     total_indentation)/]
+[if aClass.request_class_needs_event_defer()]
+[spaces/][documentation_string('@brief The type of the first deferred event in'
+ + ' the event pool of the ' + aClass.name + ' class.', 
+                                total_indentation)/]
+[spaces/][uml_c_property_decl_string(aClass.uml_c_get_event_type_name(),
+                                     utils_get_defer_head_name(),'',
+                                     total_indentation)/]
+[spaces/][documentation_string('@brief The type of the last deferred event in'
+ + ' the event pool of the ' + aClass.name + ' class.', total_indentation)/]
+[spaces/][uml_c_property_decl_string(aClass.uml_c_get_event_type_name(),
+                                     utils_get_defer_tail_name(),'',
+                                     total_indentation)/]
+[/if]
+[for (ev : Event | aClass.request_class_events())]
+[spaces/][documentation_string('@brief The event queue holding ' + ev.name + 
+                                   ' events.', total_indentation)/]
+[spaces/][uml_c_property_decl_string(uml_c_get_event_queue_typedef(aClass, ev),
+                                     ev.name,'',
+                                     total_indentation)/]
+[/for]
+[/if]
+[/let]
+[for (p: Property | aClassifier.attribute)]
 [spaces/][documentationElement(p,total_indentation)/]
 [spaces/][uml_c_property_decl(p,total_indentation)/]
 [/for][if (aClassifier.request_has_virtual_operations())]
@@ -508,8 +741,30 @@ struct [uml_c_get_struct_name(aClassifier)/]
 [spaces/][uml_c_property_decl_string('const ' 
      + aClassifier.uml_c_get_vtable_type_name()+'*',utils_get_vtable_name(),'',
                                      total_indentation)/]
-[/if]
+[/if][/if]
 };
+[/template]
+
+[template private uml_c_enumerate_states(sm:StateMachine,
+                                         indentation:Integer)
+ {sr :OrderedSet(Region) = sm.request_all_orthogonal_regions();
+  spaces : String = utils_get_indent_string();
+  total_indentation : Integer = indentation + spaces.size()}]
+[for (r:Region|sr) separator(utils_newline())]
+[documentation_string('@brief The enumeration of all substates of ' + r.name
+  + ' Region of ' + sm.name + ' StateMachine.', 
+                                indentation)/]
+typedef enum{
+[for (s:State | r.request_region_states())
+     separator(','+utils_newline()) after(',' + utils_newline())]
+[spaces/][documentationElement(s,total_indentation)/]
+[spaces/][s.uml_c_get_state_full_name()/][/for]
+[spaces/][documentation_string('@brief The number of all substates of ' 
+          + r.name + ' Region of ' + sm.name + ' StateMachine.', 
+                                total_indentation)/]
+[spaces/][r.uml_c_get_region_size()/]
+}[r.uml_c_get_region_full_name().uml_c_get_string_typedef_name()/];
+[/for]
 [/template]
 
 [**
@@ -546,6 +801,14 @@ struct [uml_c_get_vtable_struct_name(aClassifier)/]
 [template public uml_c_get_element_full_name(aNamedElement : NamedElement)
 ][aNamedElement.eContainer(Package).name + '_' + aNamedElement.name/][/template]
 
+[template public uml_c_get_region_full_name(aRegion : Region)
+][aRegion.eContainer(Package).name + '_' + aRegion.eContainer(StateMachine).name 
+  + '_' + aRegion.name/][/template]
+
+[template public uml_c_get_state_full_name(aState : State)
+post(toUpper())][aState.eContainer(Package).name + '_' 
+  + aState.eContainer(StateMachine).name + '_' + aState.name/][/template]
+
 [template public uml_c_get_operation_full_name(anOperation : Operation)
 ][(if anOperation.uml_c_is_main_operation() then
   '' else anOperation.eContainer(Package).name + '_' 
@@ -564,7 +827,34 @@ struct [uml_c_get_vtable_struct_name(aClassifier)/]
  separator(utils_newline()+utils_newline())
  after(utils_newline()+utils_newline())
  ?(aClassifier.request_needs_storage())]
-[if aClassifier.request_needs_vtable()]
+[if aClassifier.request_needs_intermediate_binding()]
+[for (tB : TemplateBinding | aClassifier.templateBinding
+             ->request_sorted_bindings())
+     ?(tB.signature.template.oclIsKindOf(Classifier))]
+[let tC : Classifier = tB.signature.template]
+[if tC.request_needs_vtable()]
+[utils_indent(indentation)/][uml_c_struct_typedef_string(
+       '@brief The virtual table type for the ' 
+       + uml_c_get_bound_class_full_name(tC,aClassifier)
+         .uml_c_get_string_struct_name()
+       + ' intermediate bound struct.', 
+       tC.uml_c_get_bound_vtable_name(aClassifier).uml_c_get_string_struct_name(), 
+       tC.uml_c_get_bound_vtable_name(aClassifier).uml_c_get_string_typedef_name(), 
+       indentation)/]
+
+[/if][utils_indent(indentation)/][uml_c_struct_typedef_string(
+       '@brief The type representing the ' 
+       + uml_c_get_bound_class_full_name(tC,aClassifier)
+         .uml_c_get_string_struct_name()
+       + ' intermediate bound struct.', 
+       tC.uml_c_get_bound_class_full_name(aClassifier)
+         .uml_c_get_string_struct_name(), 
+       tC.uml_c_get_bound_class_full_name(aClassifier)
+         .uml_c_get_string_typedef_name(), 
+       indentation)/]
+[/let]
+[/for]
+[/if][if aClassifier.request_needs_vtable()]
 [utils_indent(indentation)/][uml_c_struct_typedef_string(
        '@brief The virtual table type for the ' 
        + uml_c_get_struct_name(aClassifier) + ' struct.', 
@@ -1006,5 +1296,102 @@ static const [uml_c_get_vtable_type_name(aClassifier)
      separator(utils_newline())]
 [utils_indent(indentation)/][uml_c_operation_definition(o, indentation)/]
 [/for]
+[/for]
+[/template]
+
+[template public uml_c_define_state_entry(sm : StateMachine, 
+                                          indentation : Integer)
+ {indent_width : Integer = getProperty('indent_width').toInteger();}]
+[for (st : State | sm.eAllContents(State)) separator(utils_newline())]
+[documentation_string('@brief Enters the ' + st.name + ' state of the ' 
+ + sm.name + ' state machine.\n' 
+  + documentation_param(ParameterDirectionKind::_in, 
+               utils_get_self_name(), 'The pointer to the self object.'), 
+  indentation)/]
+static inline void
+[uml_c_format_param_list(st.uml_c_get_entry_name(),
+         Sequence{ uml_c_param_decl(uml_c_get_type_name(sm) + '*', 
+                                    utils_get_self_name())}, indentation)/]
+{
+[utils_indent(indent_width)/][utils_get_self_name()
+      /]->[request_state_region(st).name/] = [st.uml_c_get_state_full_name()/];
+[if not st.entry.oclIsUndefined()]
+[uml_c_implement_behavior(st.entry,'C',indentation)/]
+[/if]
+}
+[/for]
+[/template]
+
+[template public uml_c_define_state_exit(sm : StateMachine, 
+                                          indentation : Integer)
+ {indent_width : Integer = getProperty('indent_width').toInteger();
+  spaces : String = utils_get_indent_string();}]
+[for (st : State | sm.eAllContents(State)
+                   ->select(aState : State | aState.request_state_needs_exit()))
+     separator(utils_newline())]
+[if not st.exit.oclIsUndefined()]
+[documentationElement(st.exit,indentation)/]
+static inline void
+[uml_c_format_param_list(st.exit.uml_c_get_behavior_full_name(),
+         Sequence{ uml_c_param_decl(uml_c_get_type_name(sm) + '*', 
+                                    utils_get_self_name())}, indentation)/]
+{
+[uml_c_implement_behavior(st.exit,'C',indentation)/]
+}
+
+[/if]
+[documentation_string('@brief Exits the ' + st.name + ' state of the ' 
+ + sm.name + ' state machine.\n' 
+  + documentation_param(ParameterDirectionKind::_in, 
+               utils_get_self_name(), 'The pointer to the self object.\n')
+  + documentation_param(ParameterDirectionKind::_in, 
+               'exit_state', 'The state that wants to exit.'), 
+  indentation)/]
+static inline void
+[uml_c_format_param_list(st.uml_c_get_exit_name(),
+         Sequence{ uml_c_param_decl(uml_c_get_type_name(sm) + '*', 
+                                    utils_get_self_name()),
+                   uml_c_param_decl(
+                         st.request_state_region().uml_c_get_region_typedef(), 
+                                    'exit_state')}, indentation)/]
+{
+[spaces/]if(exit_state <= [st.uml_c_get_state_full_name()/])
+[spaces/]{
+[if st.request_state_needs_region_exit()]
+[for (aRegion : Region | st.region
+     ->select(r : Region | r.request_region_needs_exit())
+     ->request_regions_sorted()) ]
+[spaces/][spaces/][ uml_c_format_param_list(
+         aRegion.uml_c_get_region_exit_name(),
+         Sequence{ utils_get_self_name(),
+         aRegion.request_region_states()->first().uml_c_get_state_full_name()}, 
+         indentation + (spaces.size()*2)+1) /];
+[/for]
+[/if]
+[if not st.exit.oclIsUndefined()]
+[spaces/][spaces/][st.exit.uml_c_get_behavior_full_name()
+                                             /]([utils_get_self_name()/]);
+[/if]
+[if st.request_parent_state_needs_exit()]
+[spaces/][spaces/][ uml_c_format_param_list(
+         st.request_parent_exit_state().uml_c_get_exit_name(),
+         Sequence{ utils_get_self_name(),'exit_state'}, 
+         indentation + (spaces.size()*2)+1) /];
+[/if]
+[spaces/]}
+}
+[/for]
+[/template]
+
+[template public uml_c_declare_region_exit(sm : StateMachine, 
+                                          indentation : Integer)]
+[for (aRegion : Region | sm.request_all_orthogonal_regions()
+                ->select(r : Region | r.request_region_needs_exit()))]
+[uml_c_format_param_list('static void ' + aRegion.uml_c_get_region_exit_name(),
+         Sequence{uml_c_param_decl(uml_c_get_type_name(sm) + '*', 
+                                    utils_get_self_name()),
+                  uml_c_param_decl(
+                         aRegion.uml_c_get_region_typedef(), 
+                                    'exit_state')}, indentation+1)/];
 [/for]
 [/template]

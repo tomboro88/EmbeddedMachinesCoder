@@ -167,6 +167,14 @@
 [doxygen_comments(
    request_return_value(anOp)->first(),
    doxygen_return(''),line_width)/][/if]
+[else]
+[if anElement.oclIsKindOf(Behavior) 
+    and (not anElement.oclAsType(Behavior).owner.oclIsUndefined())
+    and anElement.oclAsType(Behavior).owner.oclIsKindOf(State)]
+[doxygen_param(ParameterDirectionKind::_in, 
+               utils_get_self_name()).doxygen_line_prefix()
+/]The pointer to the self object.
+[/if]
 [/let]
 [/template]
 
@@ -178,6 +186,19 @@
 [doxygen_file('').doxygen_line_prefix()/]
 [doxygen_line_prefix('')/]
 [doxygen_comments(anElement,'',line_width)/]
+[/template]
+
+[**
+ * @brief The template for doxygen documentation of a header file using a 
+ * specific string. 
+ */]
+[template public doxygen_header_doc_string(str: String, line_width : Integer)
+                             post(doxygen_block())]
+[doxygen_file('').doxygen_line_prefix()/]
+[doxygen_line_prefix('')/]
+[if (str.size()>0)]
+[str.doxygen_line_prefix().doxygen_newlines('')
+ .doxygen_split_long_lines(line_width,'')/][utils_newline()/][/if]
 [/template]
 
 [**

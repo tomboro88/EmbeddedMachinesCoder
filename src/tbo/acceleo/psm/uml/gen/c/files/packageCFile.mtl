@@ -129,6 +129,12 @@
     ->isEmpty()]
 [uml_c_declare_defaults(allClassifiers, 0)/]
 [/if]
+[for (sm : StateMachine | allClassifiers->selectByKind(StateMachine)
+      ->select(stm : StateMachine | not stm.request_all_orthogonal_regions()
+                          ->select(r: Region | r.request_region_needs_exit())
+                          ->isEmpty()))]
+[uml_c_declare_region_exit(sm,0)/]
+[/for]
 /*******************************************************************************
  * 
  * Inline functions.
@@ -163,7 +169,16 @@ static inline bool
 
     return b_is_copied;
 }
+
 [/if]
+[for (sm : StateMachine | allClassifiers->selectByKind(StateMachine))]
+[uml_c_define_state_entry(sm,0)/]
+[if not sm.eAllContents(State)
+          ->select(aState : State | aState.request_state_needs_exit())
+          ->isEmpty() ]
+[uml_c_define_state_exit(sm,0)/]
+[/if]
+[/for]
 /*******************************************************************************
  * 
  * Static data declarations.

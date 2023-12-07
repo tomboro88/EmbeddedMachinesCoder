@@ -73,6 +73,22 @@ utils_files_newline().characters()
 
 [query public utils_get_vtable_name(traceabilityContext: OclAny) :
  String = 'p_vtable'/]
+
+[query public utils_get_event_head_name(traceabilityContext: OclAny) :
+ String = 'event_head'/]
+
+[query public utils_get_event_tail_name(traceabilityContext: OclAny) :
+ String = 'event_tail'/]
+
+[query public utils_get_event_next_name(traceabilityContext: OclAny) :
+ String = 'event_next'/]
+
+[query public utils_get_defer_head_name(traceabilityContext: OclAny) :
+ String = 'defer_head'/]
+
+[query public utils_get_defer_tail_name(traceabilityContext: OclAny) :
+ String = 'defer_tail'/]
+
 [**
  * @brief Joins the strings in the aSeq Sequence so that whey will fit into a 
  * line of entry_width and so that the length of the last line is 

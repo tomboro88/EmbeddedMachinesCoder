@@ -60,6 +60,17 @@
 [query public request_has_attributes(aClassifier:Classifier):Boolean = 
    not aClassifier.attribute->select(p : Property | not p.isStatic)->isEmpty()/]
 
+[query public request_owns_states(aClassifier:Classifier) : Boolean = 
+  aClassifier.oclIsKindOf(StateMachine) and 
+   not aClassifier.oclAsType(StateMachine).region.subvertex->selectByKind(State)
+       ->isEmpty() /]
+
+[query public request_has_states(aClassifier:Classifier):Boolean = 
+   aClassifier.request_owns_states()
+   or (aClassifier.oclIsKindOf(BehavioredClassifier) 
+       and not aClassifier.oclAsType(BehavioredClassifier).ownedBehavior
+      ->select(b:Behavior | b.request_has_states())->isEmpty()) /]
+
 [query public request_direct_children(aPackage : Package) : 
      Sequence(PackageableElement) 
      = aPackage.eContents(PackageableElement)->select(p : PackageableElement | 
@@ -85,12 +96,29 @@
 
 [query public request_needs_generalization_storage(aClassifier : Classifier) 
 : Boolean = aClassifier.generalization->exists(g : Generalization 
-   | g.general.request_needs_storage())/]
+   | g.general.request_has_fields())/]
+
+[query public request_provides_nontemplate_fields(aClassifier : Classifier) 
+ : Boolean = 
+ aClassifier.request_has_attributes() 
+ or aClassifier.request_needs_generalization_storage()
+ or aClassifier.request_has_states()
+ 
+ or aClassifier.request_has_virtual_operations()/]
+
+[query public request_provides_fields(aClassifier : Classifier) : Boolean = 
+ aClassifier.request_provides_nontemplate_fields() 
+ or aClassifier.request_needs_vtable()/] 
+
+[query public request_has_fields(aClassifier : Classifier) : Boolean = 
+ aClassifier.request_provides_fields() 
+ or aClassifier.templateBinding->exists(tb : TemplateBinding | 
+               tb.signature.template.oclAsType(Classifier)
+               .request_has_fields())/] 
 
 [query public request_needs_storage(aClassifier : Classifier) 
-: Boolean = aClassifier.request_has_attributes() 
-            or aClassifier.request_needs_generalization_storage()
-            or aClassifier.request_needs_vtable()/]
+: Boolean = not aClassifier.isTemplate() 
+            and aClassifier.request_has_fields()/]
 
 [query private request_needs_generalization_vtable(aClassifier : Classifier) 
   : Boolean = aClassifier.generalization->exists(g : Generalization
@@ -98,7 +126,10 @@
 
 [query public request_needs_vtable(aClassifier : Classifier) : Boolean 
  = aClassifier.request_has_virtual_operations()
-   or aClassifier.request_needs_generalization_vtable()/]
+   or aClassifier.request_needs_generalization_vtable()
+   or aClassifier.templateBinding->exists(tb : TemplateBinding | 
+               tb.signature.template.oclAsType(Classifier)
+               .request_needs_vtable())/]
 
 [query public request_all_generals(aClassifier:Classifier) : Set(Classifier) = 
  aClassifier.general->addAll(aClassifier.general.request_all_generals())/]
@@ -201,3 +232,108 @@
 [query public request_needs_constructor(aClassifier : Classifier) : Boolean = 
   aClassifier.request_needs_vtable() 
   or aClassifier.request_has_default_values()/]
+
+[query public request_sorted_bindings(sB : Set(TemplateBinding)) 
+: OrderedSet(TemplateBinding) = sB->sortedBy(aTB : TemplateBinding | 
+     aTB.boundElement.oclAsType(Classifier).qualifiedName
+     + aTB.signature.template.oclAsType(Classifier).qualifiedName
+                    + aTB.signature.parameter
+             ->collect(tP : TemplateParameter | aTB.parameterSubstitution
+                 ->any(tps : TemplateParameterSubstitution | tps.formal = tP)
+                 .actual).toString())/]
+
+[query public request_needs_intermediate_binding(aClassifier : Classifier)
+ : Boolean = aClassifier.templateBinding->size() > 1 or 
+    (aClassifier.templateBinding->size() = 1
+       and aClassifier.request_provides_nontemplate_fields())/]
+
+[query public request_class_needs_event_defer(aClass : Class) : Boolean 
+= not aClass.ownedBehavior.eAllContents(Transition)
+->select(t : Transition | (not t.effect.oclIsUndefined()) and 
+          t.effect.oclIsKindOf(OpaqueBehavior)).effect
+  .oclAsType(OpaqueBehavior)->select(ob : OpaqueBehavior 
+  | (ob._body->size() = 1) and (ob._body->first() = 'defer'))->isEmpty()/]
+
+[query public request_event_needs_defer(aClass : Class, evt : Event) : Boolean 
+= not aClass.ownedBehavior.eAllContents(Transition)
+->select(t : Transition | (not t.effect.oclIsUndefined()) and 
+    t.effect.oclIsKindOf(OpaqueBehavior) and (t.trigger.event->includes(evt))
+          and (let ob : OpaqueBehavior = t.effect.oclAsType(OpaqueBehavior) in
+               ob._body->size() = 1 and ob._body->first() = 'defer')
+  )->isEmpty()/]
+
+[query public request_is_direct_binding(aClassifier : Classifier)
+ : Boolean = aClassifier.templateBinding->size() = 1 and 
+    not aClassifier.request_provides_nontemplate_fields()/]
+
+[query public request_regions_sorted(sr:Set(Region)) : OrderedSet(Region) = 
+ sr->asOrderedSet()
+ ->sortedBy(r:Region|r.containingStateMachine().eAllContents()->indexOf(r)) /]
+
+[query public request_is_in_region(v:Vertex,r:Region):Boolean = 
+ if (v.container = r) then true
+ else
+ if (v.container.state->isEmpty() or v.container.state.isOrthogonal) then false
+ else v.container.state.request_is_in_region(r)
+ endif endif/]
+
+[query public request_all_orthogonal_regions(sm:StateMachine):OrderedSet(Region)
+  = sm.region->addAll(
+      sm.eAllContents(Region)->select(r:Region|not r.state->isEmpty())
+      ->select(r:Region|r.state.region->size()>1))->request_regions_sorted()/]
+
+[query public request_region_states(r:Region) : Sequence(State) = 
+    r.containingStateMachine().eAllContents(State)
+      ->select(s:State | r.containingStateMachine()
+                         .request_all_orthogonal_regions()->excluding(r)
+               ->forAll(R:Region|not s.request_is_in_region(R)))/]
+
+[query public request_state_region(st : State) : Region = 
+  st.containingStateMachine().request_all_orthogonal_regions()
+  ->select(r : Region | r.request_region_states()->includes(st))->any(true)/]
+
+[query public request_needs_event_loop(aClassifier : Classifier): Boolean  = 
+    if aClassifier.oclIsKindOf(StateMachine) then
+        aClassifier.oclAsType(Behavior)._context.oclIsUndefined()
+    else
+        aClassifier.oclIsKindOf(BehavioredClassifier) 
+        and not aClassifier.oclAsType(BehavioredClassifier).ownedBehavior
+            ->filter(StateMachine)->isEmpty()
+    endif
+/]
+
+[query public request_class_events(aClass : Class): OrderedSet(Event)
+ = aClass.eAllContents(Trigger)
+                          ->select(t : Trigger | not t.event.oclIsUndefined())
+                          .event->asOrderedSet()/]
+
+[query public request_parent_state_needs_exit(aState : State): Boolean
+ = ((not aState.container.oclIsUndefined())
+       and (not aState.container.state.oclIsUndefined()) 
+       and (not aState.container.state.isOrthogonal)
+       and aState.container.state.request_state_needs_exit()
+      )/]
+
+[query public request_state_needs_region_exit(aState : State) : Boolean =  
+ (aState.region->size() > 1) and
+       (not aState.region->select(r : Region | r.request_region_needs_exit())
+             ->isEmpty()) /]
+
+[query public request_state_needs_exit(aState : State): Boolean
+ = (not aState.exit.oclIsUndefined()) 
+    or aState.request_state_needs_region_exit() /]
+
+[query public request_region_needs_exit(aRegion : Region): Boolean
+ = not aRegion.subvertex->selectByKind(State)
+    ->select(st : State | st.request_state_needs_exit())->isEmpty()/]
+
+[query public request_parent_exit_state(aState : State): State
+ = if (not aState.container.oclIsUndefined())
+       and (not aState.container.state.oclIsUndefined())
+       and (not aState.container.state.isOrthogonal) then
+      if aState.container.state.exit.oclIsUndefined() then
+         aState.container.state.request_parent_exit_state()
+      else
+         aState.container.state
+      endif
+   else null endif/]
