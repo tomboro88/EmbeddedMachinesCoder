@@ -808,10 +808,7 @@ typedef enum{
           + r.name + ' Region of ' + sm.name + ' StateMachine.', 
                                 total_indentation)/]
 [spaces/][r.uml_c_get_region_initial_state_name()/],
-[for (t:Transition | sm.request_state_machine_transitions()
-      ->select(t:Transition|t.request_transition_effect_region()=r)
-      ->select(t:Transition|(not t.effect.oclIsUndefined()) 
-                             and t.effect.oclIsKindOf(StateMachine)))]
+[for (t:Transition | r.request_region_effect_sm_transitions())]
 [spaces/][documentation_string('@brief A pseudostate reserved for execution of '
           + 'the effect behavior of the ' + t.uml_c_get_transition_name()
           + ' transition.', total_indentation)/]
@@ -889,6 +886,9 @@ post(toUpper())][aVertex.eContainer(Package).name + '_'
 [template public uml_c_get_state_exit_name(aState : State)
 ][uml_c_get_vertex_full_name(aState)+'_EXIT'/][/template]
 
+[template public uml_c_get_state_sm_exit_name(aState : State)
+][aState.name.toLower() + '_exit'/][/template]
+
 [query public uml_c_get_transition_name(aTransition:Transition):String = 
  if aTransition.name.oclIsUndefined()then
        'TRN' + aTransition.containingStateMachine()
@@ -904,6 +904,9 @@ post(toUpper())][
 
 [template public uml_c_get_state_entry_name(aState : State)
 ][uml_c_get_vertex_full_name(aState)+'_ENTRY'/][/template]
+
+[template public uml_c_get_state_sm_entry_name(aState : State)
+][aState.name.toLower() + '_entry'/][/template]
 
 [template public uml_c_get_operation_full_name(anOperation : Operation)
 ][(if anOperation.uml_c_is_main_operation() then
@@ -1242,6 +1245,11 @@ static const [uml_c_get_vtable_type_name(aClassifier)
 
 [query public uml_c_get_sm_event_dispatch(anSM:StateMachine, anEvent: Event)
   : String = (anSM.name + '_dispatch_' + anEvent.name).toLower()/]
+
+[query public uml_c_get_transition_effect_name(aTransition:Transition)
+  : String = if aTransition.effect.oclIsUndefined() then null else
+            aTransition.uml_c_get_transition_name().toLower() 
+            + '_effect' endif /]
 
 [query public uml_c_get_state_event_dispatch(aState:State, anEvent: Event)
   : String = (aState.containingStateMachine().name + '_dispatch_' 
@@ -1597,7 +1605,8 @@ static void
                                           indentation : Integer)]
 [for (aRegion : Region | sm.request_all_orthogonal_regions()) 
      separator(utils_newline())
-     ?(not aRegion.request_region_events()->isEmpty())]
+     ?(not aRegion.request_region_events()->isEmpty()
+       and not request_is_top_level_region(aRegion))]
 [for (anEvent : Event | aRegion.request_region_events())]
 [uml_c_format_param_list('static ' + uml_c_get_event_status_type() + ' ' 
                         + aRegion.uml_c_get_region_event_dispatch(anEvent),
@@ -1617,7 +1626,8 @@ static void
   assign_result : String = 'result = ';}]
 [for (aRegion : Region | sm.request_all_orthogonal_regions()) 
      separator(utils_newline())
-     ?(not aRegion.request_region_events()->isEmpty())]
+     ?(not aRegion.request_region_events()->isEmpty()
+       and not request_is_top_level_region(aRegion))]
 [for (anEvent : Event | aRegion.request_region_events()) 
      separator(utils_newline())]
 [documentation_string('@brief Implements ' + anEvent.name + ' event handling by'
@@ -1635,11 +1645,39 @@ static [uml_c_get_event_status_type()/]
 {
 [spaces/][uml_c_get_event_status_type()/] [assign_result/]IGNORED;
 
+[uml_c_region_dispatch_body(aRegion, anEvent, indentation)/]
+
+[spaces/]return result;
+}
+[/for]
+[/for]
+[/template]
+
+[**
+ * Implements a dispatch function of each event for each region for which a 
+ * state variable was defined. 
+ */]
+[template public uml_c_region_dispatch_body(aRegion:Region, anEvent:Event, 
+                                            indentation : Integer)
+ {spaces : String = utils_get_indent_string();
+  assign_result : String = 'result = ';}]
 [spaces/]switch([utils_get_self_name()/]->[
                               aRegion.uml_c_get_region_state_property_name()/])
 [spaces/]{
-[for (s:State | aRegion.request_region_event_states(anEvent))
-     separator(utils_newline()) after(utils_newline())]
+[for (s:State | aRegion.request_region_states())
+     separator(utils_newline()) after(utils_newline())
+     ?(aRegion.request_region_event_states(anEvent)->includes(s)
+       or s.exit.request_does_behavior_handle_event(anEvent)
+       or s.entry.request_does_behavior_handle_event(anEvent))]
+[if s.entry.request_does_behavior_handle_event(anEvent)]
+[spaces/][spaces/]case [s.uml_c_get_state_entry_name()/]:
+[spaces/][spaces/][spaces/][assign_result/][uml_c_format_param_list(
+         s.entry.oclAsType(StateMachine).uml_c_get_sm_event_dispatch(anEvent),
+         Sequence{ utils_get_self_name()
+         + '->' + s.uml_c_get_state_sm_entry_name(), 'p_event'}, 
+         indentation+(spaces.size()*3) + assign_result.size() + 1)/];
+[spaces/][spaces/][spaces/]break;[/if]
+[if aRegion.request_region_event_states(anEvent)->includes(s)]
 [spaces/][spaces/]case [s.uml_c_get_state_full_name()/]:
 [for (aChildState : State | aRegion.request_region_states()->excluding(s)
            ->select(c:State|(not c.request_state_handles_event(anEvent))
@@ -1650,15 +1688,28 @@ static [uml_c_get_event_status_type()/]
          s.uml_c_get_state_event_dispatch(anEvent),
          Sequence{ utils_get_self_name(), 'p_event'}, 
          indentation+(spaces.size()*3) + assign_result.size() + 1)/];
-[spaces/][spaces/][spaces/]break;[/for]
+[spaces/][spaces/][spaces/]break;[/if]
+[if s.exit.request_does_behavior_handle_event(anEvent)]
+[spaces/][spaces/]case [s.uml_c_get_state_exit_name()/]:
+[spaces/][spaces/][spaces/][assign_result/][uml_c_format_param_list(
+         s.exit.oclAsType(StateMachine).uml_c_get_sm_event_dispatch(anEvent),
+         Sequence{ utils_get_self_name()
+         + '->' + s.uml_c_get_state_sm_exit_name(), 'p_event'}, 
+         indentation+(spaces.size()*3) + assign_result.size() + 1)/];
+[spaces/][spaces/][spaces/]break;[/if][/for]
+[for (t:Transition | aRegion.request_region_effect_sm_transitions()
+      ->request_transitions_by_event(anEvent))]
+[spaces/][spaces/]case [t.uml_c_get_transition_pseudostate_name()/]:
+[spaces/][spaces/][spaces/][assign_result/][uml_c_format_param_list(
+         t.effect.oclAsType(StateMachine).uml_c_get_sm_event_dispatch(anEvent),
+         Sequence{ utils_get_self_name()
+         + '->' + t.uml_c_get_transition_effect_name(), 'p_event'}, 
+         indentation+(spaces.size()*3) + assign_result.size() + 1)/];
+[spaces/][spaces/][spaces/]break;
+[/for]
 [spaces/][spaces/]default:
 [spaces/][spaces/][spaces/]break;
 [spaces/]}
-
-[spaces/]return result;
-}
-[/for]
-[/for]
 [/template]
 
 [**
@@ -1716,10 +1767,7 @@ static [uml_c_get_event_status_type()/]
 [/for]
 [elseif sm.region->size() = 1]
 
-[spaces/][assign_result/][uml_c_format_param_list(
-                 sm.region->any(true).uml_c_get_region_event_dispatch(anEvent),
-                 Sequence{ utils_get_self_name(), 'p_event'}, 
-                 indentation+spaces.size()+assign_temp_status.size()+1)/];
+[uml_c_region_dispatch_body(sm.region->any(true), anEvent, indentation)/]
 [/if]
 
 [spaces/]return result;

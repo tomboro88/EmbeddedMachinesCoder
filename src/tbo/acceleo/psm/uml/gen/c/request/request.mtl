@@ -299,14 +299,41 @@
                ->forAll(R:Region|not v.request_is_in_region(R)))
       ->asOrderedSet()/]
 
+[**
+ * @brief Returns all events that need to be handled in the region 
+ */]
 [query public request_region_events(aRegion:Region) : OrderedSet(Event) = 
     let states:Set(State) = aRegion.subvertex->selectByKind(State) in
-    let events:OrderedSet(Event) = states.outgoing->flatten().trigger->flatten()
-                                .event->select(e:Event|not e->oclIsUndefined())
+    let guard_events:OrderedSet(Event) = states
+               ->collect(s:State|s.request_state_events())->flatten()
                                 ->asOrderedSet() in
+    let state_events:OrderedSet(Event) = states
+               ->collect(s:State|s.request_state_events())->flatten()
+                                ->asOrderedSet() in
+    let entry_events:OrderedSet(Event) = states
+               ->collect(s:State|s.entry.request_behavior_events())->flatten()
+                                ->asOrderedSet() in
+    let do_events:OrderedSet(Event) = states
+               ->collect(s:State|s.doActivity.request_behavior_events())
+                ->flatten()->asOrderedSet() in
+    let exit_events:OrderedSet(Event) = states
+               ->collect(s:State|s.exit.request_behavior_events())->flatten()
+                                ->asOrderedSet() in
+    let effect_events : OrderedSet(Event) = 
+        aRegion.request_region_effect_sm_transitions()
+        ->collect(t:Transition|t.effect.request_behavior_events())
+        ->flatten()->asOrderedSet() in
     states->select(s:State|not s.region->isEmpty()).region->flatten()
-          .request_region_events()->flatten()->asOrderedSet()->addAll(events)/]
+     .request_region_events()->flatten()->asOrderedSet()
+     ->addAll(state_events)
+     ->addAll(entry_events)
+     ->addAll(do_events)
+     ->addAll(exit_events)
+     ->addAll(effect_events)/]
 
+[**
+ * @brief Returns an OrderedSet of events handled specifically by this state.
+*/]
 [query public request_state_events(aState:State) : OrderedSet(Event) =
     let events:OrderedSet(Event) = aState.outgoing.trigger->flatten()
                                 .event->select(e:Event|not e->oclIsUndefined())
@@ -365,7 +392,7 @@
 
 [query public request_class_events(aClass : Class): OrderedSet(Event)
  = aClass.eAllContents(Trigger)
-                          ->select(t : Trigger | not t.event.oclIsUndefined())
+                          ->select(t : Trigger | (not t.event.oclIsUndefined()))
                           .event->asOrderedSet()/]
 
 [query public request_sm_context(sm: StateMachine) : 
@@ -392,19 +419,17 @@
  = not aRegion.subvertex->selectByKind(State)
     ->select(st : State | st.request_state_needs_exit())->isEmpty()/]
 
+[**
+ * @brief Returns an OrderedSet of states that need to handle an event
+*/]
 [query public request_region_event_states(aRegion:Region, anEvent:Event) 
   : OrderedSet(State) = 
     aRegion.request_region_states()
-                       ->select(s:State|s.outgoing.trigger->flatten()
-                                        .event->includes(anEvent)
-      or s.region->collect(r:Region|r.request_region_events())
-                 ->flatten()->includes(anEvent))/]
+                       ->select(s:State|s.request_state_handles_event(anEvent)
+      or ((s.region->size() > 1 ) 
+           and s.region->collect(r:Region|r.request_region_events())
+                 ->flatten()->includes(anEvent)))/]
 
-[query public request_region_needs_dispatch(aRegion : Region, anEvent : Event)
-   : Boolean
- = let regionStates : OrderedSet(State) = aRegion.request_region_states() in
-   let regionEvents : OrderedSet(Event) = null in
-     false/]
 
 [query public request_parent_exit_state(aState : State): State
  = if (not aState.container.oclIsUndefined())
@@ -460,6 +485,7 @@
 [**
  * @brief Get a list of states that will be exited when the transition occurs.
  * Does not include substates of a compound source state. 
+ * The topmost state is at index 0, child states are at lower indexes.
  */]
 [query public request_transition_exit_states(aTransition : Transition):
 OrderedSet(State) = 
@@ -472,10 +498,6 @@ OrderedSet(State) =
  if parentStates->isEmpty() 
           then OrderedSet{} else parentStates
                                ->drop(parentStates->indexOf(exitState)) endif /]
-
-[query public request_transition_behaviors(aTransition : Transition) 
-  : Sequence(Behavior) = 
-   null/]
 
 [query public request_state_machine_states(sm:StateMachine):OrderedSet(State) = 
  sm.eAllContents(State)->select(s:State|s.containingStateMachine() = sm)
@@ -491,3 +513,36 @@ OrderedSet(State) =
   Region = let exit_state : State = aTransition.request_transition_exit_state()
   in if not exit_state.oclIsUndefined() then exit_state.request_vertex_region()
   else aTransition.source.request_vertex_region() endif/]
+
+[query public request_region_effect_sm_transitions(aRegion:Region):
+  OrderedSet(Transition) = aRegion.containingStateMachine()
+      .request_state_machine_transitions()
+      ->select(t:Transition|t.request_transition_effect_region()=aRegion)
+      ->select(t:Transition|(not t.effect.oclIsUndefined()) 
+                             and t.effect.oclIsKindOf(StateMachine))/]
+
+[query public request_transitions_by_event(transitions:OrderedSet(Transition),
+              anEvent:Event):
+  OrderedSet(Transition) = 
+  transitions->select(t:Transition|t.trigger->notEmpty() 
+               and t.trigger->collect(tr:Trigger|tr.event)->includes(anEvent))/]
+
+[query public request_is_top_level_region(aRegion : Region)
+ : Boolean =
+ let sm : StateMachine = aRegion.containingStateMachine() in  
+  (sm.region->size() = 1) and (sm.region->includes(aRegion))/]
+
+[query public request_does_behavior_handle_event(aBehavior : Behavior, 
+  anEvent : Event)
+ : Boolean =
+ (not aBehavior.oclIsUndefined()) 
+    and aBehavior.oclIsKindOf(StateMachine) 
+    and aBehavior.oclAsType(StateMachine).request_class_events()
+                                       ->includes(anEvent)/]
+
+[query public request_behavior_events(aBehavior : Behavior)
+ : OrderedSet(Event) =
+ if (not aBehavior.oclIsUndefined()) 
+    and aBehavior.oclIsKindOf(StateMachine) 
+    then aBehavior.oclAsType(StateMachine).request_class_events()
+ else OrderedSet{} endif/]
