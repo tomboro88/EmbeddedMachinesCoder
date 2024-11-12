@@ -45,13 +45,12 @@ extern "C" {
 [if headerClassifiers->uml_c_classifiers_need_declare()]
 [uml_c_declare_structs(headerClassifiers, indentation)/]
 [/if]
-[if headerClassifiers
-->uml_c_classifiers_operations_need_declaration(
-                                          uml_c_header_operation_visibility())]
-[uml_c_declare_operations(headerClassifiers, 
-                          uml_c_header_operation_visibility(), false,
-                          indentation)/]
-[/if]
+[for (aClassifier:Classifier|headerClassifiers)
+     ?(aClassifier.uml_c_operations_need_declaration(
+                          uml_c_header_operation_visibility())->notEmpty())]
+[uml_c_declare_operations(aClassifier, uml_c_header_operation_visibility(), 
+                          false, indentation)/]
+[/for]
 #ifdef  __cplusplus
 }
 #endif

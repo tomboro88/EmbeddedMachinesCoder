@@ -30,3 +30,7 @@
                             aName : String, aDescription : String)]
 [doxygen_param(aDirection, aName) + aDescription/]
 [/template]
+
+[template public documentation_return(aDescription : String)]
+[doxygen_return(aDescription)/]
+[/template]

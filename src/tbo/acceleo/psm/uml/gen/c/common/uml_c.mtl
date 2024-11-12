@@ -738,7 +738,7 @@ struct [uml_c_get_struct_name(aClassifier)/]
 [spaces/][uml_c_property_decl_string(bC.uml_c_get_type_name(),bC.name,'',
                                      total_indentation)/]
 [/for][let sm:StateMachine =  aClassifier]
-[for (r:Region| sm.request_all_orthogonal_regions())]
+[for (r:Region| sm.request_all_regions())]
 [spaces/][documentationElement(r,indentation)/]
 [spaces/][uml_c_property_decl_string(
         r.uml_c_get_region_typedef(),
@@ -796,7 +796,7 @@ struct [uml_c_get_struct_name(aClassifier)/]
 
 [template private uml_c_enumerate_states(sm:StateMachine,
                                          indentation:Integer)
- {sr :OrderedSet(Region) = sm.request_all_orthogonal_regions();
+ {sr :OrderedSet(Region) = sm.request_all_regions();
   spaces : String = utils_get_indent_string();
   total_indentation : Integer = indentation + spaces.size()}]
 [for (r:Region|sr) separator(utils_newline())]
@@ -1060,7 +1060,7 @@ static const [uml_c_get_vtable_type_name(aClassifier)
                                      b_is_extern : Boolean,
                                         indentation : Integer)]
 [uml_c_format_param_list( 
-    aBehavior.uml_c_behavior_visibility().uml_c_function_visibility(b_is_extern)
+  aBehavior.request_behavior_visibility().uml_c_function_visibility(b_is_extern)
     + aBehavior.uml_c_behavior_return_type() 
        + ' ' + aBehavior.uml_c_get_behavior_full_name(),
          uml_c_behavior_param_strings(aBehavior),
@@ -1218,24 +1218,22 @@ static const [uml_c_get_vtable_type_name(aClassifier)
                                /] [ls.uml_c_get_literal_string()/]
 [/template]
 
-[template public uml_c_declare_operations(anOSet:OrderedSet(Classifier),
+[template public uml_c_declare_operations(aClassifier:Classifier,
                                           vis : Set(VisibilityKind), 
                                           b_is_extern : Boolean,
                                           indentation : Integer)
- ?(anOSet->uml_c_classifiers_operations_need_declaration(vis))]
-[for (aClassifier : Classifier | anOSet) separator(utils_newline()) 
-      ?(not aClassifier.uml_c_operations_need_declaration(vis)
-                ->isEmpty())]
-[for (o: Operation | aClassifier.uml_c_operations_need_declaration(vis)
-                     ->sortedBy(o:Operation|o.name.toLower()))]
+ ?(aClassifier.uml_c_operations_need_declaration(vis)
+                ->notEmpty())]
+[for (o: Operation | request_elements_sorted(aClassifier
+                .uml_c_operations_need_declaration(vis)).oclAsType(Operation))]
 [utils_indent(indentation)/][uml_c_operation_decl(o, b_is_extern, indentation)/]
-[/for]
 [/for]
 [/template]
 
 [query public uml_c_classifiers_behaviors_need_declaration(
-       anOSet : OrderedSet(Classifier), vis : Set(VisibilityKind)) : Boolean
- = not anOSet->select(aClassifier : Classifier | 
+       anOSet : OrderedSet(BehavioredClassifier), vis : Set(VisibilityKind)) 
+  : Boolean
+ = not anOSet->select(aClassifier : BehavioredClassifier | 
        not aClassifier.request_standalone_behaviors(vis)->isEmpty())
    ->isEmpty()/]
 
@@ -1255,23 +1253,17 @@ static const [uml_c_get_vtable_type_name(aClassifier)
   : String = (aState.containingStateMachine().name + '_dispatch_' 
              + anEvent.name + '_' + aState.name).toLower()/]
 
-[template public uml_c_declare_behaviors(anOSet:OrderedSet(Classifier),
+[template public uml_c_declare_behaviors(aClassifier:BehavioredClassifier,
                                           vis : Set(VisibilityKind),
                                           b_is_extern : Boolean, 
                                           indentation : Integer)
-?(anOSet->uml_c_classifiers_behaviors_need_declaration(vis))]
-[for (aClassifier : Classifier | anOSet) separator(utils_newline()) 
-      ?(not aClassifier.request_standalone_behaviors(vis)->isEmpty())]
-[for (b: Behavior | aClassifier.request_standalone_behaviors(vis)
-                     ->sortedBy(b:Behavior|b.name.toLower()))]
+?(aClassifier.request_standalone_behaviors(vis)->notEmpty())]
+[for (b: Behavior | request_elements_sorted(aClassifier
+                       .request_standalone_behaviors(vis)).oclAsType(Behavior))]
 [utils_indent(indentation)/][uml_c_behavior_decl(b,b_is_extern, indentation)/]
-[/for]
 [/for]
 [/template]
 
-[query public uml_c_behavior_visibility(aBehavior : Behavior):VisibilityKind
- = if aBehavior.specification.oclIsUndefined() then VisibilityKind::private
-   else aBehavior.visibility endif/]
 
 [**
  * Provides the C definition of a Behavior. 
@@ -1279,7 +1271,7 @@ static const [uml_c_get_vtable_type_name(aClassifier)
 [template public uml_c_behavior_definition(aBehavior : Behavior,
                                       indentation : Integer)]
 [documentationElement(aBehavior,indentation)/]
-[aBehavior.uml_c_behavior_visibility().uml_c_function_visibility(false) 
+[aBehavior.request_behavior_visibility().uml_c_function_visibility(false) 
  + aBehavior.uml_c_behavior_return_type()/]
 [uml_c_format_param_list(aBehavior.uml_c_get_behavior_full_name(),
          uml_c_behavior_param_strings(aBehavior),
@@ -1298,23 +1290,23 @@ static const [uml_c_get_vtable_type_name(aClassifier)
     [if (ob.language->includes(language))]
     [let bd : String = 
       let s : String = ob._body->at(ob.language->indexOf(language)) in 
-                       if s.oclIsUndefined() then '' else s endif]
+                       if s.oclIsUndefined() 
+                 then '#error OpaqueBehavior empty implementation' else s endif]
 [bd.indent_newlines('')
 /][/let]
     [/if]
     [/let]
 [/template]
 
-[template public uml_c_define_behaviors(anOSet:OrderedSet(Classifier),
+[template public uml_c_define_behaviors(aClassifier:BehavioredClassifier,
                                           vis : Set(VisibilityKind), 
-                                          indentation : Integer)]
-[for (aClassifier : Classifier | anOSet) separator(utils_newline()) 
-      ?(not aClassifier.request_standalone_behaviors(vis)->isEmpty())]
-[for (b: Behavior | aClassifier.request_standalone_behaviors(vis)
-                     ->sortedBy(b:Behavior|b.name.toLower()))
+                                          indentation : Integer)
+    ?(aClassifier.request_standalone_behaviors(vis)->notEmpty())]
+[for (b: Behavior | request_elements_sorted(aClassifier
+                                            .request_standalone_behaviors(vis))
+                              .oclAsType(Behavior))
      separator(utils_newline())]
 [utils_indent(indentation)/][uml_c_behavior_definition(b,indentation)/]
-[/for]
 [/for]
 [/template]
 
@@ -1323,10 +1315,9 @@ static const [uml_c_get_vtable_type_name(aClassifier)
         not p.defaultValue->oclIsUndefined())->isEmpty())
        or (c.request_needs_vtable() and (not c.oclIsKindOf(Interface)))/]
 
-[template public uml_c_declare_defaults(anOSet:OrderedSet(Classifier),
-                                       indentation : Integer) ]
-[for (aClassifier : Classifier | 
-      anOSet->select(c : Classifier | c.uml_c_needs_init_defaults()))]
+[template public uml_c_declare_defaults(aClassifier:Classifier,
+                                       indentation : Integer) 
+ ?(aClassifier.uml_c_needs_init_defaults())]
 [utils_indent(indentation)/][uml_c_format_param_list('static void ' 
                          + aClassifier.uml_c_get_init_default_name(),
                          Sequence{
@@ -1334,18 +1325,15 @@ static const [uml_c_get_vtable_type_name(aClassifier)
                                              + '*', utils_get_self_name())
                          },
                          indentation+1)/];
-[/for]
 [/template]
 
-[template public uml_c_define_defaults(anOSet:OrderedSet(Classifier),
+[template public uml_c_define_defaults(aClassifier:Classifier,
                                        indentation : Integer)
+ ?(aClassifier.uml_c_needs_init_defaults())
  {indent_width : Integer = getProperty('indent_width').toInteger();
   right_length : Integer = getProperty('line_width').toInteger()
                               -(indentation + indent_width 
                                 + utils_get_max_name_length() + 6);}]
-[for (aClassifier : Classifier | 
-      anOSet->select(c : Classifier | c.uml_c_needs_init_defaults())) 
-      separator(utils_newline())]
 [utils_indent(indentation)
 /][documentation_string('@brief The initializer function of the default values '
   + 'and virtual tables of the ' 
@@ -1377,7 +1365,6 @@ static const [uml_c_get_vtable_type_name(aClassifier)
 /][uml_c_assign_vtable(Sequence{aClassifier}, indent_width + indentation)/]
 [/if]
 [utils_indent(indentation)/]}
-[/for]
 [/template]
 
 [template public uml_c_assign_vtable(aTree : Sequence(Classifier),
@@ -1406,21 +1393,15 @@ static const [uml_c_get_vtable_type_name(aClassifier)
    .indent_newlines(utils_indent(utils_get_max_name_length() + 5))
     /];[/if][/template]
 
-[query public uml_c_have_operations(anOSet:OrderedSet(Classifier),
-                                          vis : Set(VisibilityKind)):Boolean
- = not anOSet->select(c:Classifier| not c.uml_c_get_operations(vis)->isEmpty())
-   ->isEmpty()/]
-
-[template public uml_c_define_operations(anOSet:OrderedSet(Classifier),
+[template public uml_c_define_operations(aClassifier:Classifier,
                                           vis : Set(VisibilityKind),
-                                          indentation : Integer)]
-[for (aClassifier : Classifier | anOSet) separator(utils_newline()) 
-      ?(not aClassifier.uml_c_get_operations(vis)->isEmpty())]
-[for (o: Operation | aClassifier.uml_c_get_operations(vis)
-                     ->sortedBy(o:Operation|o.name.toLower()))
+                                          indentation : Integer)
+  ?(aClassifier.uml_c_get_operations(vis)->notEmpty())]
+[for (o: Operation | 
+                  request_elements_sorted(aClassifier.uml_c_get_operations(vis))
+                       .oclAsType(Operation))
      separator(utils_newline())]
 [utils_indent(indentation)/][uml_c_operation_definition(o, indentation)/]
-[/for]
 [/for]
 [/template]
 
@@ -1454,18 +1435,24 @@ static inline void
 [template public uml_c_define_state_exit(sm : StateMachine, 
                                           indentation : Integer)
  {indent_width : Integer = getProperty('indent_width').toInteger();
-  spaces : String = utils_get_indent_string();}]
+  spaces : String = utils_get_indent_string();
+  modify_result : String = 'b_is_completed &= '}]
 [for (st : State | sm.request_state_machine_states()
                    ->select(aState : State | aState.request_state_needs_exit()))
      separator(utils_newline())]
 [if not st.exit.oclIsUndefined()]
 [documentationElement(st.exit,indentation)/]
-static inline void
+static inline bool
 [uml_c_format_param_list(st.exit.uml_c_get_behavior_full_name(),
          Sequence{ uml_c_param_decl(uml_c_get_type_name(sm) + '*', 
                                     utils_get_self_name())}, indentation)/]
 {
 [spaces/][uml_c_implement_behavior(st.exit,'C',indentation+spaces.size())/]
+[if st.exit.oclIsKindOf(OpaqueBehavior)]
+[spaces/]return true;
+[else]
+[spaces/]return false;
+[/if]
 }
 
 [/if]
@@ -1473,100 +1460,95 @@ static inline void
  + sm.name + ' state machine.\n' 
   + documentation_param(ParameterDirectionKind::_in, 
                utils_get_self_name(), 'The pointer to the self object.\n')
-  + documentation_param(ParameterDirectionKind::_in, 
-               'exit_state', 'The state that wants to exit.'), 
+  + documentation_return('true if the exit is completed, otherwise false.'), 
   indentation)/]
-static inline void
+static inline bool
 [uml_c_format_param_list(st.uml_c_get_exit_name(),
          Sequence{ uml_c_param_decl(uml_c_get_type_name(sm) + '*', 
-                                    utils_get_self_name()),
-                   uml_c_param_decl(
-                         st.request_vertex_region().uml_c_get_region_typedef(), 
-                                    'exit_state')}, indentation)/]
+                                    utils_get_self_name())}, indentation)/]
 {
-[spaces/]if(exit_state <= [st.uml_c_get_state_full_name()/])
-[spaces/]{
+[spaces/]bool b_is_completed = true;
 [if st.request_state_needs_region_exit()]
 [for (aRegion : Region | st.region
      ->select(r : Region | r.request_region_needs_exit())
      ->request_regions_sorted()) ]
-[spaces/][spaces/][ uml_c_format_param_list(
+[spaces/][modify_result/][ uml_c_format_param_list(
          aRegion.uml_c_get_region_exit_name(),
-         Sequence{ utils_get_self_name(),
-         aRegion.uml_c_get_region_initial_state_name()}, 
-         indentation + (spaces.size()*2)+1) /];
+         Sequence{ utils_get_self_name()}, 
+         indentation + spaces.size() + modify_result.size() +1) /];
 [/for]
 [/if]
 [if not st.exit.oclIsUndefined()]
-[spaces/][spaces/][st.exit.uml_c_get_behavior_full_name()
+[if st.request_state_needs_region_exit()]
+
+[spaces/]if(b_is_completed)
+[spaces/]{
+[spaces/][/if][spaces/][modify_result
+                                 /][st.exit.uml_c_get_behavior_full_name()
                                              /]([utils_get_self_name()/]);
-[/if]
-[if st.request_parent_state_needs_exit()]
-[spaces/][spaces/][ uml_c_format_param_list(
-         st.request_parent_exit_state().uml_c_get_exit_name(),
-         Sequence{ utils_get_self_name(),'exit_state'}, 
-         indentation + (spaces.size()*2)+1) /];
-[/if]
+[if st.request_state_needs_region_exit()]
 [spaces/]}
+
+[/if]
+[/if]
+[spaces/]return b_is_completed;
 }
 [/for]
 [/template]
 
 [template public uml_c_declare_region_exit(sm : StateMachine, 
-                                          indentation : Integer)]
-[for (aRegion : Region | sm.request_all_orthogonal_regions()
+                                          indentation : Integer)
+ ?(sm.request_all_regions()->select(r: Region | r.request_region_needs_exit())
+                          ->notEmpty())]
+[for (aRegion : Region | sm.request_all_regions()
                 ->select(r : Region | r.request_region_needs_exit()))]
-[uml_c_format_param_list('static void ' + aRegion.uml_c_get_region_exit_name(),
+[uml_c_format_param_list('static bool ' + aRegion.uml_c_get_region_exit_name(),
          Sequence{uml_c_param_decl(uml_c_get_type_name(sm) + '*', 
-                                    utils_get_self_name()),
-                  uml_c_param_decl(
-                         aRegion.uml_c_get_region_typedef(), 
-                                    'exit_state')}, indentation+1)/];
+                                    utils_get_self_name())}, indentation+1)/];
 [/for]
 [/template]
 
 [template public uml_c_define_region_exit(sm : StateMachine, 
                                           indentation : Integer)
- {spaces : String = utils_get_indent_string();}]
-[for (aRegion : Region | sm.request_all_orthogonal_regions()
+ ?(sm.request_all_regions()
+                          ->select(r: Region | r.request_region_needs_exit())
+                          ->notEmpty())
+ {spaces : String = utils_get_indent_string();
+  modify_result : String = 'b_is_completed &= ';}]
+[for (aRegion : Region | sm.request_all_regions()
                 ->select(r : Region | r.request_region_needs_exit()))
  separator(utils_newline())]
 [documentation_string('@brief Exits the ' + aRegion.name + ' region of the ' 
- + sm.name + ' state machine.\n\nAllows to easily exit a parent state when the'
- + ' statemachine is in a child state.\n' 
+ + sm.name + ' state machine.\n' 
   + documentation_param(ParameterDirectionKind::_in, 
                utils_get_self_name(), 'The pointer to the self object.\n')
-  + documentation_param(ParameterDirectionKind::_in, 
-               'exit_state', 'The state that wants to exit.'), 
+  + documentation_return('true if the exit is completed, otherwise false.'), 
   indentation)/]
-static void
+static bool
 [uml_c_format_param_list(aRegion.uml_c_get_region_exit_name(),
          Sequence{uml_c_param_decl(uml_c_get_type_name(sm) + '*', 
-                                    utils_get_self_name()),
-                  uml_c_param_decl(
-                         aRegion.uml_c_get_region_typedef(), 
-                                    'exit_state')}, indentation+1)/]
+                                    utils_get_self_name())}, indentation)/]
 {
-[spaces/]switch([utils_get_self_name()/]->[aRegion.name/])
+[spaces/]bool b_is_completed = true;
+
+[spaces/]switch([utils_get_self_name()
+                /]->[aRegion.uml_c_get_region_state_property_name()/])
 [spaces/]{
 [for (s:State | aRegion.request_region_states()
                   ->select(aState : State | aState.request_state_needs_exit()))
      separator(utils_newline()) after(utils_newline())]
 [spaces/][spaces/]case [s.uml_c_get_state_full_name()/]:
-[for (subState:State | aRegion.request_region_states()->select(aState : State | 
-      (not aState.request_state_needs_exit())
-      and aState.request_parent_states()->includes(s) 
-      and aState.request_parent_states()
-          ->removeAll(s.request_parent_states()->append(s))
-          ->forAll(pState:State | not pState.request_state_needs_exit())))]
-[spaces/][spaces/]case [subState.uml_c_get_state_full_name()/]:
-[/for]
-[spaces/][spaces/][spaces/][uml_c_format_param_list(s.uml_c_get_exit_name(),
-         Sequence{ utils_get_self_name(), 'exit_state'}, indentation)/];
+[spaces/][spaces/][spaces/][modify_result
+                         /][uml_c_format_param_list(s.uml_c_get_exit_name(),
+                            Sequence{ utils_get_self_name()}, 
+                            indentation + (spaces.size()*3) 
+                                        + modify_result.size() + 1)/];
 [spaces/][spaces/][spaces/]break;[/for]
 [spaces/][spaces/]default:
 [spaces/][spaces/][spaces/]break;
 [spaces/]}
+
+[spaces/]return b_is_completed;
 }
 [/for]
 [/template]
@@ -1602,8 +1584,9 @@ static void
  * variable was defined. 
  */]
 [template public uml_c_declare_region_dispatch(sm : StateMachine, 
-                                          indentation : Integer)]
-[for (aRegion : Region | sm.request_all_orthogonal_regions()) 
+                                          indentation : Integer)
+    ?(sm.request_all_regions()->notEmpty())]
+[for (aRegion : Region | sm.request_all_regions()) 
      separator(utils_newline())
      ?(not aRegion.request_region_events()->isEmpty()
        and not request_is_top_level_region(aRegion))]
@@ -1624,7 +1607,7 @@ static void
                                           indentation : Integer)
  {spaces : String = utils_get_indent_string();
   assign_result : String = 'result = ';}]
-[for (aRegion : Region | sm.request_all_orthogonal_regions()) 
+[for (aRegion : Region | sm.request_all_regions()) 
      separator(utils_newline())
      ?(not aRegion.request_region_events()->isEmpty()
        and not request_is_top_level_region(aRegion))]
@@ -1666,47 +1649,14 @@ static [uml_c_get_event_status_type()/]
 [spaces/]{
 [for (s:State | aRegion.request_region_states())
      separator(utils_newline()) after(utils_newline())
-     ?(aRegion.request_region_event_states(anEvent)->includes(s)
-       or s.exit.request_does_behavior_handle_event(anEvent)
-       or s.entry.request_does_behavior_handle_event(anEvent))]
-[if s.entry.request_does_behavior_handle_event(anEvent)]
-[spaces/][spaces/]case [s.uml_c_get_state_entry_name()/]:
-[spaces/][spaces/][spaces/][assign_result/][uml_c_format_param_list(
-         s.entry.oclAsType(StateMachine).uml_c_get_sm_event_dispatch(anEvent),
-         Sequence{ utils_get_self_name()
-         + '->' + s.uml_c_get_state_sm_entry_name(), 'p_event'}, 
-         indentation+(spaces.size()*3) + assign_result.size() + 1)/];
-[spaces/][spaces/][spaces/]break;[/if]
+     ?(aRegion.request_region_event_states(anEvent)->includes(s))]
 [if aRegion.request_region_event_states(anEvent)->includes(s)]
 [spaces/][spaces/]case [s.uml_c_get_state_full_name()/]:
-[for (aChildState : State | aRegion.request_region_states()->excluding(s)
-           ->select(c:State|(not c.request_state_handles_event(anEvent))
-                   and (c.request_parent_state_event_handler(anEvent) = s)))]
-[spaces/][spaces/]case [aChildState.uml_c_get_state_full_name()/]:
-[/for]
 [spaces/][spaces/][spaces/][assign_result/][uml_c_format_param_list(
          s.uml_c_get_state_event_dispatch(anEvent),
          Sequence{ utils_get_self_name(), 'p_event'}, 
          indentation+(spaces.size()*3) + assign_result.size() + 1)/];
-[spaces/][spaces/][spaces/]break;[/if]
-[if s.exit.request_does_behavior_handle_event(anEvent)]
-[spaces/][spaces/]case [s.uml_c_get_state_exit_name()/]:
-[spaces/][spaces/][spaces/][assign_result/][uml_c_format_param_list(
-         s.exit.oclAsType(StateMachine).uml_c_get_sm_event_dispatch(anEvent),
-         Sequence{ utils_get_self_name()
-         + '->' + s.uml_c_get_state_sm_exit_name(), 'p_event'}, 
-         indentation+(spaces.size()*3) + assign_result.size() + 1)/];
 [spaces/][spaces/][spaces/]break;[/if][/for]
-[for (t:Transition | aRegion.request_region_effect_sm_transitions()
-      ->request_transitions_by_event(anEvent))]
-[spaces/][spaces/]case [t.uml_c_get_transition_pseudostate_name()/]:
-[spaces/][spaces/][spaces/][assign_result/][uml_c_format_param_list(
-         t.effect.oclAsType(StateMachine).uml_c_get_sm_event_dispatch(anEvent),
-         Sequence{ utils_get_self_name()
-         + '->' + t.uml_c_get_transition_effect_name(), 'p_event'}, 
-         indentation+(spaces.size()*3) + assign_result.size() + 1)/];
-[spaces/][spaces/][spaces/]break;
-[/for]
 [spaces/][spaces/]default:
 [spaces/][spaces/][spaces/]break;
 [spaces/]}
@@ -1716,8 +1666,10 @@ static [uml_c_get_event_status_type()/]
  * Declares a dispatch function of each event for a StateMachine. 
  */]
 [template public uml_c_declare_sm_dispatch(sm : StateMachine, 
-                                          indentation : Integer)]
-[for (anEvent : Event | sm.request_class_events())]
+                                          indentation : Integer)
+ ?(sm.request_all_regions()->notEmpty() 
+   and (sm.request_class_events()->notEmpty()))]
+[for (anEvent : Event | sm.request_sm_events())]
 [uml_c_format_param_list('static ' + uml_c_get_event_status_type() + ' ' 
                         + sm.uml_c_get_sm_event_dispatch(anEvent),
                         sm.uml_c_get_sm_event_dispatch_params(anEvent), 
@@ -1734,7 +1686,7 @@ static [uml_c_get_event_status_type()/]
  {spaces : String = utils_get_indent_string();
   assign_temp_status : String = 'temp_status = ';
   assign_result : String = 'result = ';}]
-[for (anEvent : Event | sm.request_class_events()) 
+[for (anEvent : Event | sm.request_sm_events()) 
      separator(utils_newline())]
 [documentation_string('@brief Implements ' + anEvent.name + ' event handling by'
  +' the ' + sm.name + ' state machine.\n' 
@@ -1780,8 +1732,9 @@ static [uml_c_get_event_status_type()/]
  * Creates a dispatch function of each event for each state. 
  */]
 [template public uml_c_declare_state_dispatch(sm : StateMachine, 
-                                          indentation : Integer)]
-[for (aRegion : Region | sm.request_all_orthogonal_regions()) 
+                                          indentation : Integer)
+ ?(sm.request_all_regions()->notEmpty())]
+[for (aRegion : Region | sm.request_all_regions()) 
      separator(utils_newline())
      ?(not aRegion.request_region_events()->isEmpty())]
 [for (anEvent : Event | aRegion.request_region_events())]
@@ -1803,7 +1756,7 @@ static [uml_c_get_event_status_type()/]
  {spaces : String = utils_get_indent_string();
   assign_temp_status : String = 'temp_status = ';
   assign_result : String = 'result = ';}]
-[for (aRegion : Region | sm.request_all_orthogonal_regions()) 
+[for (aRegion : Region | sm.request_all_regions()) 
      separator(utils_newline())
      ?(not aRegion.request_region_events()->isEmpty())]
 [for (anEvent : Event | aRegion.request_region_events()) 
@@ -1823,26 +1776,28 @@ static [uml_c_get_event_status_type()/]
                         indentation)/]
 {
 [spaces/][uml_c_get_event_status_type()/] [assign_result/]IGNORED;
-[if aState.region->size() > 1 
-    and aState.request_event_subregions(anEvent)->size() > 0]
+[if aState.request_event_subregions(anEvent)->size() > 1]
 [spaces/][uml_c_get_event_status_type()/] [assign_temp_status/]IGNORED;
+[/if]
 [for (subRegion : Region | aState.request_event_subregions(anEvent))
       before(utils_newline())
-      separator(utils_newline())]
-[spaces/][assign_temp_status/][uml_c_format_param_list(
+      separator(utils_newline())
+      {assign_retval : String = 
+          if aState.request_event_subregions(anEvent)->size()>1 
+          then assign_temp_status else assign_result endif;}]
+[spaces/][assign_retval/][uml_c_format_param_list(
                     subRegion.uml_c_get_region_event_dispatch(anEvent),
                     Sequence{ utils_get_self_name(), 'p_event'}, 
-                    indentation+spaces.size()+assign_temp_status.size()+1)/];
+                    indentation+spaces.size()+assign_retval.size()+1)/];
+[if aState.request_event_subregions(anEvent)->size() > 1]
 [spaces/][assign_result/][uml_c_format_param_list(
                     uml_c_get_event_resolve_status_name(),
                     Sequence{ 'result', 'temp_status'}, 
                     indentation+spaces.size()+assign_result.size()+1)/];
-[/for]
 [/if]
-[if aState.request_state_handles_event(anEvent)
-    or aState.request_parent_state_handles_event(anEvent)]
-[if (aState.region->size() > 1 
-      and aState.request_event_subregions(anEvent)->size() > 0)]
+[/for]
+[if aState.request_state_handles_event(anEvent)]
+[if (aState.request_event_subregions(anEvent)->size() > 0)]
 
 [spaces/]if(IGNORED == result)
 [spaces/]{
@@ -1866,37 +1821,22 @@ static [uml_c_get_event_status_type()/]
 [**
  * Implements the event handling code in case the event must be handled
  * by this particular hierarchical state - that is no child states handled it.
- * The checked transitions are executed by name order.
+ * The checked transitions are executed by the order of occurence in the model.
 */]
 [template public uml_c_implement_event_handler(aState: State, anEvent: Event,
                                        indentation : Integer)
- {parentState :State = aState.request_parent_state_event_handler(anEvent);
- transitions: OrderedSet(Transition)= aState.outgoing
-                    ->select(t:Transition|t.trigger.event->includes(anEvent))
-                    ->asOrderedSet()
-                    ->sortedBy(t:Transition| if t.name.oclIsUndefined() 
-                              then '' else t.name.toLower() endif);
- spaces : String = utils_get_indent_string();}]
-[if aState.request_state_handles_event(anEvent)]
-[uml_c_implement_vertex_transitions(aState, transitions, indentation)
-/][if transitions->exists(t:Transition|not t.guard.oclIsUndefined()
-      and transitions->request_else_transitions()->isEmpty())]
-
-{
-[if not parentState.oclIsUndefined()]
-[spaces/][uml_c_call_state_event_dispatch(parentState, anEvent, 
-                                          indentation + spaces.size())/][/if]
-}[/if][else]
-[if not parentState.oclIsUndefined()]
-[uml_c_call_state_event_dispatch(parentState, anEvent, indentation)/][/if][/if]
+ {transitions: OrderedSet(Transition)= 
+                   aState.request_outgoing_transitions(anEvent);}]
+[uml_c_implement_vertex_transitions(aState, transitions, indentation)/]
 [/template]
 
 [template public uml_c_call_state_event_dispatch(aState:State, anEvent:Event, 
-                                                 indentation:Integer)]
-status = [uml_c_format_param_list(
+                                                 indentation:Integer)
+ {set_status:String = 'status = ';}]
+[set_status/][uml_c_format_param_list(
                     aState.uml_c_get_state_event_dispatch(anEvent),
                     aState.uml_c_get_state_event_dispatch_params(anEvent),
-                        indentation+10)/];
+                        indentation+set_status.size() + 1)/];
 [/template]
 
 [template public uml_c_implement_vertex_transitions(aVertex : Vertex, 
@@ -1920,6 +1860,9 @@ status = [uml_c_format_param_list(
        Please check your model[/if][/if][/for]
 [/template]
 
+[**
+ * @brief The template responsible for implementation of guards. 
+ */]
 [template public uml_c_implement_transition_guard(aTransition:Transition, 
                                             indentation:Integer)
     {spaces : String = utils_get_indent_string();}]
@@ -1930,7 +1873,10 @@ if([uml_c_implement_opaque_expression(anOpaqueExpression,'C')/])
 [spaces/][uml_c_implement_transition_execution(aTransition, 
                                                indentation + spaces.size())/]
 }
-else [elseif not anOpaqueExpression.behavior.oclIsUndefined()]
+else [elseif anOpaqueExpression.behavior.oclIsKindOf(OpaqueBehavior)]
+#error OpaqueBehavior
+[elseif anOpaqueExpression.behavior.oclIsKindOf(StateMachine)]
+#error StateMachine[else]
 #error OpaqueExpression behavior-type guard C language implementation missing\
        in [aTransition.source.uml_c_get_vertex_full_name()/] vertex.
 [/if]
@@ -1948,10 +1894,15 @@ else [elseif not anOpaqueExpression.behavior.oclIsUndefined()]
 [if (anOpaqueExpression.language->includes(aLanguage))]
 [(let s : String = anOpaqueExpression._body
                        ->at(anOpaqueExpression.language->indexOf(aLanguage)) in 
-                       if s.oclIsUndefined() then '' else s endif)/][else]
-no expression for [aLanguage/] language[/if]
+                       if s.oclIsUndefined() then 
+                          '#error empty opaque expression' else s endif)/][else]
+#error no expression for [aLanguage/] language[/if]
 [/template]
 
+[**
+ * @brief Implements the transition execution after the guard is fulfilled 
+ * to true. 
+ */]
 [template public uml_c_implement_transition_execution(aTransition:Transition,
                                                       indentation : Integer)]
 [if aTransition.kind = TransitionKind::internal]
@@ -1960,7 +1911,7 @@ no expression for [aLanguage/] language[/if]
 [/if]
 result = SAMESTATE;[elseif aTransition.kind = TransitionKind::external]
 [uml_c_implement_external_transition(aTransition, indentation)/][else]
-#error local transition execution not supported[/if]
+#error local transition execution not supported yet.[/if]
 [/template]
 
 [template public uml_c_implement_external_transition(aTransition:Transition,
@@ -1971,14 +1922,12 @@ result = SAMESTATE;[elseif aTransition.kind = TransitionKind::external]
 
 [template public uml_c_implement_ext_state_transition(aTransition:Transition,
                                                       indentation : Integer)
-{aRegion:Region = 
- aTransition.request_transition_exit_state().request_vertex_region();}]
-[if aRegion.request_region_needs_exit()]
-[uml_c_format_param_list(
-     aRegion.uml_c_get_region_exit_name(),
-     Sequence{ utils_get_self_name(),
-     aTransition.request_transition_exit_state().uml_c_get_state_full_name()}, 
-     indentation +1)/];
+{aState:State = aTransition.request_transition_exit_state();
+ exit_result : String = 'bool b_is_completed = ';}]
+[if aState.request_state_needs_exit()]
+[exit_result/][uml_c_format_param_list(aState.uml_c_get_exit_name(),
+                            Sequence{ utils_get_self_name()}, 
+                            indentation + exit_result.size() + 1)/];
 [/if]
 [/template]
 
@@ -1993,11 +1942,12 @@ result = SAMESTATE;[elseif aTransition.kind = TransitionKind::external]
 [template public uml_c_declare_event_status(indentation : Integer)
     {spaces : String = utils_get_indent_string();}]
 typedef enum {
-[spaces/]IGNORED,
-[spaces/]DEFERRED,
-[spaces/]SAMESTATE,
-[spaces/]CHANGEDSTATE,
-[spaces/]TRANSITION
+[spaces/]IGNORED,      /**< Event ignored.*/
+[spaces/]DEFERRED,     /**< Event deferred.*/
+[spaces/]SAMESTATE,    /**< Event handled, no state change.*/
+[spaces/]CHANGEDSTATE, /**< Event handled, state changed.*/
+[spaces/]TRANSITION    /**< Event processing started, but paused \
+                                  on some submachine action.*/
 }[uml_c_get_event_status_type()/];
 [/template]
 

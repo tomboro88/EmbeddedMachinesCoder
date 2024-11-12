@@ -88,65 +88,68 @@
  * Non-private function prototypes.
  * 
  ******************************************************************************/
-[if general_extern_classifiers
-->uml_c_classifiers_operations_need_declaration(Set{VisibilityKind::protected})]
-[uml_c_declare_operations(general_extern_classifiers, 
-                          Set{VisibilityKind::protected}, true, 0)/]
-[/if][if general_extern_classifiers
- ->uml_c_classifiers_behaviors_need_declaration(
-                       Set{VisibilityKind::protected, VisibilityKind::public})]
+[for (aClassifier:Classifier|general_extern_classifiers)
+     ?(aClassifier.uml_c_operations_need_declaration(
+                          Set{VisibilityKind::protected})->notEmpty()
+       or (aClassifier.request_has_standalone_behaviors(
+                         Set{VisibilityKind::protected, 
+                             VisibilityKind::public})))]
+[uml_c_declare_operations(aClassifier, Set{VisibilityKind::protected}, 
+                          true, 0)/]
+[let bc:BehavioredClassifier=aClassifier]
 [uml_c_declare_behaviors(
-        general_extern_classifiers, 
+        bc, 
         Set{VisibilityKind::protected, VisibilityKind::public}, true, 0)/]
-[/if][if sourceClassifiers
-   ->uml_c_classifiers_operations_need_declaration(Set{VisibilityKind::public})]
-[uml_c_declare_operations(sourceClassifiers, 
-                          Set{VisibilityKind::public}, false, 0)/]
-[/if][if allClassifiers
- ->uml_c_classifiers_operations_need_declaration(Set{VisibilityKind::protected, 
-                              VisibilityKind::_package})]
-[uml_c_declare_operations(allClassifiers, 
+[/let]
+[/for]
+[for (aClassifier:Classifier|sourceClassifiers)
+     ?(aClassifier.uml_c_operations_need_declaration(
+                          Set{VisibilityKind::public})->notEmpty())]
+[uml_c_declare_operations(aClassifier, Set{VisibilityKind::public}, 
+                          false, 0)/]
+[/for]
+[for (aClassifier:Classifier|allClassifiers)
+     ?(aClassifier.uml_c_operations_need_declaration(
                           Set{VisibilityKind::protected, 
-                              VisibilityKind::_package}, false, 0)/]
-[/if][if allClassifiers
- ->uml_c_classifiers_behaviors_need_declaration(Set{VisibilityKind::protected,
+                              VisibilityKind::_package})->notEmpty()
+       or (aClassifier.request_has_standalone_behaviors(
+                                     Set{VisibilityKind::protected,
                                          VisibilityKind::_package,
-                                         VisibilityKind::public})]
-[uml_c_declare_behaviors(allClassifiers, Set{VisibilityKind::protected,
+                                         VisibilityKind::public})))]
+[uml_c_declare_operations(aClassifier, Set{VisibilityKind::protected,
+                                         VisibilityKind::_package,
+                                         VisibilityKind::public}, 
+                          false, 0)/]
+[let bc:BehavioredClassifier=aClassifier]
+[uml_c_declare_behaviors(bc, Set{VisibilityKind::protected,
                                          VisibilityKind::_package,
                                          VisibilityKind::public}, false, 0)/]
-[/if]
+[/let]
+[/for]
 /*******************************************************************************
  * 
  * Private function prototypes.
  * 
  ******************************************************************************/
-[if allClassifiers
-  ->uml_c_classifiers_operations_need_declaration(Set{VisibilityKind::private})]
-[uml_c_declare_operations(allClassifiers, 
-                          Set{VisibilityKind::private}, false, 0)/]
-[/if]
-[if allClassifiers
- ->uml_c_classifiers_behaviors_need_declaration(Set{VisibilityKind::private})]
-[uml_c_declare_behaviors(allClassifiers, Set{VisibilityKind::private}, 
-                                       false, 0)/]
-[/if]
-[if not allClassifiers->select(c:Classifier | c.uml_c_needs_init_defaults())
-    ->isEmpty()]
-[uml_c_declare_defaults(allClassifiers, 0)/]
-[/if]
-[for (sm : StateMachine | allClassifiers->selectByKind(StateMachine)
-      ->select(stm : StateMachine | not stm.request_all_orthogonal_regions()
-                          ->select(r: Region | r.request_region_needs_exit())
-                          ->isEmpty()))]
+[for (aClassifier:Classifier|allClassifiers)
+  ?(aClassifier.uml_c_operations_need_declaration(Set{VisibilityKind::private})
+                ->notEmpty()
+       or aClassifier
+            .request_has_standalone_behaviors(Set{VisibilityKind::private})
+       or aClassifier.uml_c_needs_init_defaults()
+       or aClassifier.oclIsKindOf(StateMachine))]
+[uml_c_declare_operations(aClassifier, Set{VisibilityKind::private}, 
+                          false, 0)/]
+[let bc:BehavioredClassifier=aClassifier]
+[uml_c_declare_behaviors(bc, Set{VisibilityKind::private}, false, 0)/]
+[/let]
+[uml_c_declare_defaults(aClassifier, 0)/]
+[let sm:StateMachine=aClassifier]
 [uml_c_declare_region_exit(sm,0)/]
-[/for]
-[for (sm : StateMachine | allClassifiers->selectByKind(StateMachine)
-      ->select(stm : StateMachine | not stm.request_all_orthogonal_regions()
-                                    ->isEmpty()))]
 [uml_c_declare_sm_dispatch(sm, 0)/]
 [uml_c_declare_region_dispatch(sm,0)/]
 [uml_c_declare_state_dispatch(sm, 0)/]
+[/let]
 [/for]
 /*******************************************************************************
  * 
@@ -203,48 +206,51 @@ static inline bool
  * Public function bodies.
  * 
  ******************************************************************************/
-[if allClassifiers->uml_c_have_operations(Set{VisibilityKind::public})]
-[uml_c_define_operations(allClassifiers, Set{VisibilityKind::public}, 0)/]
-[/if]
-[if allClassifiers
-    ->request_have_virtual_behaviors(Set{VisibilityKind::public})]
-[uml_c_define_behaviors(allClassifiers, Set{VisibilityKind::public}, 0)/]
-[/if]
+[for (aClassifier:Classifier|allClassifiers)
+     ?(aClassifier.uml_c_get_operations(Set{VisibilityKind::public})
+       ->notEmpty()
+       or aClassifier
+                .request_has_standalone_behaviors(Set{VisibilityKind::public}))]
+[uml_c_define_operations(aClassifier, Set{VisibilityKind::public}, 0)/]
+[let bc:BehavioredClassifier=aClassifier]
+[uml_c_define_behaviors(bc,Set{VisibilityKind::public}, 0)/]
+[/let]
+[/for]
 /*******************************************************************************
  * 
  * Non-public function bodies.
  * 
  ******************************************************************************/
-[if not allClassifiers->select(c : Classifier | 
-                     c.uml_c_needs_init_defaults())->isEmpty()]
-[uml_c_define_defaults(allClassifiers,0)/]
-[/if]
-[if allClassifiers->uml_c_have_operations(Set{VisibilityKind::_package,
+[for (aClassifier:Classifier|allClassifiers)
+     ?(aClassifier.uml_c_needs_init_defaults()
+       or aClassifier.uml_c_get_operations(Set{VisibilityKind::_package,
                                             VisibilityKind::private,
-                                            VisibilityKind::protected})]
-[uml_c_define_operations(allClassifiers, Set{VisibilityKind::_package,
-                                            VisibilityKind::private,
-                                            VisibilityKind::protected}, 0)/]
-[/if]
-[if allClassifiers
-    ->request_have_virtual_behaviors(Set{VisibilityKind::_package,
-                                            VisibilityKind::private,
-                                            VisibilityKind::protected})]
-[uml_c_define_behaviors(allClassifiers, Set{VisibilityKind::_package,
+                                            VisibilityKind::protected})
+                                          ->notEmpty()
+       or aClassifier.request_has_standalone_behaviors(
+                           Set{VisibilityKind::_package,
+                               VisibilityKind::private,
+                               VisibilityKind::protected})
+       or aClassifier.oclIsKindOf(StateMachine)) ]
+[uml_c_define_defaults(aClassifier,0)/]
+[uml_c_define_operations(aClassifier, Set{VisibilityKind::_package,
                                             VisibilityKind::private,
                                             VisibilityKind::protected}, 0)/]
-[/if]
-[for (sm : StateMachine | allClassifiers->selectByKind(StateMachine)
-      ->select(stm : StateMachine | not stm.request_all_orthogonal_regions()
-                          ->isEmpty()))]
-[if not sm.request_all_orthogonal_regions()
+[let bc:BehavioredClassifier=aClassifier]
+[uml_c_define_behaviors(bc,Set{VisibilityKind::_package,
+                               VisibilityKind::private,
+                               VisibilityKind::protected}, 0)/]
+[/let]
+[let sm:StateMachine=aClassifier]
+[if sm.request_all_regions()
                           ->select(r: Region | r.request_region_needs_exit())
-                          ->isEmpty()]
+                          ->notEmpty()]
 [uml_c_define_region_exit(sm,0)/]
 [/if]
 [uml_c_implement_sm_dispatch(sm, 0)/]
 [uml_c_implement_region_dispatch(sm,0)/]
 [uml_c_implement_state_dispatch(sm, 0)/]
+[/let]
 [/for]
 /*** end of file ***/
 [/file]
