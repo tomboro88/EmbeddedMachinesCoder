@@ -12,6 +12,7 @@ extern "C" {
 
 //Start of user code includes top
 //End of user code
+#    include "Tkind/Tkind.h"
 #    include "sample/sample.h"
 #    include <sm.h>
 //Start of user code includes bottom
@@ -68,6 +69,12 @@ extern "C" {
      */
     typedef struct umltest_engine_s \
             umltest_engine_t;
+
+    /**
+     * @brief The type representing the umltest_entrysm_s struct.
+     */
+    typedef struct umltest_entrysm_s \
+            umltest_entrysm_t;
 
     /**
      * @brief The virtual table type for the umltest_hybrid_s struct.
@@ -154,8 +161,9 @@ extern "C" {
         void (*p_start)(umltest_iface_t* const p_obj);
         /**
          * @param [in] p_obj The pointer to the self object.
+         * @return 
          */
-        void (*p_stop)(umltest_iface_t* const p_obj);
+        bool (*p_stop)(umltest_iface_t* const p_obj);
     };
 
     /**
@@ -240,6 +248,42 @@ extern "C" {
     };
 
     /**
+     * @brief The enumeration of all substates of Region1 Region of entrysm
+     * StateMachine.
+     */
+    typedef enum{
+        /**
+         * @brief The default substate of the Region1 Region of entrysm
+         * StateMachine.
+         */
+        UMLTEST_ENTRYSM_INITIAL1,
+        /**
+         */
+        UMLTEST_ENTRYSM_STATE2,
+        /**
+         */
+        UMLTEST_ENTRYSM_STATE3,
+        /**
+         */
+        UMLTEST_ENTRYSM_FINALSTATE4,
+        /**
+         * @brief The number of all substates of Region1 Region of entrysm
+         * StateMachine.
+         */
+        UMLTEST_ENTRYSM_REGION1_SIZE
+    }umltest_entrysm_region1_t;
+    
+    /**
+     * @param [in] p_obj The pointer to the self object.
+     */
+    struct umltest_entrysm_s
+    {
+        /**
+         */
+        umltest_entrysm_region1_t       region1;
+    };
+
+    /**
      */
     struct umltest_hybrid_s
     {
@@ -278,12 +322,12 @@ extern "C" {
          * @brief The default substate of the Region1 Region of sm1
          * StateMachine.
          */
-        UMLTEST_SM1_INITIAL3,
+        UMLTEST_SM1_INISM1,
         /**
          * @brief A pseudostate reserved for execution of the effect behavior of
-         * the TRN3 transition.
+         * the TRN2 transition.
          */
-        UMLTEST_SM1_TRN3_EFFECT,
+        UMLTEST_SM1_TRN2_EFFECT,
         /**
          */
         UMLTEST_SM1_FLOP,
@@ -306,7 +350,7 @@ extern "C" {
          * @brief The default substate of the Region2 Region of sm1
          * StateMachine.
          */
-        UMLTEST_SM1_REGION2_INITIAL,
+        UMLTEST_SM1_INIFLOP,
         /**
          */
         UMLTEST_SM1_SUBFLOP,
@@ -329,7 +373,12 @@ extern "C" {
          * @brief The default substate of the Region3 Region of sm1
          * StateMachine.
          */
-        UMLTEST_SM1_REGION3_INITIAL,
+        UMLTEST_SM1_INIFLIP1,
+        /**
+         * @brief A pseudostate reserved for execution of the entry behavior of
+         * the SUBFLIP state.
+         */
+        UMLTEST_SM1_SUBFLIP_ENTRY,
         /**
          */
         UMLTEST_SM1_SUBFLIP,
@@ -349,7 +398,7 @@ extern "C" {
          * @brief The default substate of the Region4 Region of sm1
          * StateMachine.
          */
-        UMLTEST_SM1_REGION4_INITIAL,
+        UMLTEST_SM1_INIFLIP2,
         /**
          */
         UMLTEST_SM1_SUBFLIP2,
@@ -425,6 +474,9 @@ extern "C" {
         /**
          */
         UMLTEST_TMPCOMBO_FLUPCALEVT,
+        /**
+         */
+        UMLTEST_TMPCOMBO_CONFENTRY_CE,
         /**
          */
         UMLTEST_TMPCOMBO_FLEPCALLEVT,
@@ -592,6 +644,43 @@ extern "C" {
     }umltest_tmpcombo_flupcalevt_queue_t;
     
     /**
+     * @brief The struct with data of the confentry_ce event in the event
+     * pool of the tmpCombo class.
+     */
+    typedef struct
+    {
+        /**
+         * @brief The base data of the event.
+         */
+        umltest_tmpcombo_evbase_t       evbase;
+    }umltest_tmpcombo_confentry_ce_t;
+    
+    /**
+     * @brief The struct with confentry_ce event queue in the event pool of
+     * the tmpCombo class.
+     */
+    typedef struct
+    {
+        /**
+         * @brief The index of the first element in the queue.
+         */
+        size_t                          head;
+        /**
+         * @brief The index of the last element in the queue.
+         */
+        size_t                          tail;
+        /**
+         * @brief The number of elements in the queue.
+         */
+        size_t                          count;
+        /**
+         * @brief The array of events in the queue.
+         */
+        umltest_tmpcombo_confentry_ce_t events\
+                                        [UMLTEST_TMPCOMBO_CONFENTRY_CE_CNT];
+    }umltest_tmpcombo_confentry_ce_queue_t;
+    
+    /**
      * @brief The struct with data of the flepcallevt event in the event
      * pool of the tmpCombo class.
      */
@@ -671,6 +760,11 @@ extern "C" {
         umltest_tmpcombo_flupcalevt_queue_t \
                                         flupcalevt;
         /**
+         * @brief The event queue holding confentry_ce events.
+         */
+        umltest_tmpcombo_confentry_ce_queue_t \
+                                        confentry_ce;
+        /**
          * @brief The event queue holding flepcallevt events.
          */
         umltest_tmpcombo_flepcallevt_queue_t \
@@ -696,7 +790,7 @@ extern "C" {
                               const umltest_E_t* const x);
 
     void umltest_iface_start(umltest_iface_t* const p_obj);
-    void umltest_iface_stop(umltest_iface_t* const p_obj);
+    bool umltest_iface_stop(umltest_iface_t* const p_obj);
     void umltest_iface_accelerate(umltest_iface_t* const p_obj);
     void umltest_iface_decelerate(umltest_iface_t* const p_obj);
 
@@ -705,6 +799,7 @@ extern "C" {
     void umltest_tmpCombo_flap(umltest_tmpCombo_t* const p_obj);
     void umltest_tmpCombo_flep(umltest_tmpCombo_t* const p_obj);
     void umltest_tmpCombo_flup(umltest_tmpCombo_t* const p_obj);
+    void umltest_tmpCombo_confirm_entry(umltest_tmpCombo_t* const p_obj);
 
 #ifdef  __cplusplus
 }

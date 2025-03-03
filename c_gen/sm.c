@@ -17,15 +17,15 @@ sm_event_resolve_status(sm_event_status_t const status1,\
     }
     else if(SAMESTATE==status1 || SAMESTATE==status2)
     {
-        status = SAMESTATE;
+        result = SAMESTATE;
     }
     else if (DEFERRED==status1 || DEFERRED==status2)
     {
-        status = DEFERRED;
+        result = DEFERRED;
     }
     else
     {
-        status = IGNORED;
+        result = IGNORED;
     }
 
     return result;

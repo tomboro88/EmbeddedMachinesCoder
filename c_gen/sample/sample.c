@@ -81,7 +81,6 @@ static void sample_flt_fine_next_preset(sample_flt_t* const p_obj);
 static void sample_flt_fine_valid(sample_flt_t* const p_obj);
 static void sample_flt_set_fine_error(sample_flt_t* const p_obj);
 
-
 static void sample_flt_init_df(sample_flt_t* const p_obj);
 
 static sm_event_status_t flt_dispatch_new_sample_call_event\
@@ -112,40 +111,40 @@ static sm_event_status_t flt_dispatch_setfiltererrorcallevent\
        (sample_flt_t* const p_obj,\
         sample_flt_setfiltererrorcallevent_t* const p_event);
 
-static sm_event_status_t flt_dispatch_new_sample_call_event_sample_state\
+static sm_event_status_t flt_dispatch_new_sample_call_event_sample_reg\
        (sample_flt_t* const p_obj,\
         sample_flt_new_sample_call_event_t* const p_event);
 
-static sm_event_status_t flt_dispatch_filterinvalidcallevent_filter_state\
+static sm_event_status_t flt_dispatch_filterinvalidcallevent_filter_reg\
        (sample_flt_t* const p_obj,\
         sample_flt_filterinvalidcallevent_t* const p_event);
-static sm_event_status_t flt_dispatch_filternextpresetcallevent_filter_state\
+static sm_event_status_t flt_dispatch_filternextpresetcallevent_filter_reg\
        (sample_flt_t* const p_obj,\
         sample_flt_filternextpresetcallevent_t* const p_event);
-static sm_event_status_t flt_dispatch_filterfirstpresetcallevent_filter_state\
+static sm_event_status_t flt_dispatch_filterfirstpresetcallevent_filter_reg\
        (sample_flt_t* const p_obj,\
         sample_flt_filterfirstpresetcallevent_t* const p_event);
-static sm_event_status_t flt_dispatch_filtervalidcallevent_filter_state\
+static sm_event_status_t flt_dispatch_filtervalidcallevent_filter_reg\
        (sample_flt_t* const p_obj,\
         sample_flt_filtervalidcallevent_t* const p_event);
 
-static sm_event_status_t flt_dispatch_filterinvalidcallevent_finvalid_state\
+static sm_event_status_t flt_dispatch_filterinvalidcallevent_rfinvalid\
        (sample_flt_t* const p_obj,\
         sample_flt_filterinvalidcallevent_t* const p_event);
-static sm_event_status_t flt_dispatch_filternextpresetcallevent_finvalid_state\
+static sm_event_status_t flt_dispatch_filternextpresetcallevent_rfinvalid\
        (sample_flt_t* const p_obj,\
         sample_flt_filternextpresetcallevent_t* const p_event);
-static sm_event_status_t flt_dispatch_filtervalidcallevent_finvalid_state\
+static sm_event_status_t flt_dispatch_filtervalidcallevent_rfinvalid\
        (sample_flt_t* const p_obj,\
         sample_flt_filtervalidcallevent_t* const p_event);
 
-static sm_event_status_t flt_dispatch_valueokcallevent_value_state\
+static sm_event_status_t flt_dispatch_valueokcallevent_value_reg\
        (sample_flt_t* const p_obj,\
         sample_flt_valueokcallevent_t* const p_event);
-static sm_event_status_t flt_dispatch_valueerrorcallevent_value_state\
+static sm_event_status_t flt_dispatch_valueerrorcallevent_value_reg\
        (sample_flt_t* const p_obj,\
         sample_flt_valueerrorcallevent_t* const p_event);
-static sm_event_status_t flt_dispatch_valueinvalidcallevent_value_state\
+static sm_event_status_t flt_dispatch_valueinvalidcallevent_value_reg\
        (sample_flt_t* const p_obj,\
         sample_flt_valueinvalidcallevent_t* const p_event);
 
@@ -204,6 +203,14 @@ static sm_event_status_t flt_dispatch_valueinvalidcallevent_value_ok\
        (sample_flt_t* const p_obj,\
         sample_flt_valueinvalidcallevent_t* const p_event);
 
+static sm_event_status_t flt_enter_choice19(sample_flt_t* const p_obj);
+static sm_event_status_t flt_enter_choice18(sample_flt_t* const p_obj);
+static sm_event_status_t flt_enter_choice21(sample_flt_t* const p_obj);
+static sm_event_status_t flt_enter_choice4(sample_flt_t* const p_obj);
+static sm_event_status_t flt_enter_choice7(sample_flt_t* const p_obj);
+static sm_event_status_t flt_enter_choice11(sample_flt_t* const p_obj);
+static sm_event_status_t flt_enter_choice14(sample_flt_t* const p_obj);
+
 /*******************************************************************************
  * 
  * Inline functions.
@@ -216,7 +223,7 @@ static sm_event_status_t flt_dispatch_valueinvalidcallevent_value_ok\
 static inline void
 flt_enter_input_valid(sample_flt_t* const p_obj)
 {
-    p_obj->sample_state = SAMPLE_FLT_INPUT_VALID;
+    p_obj->sample_reg = SAMPLE_FLT_INPUT_VALID;
 }
 
 /**
@@ -226,7 +233,7 @@ flt_enter_input_valid(sample_flt_t* const p_obj)
 static inline void
 flt_enter_input_invalid(sample_flt_t* const p_obj)
 {
-    p_obj->sample_state = SAMPLE_FLT_INPUT_INVALID;
+    p_obj->sample_reg = SAMPLE_FLT_INPUT_INVALID;
 }
 
 /**
@@ -236,7 +243,7 @@ flt_enter_input_invalid(sample_flt_t* const p_obj)
 static inline void
 flt_enter_input_first_preset(sample_flt_t* const p_obj)
 {
-    p_obj->sample_state = SAMPLE_FLT_INPUT_FIRST_PRESET;
+    p_obj->sample_reg = SAMPLE_FLT_INPUT_FIRST_PRESET;
 }
 
 /**
@@ -246,7 +253,7 @@ flt_enter_input_first_preset(sample_flt_t* const p_obj)
 static inline void
 flt_enter_input_next_preset(sample_flt_t* const p_obj)
 {
-    p_obj->sample_state = SAMPLE_FLT_INPUT_NEXT_PRESET;
+    p_obj->sample_reg = SAMPLE_FLT_INPUT_NEXT_PRESET;
 }
 
 /**
@@ -256,7 +263,7 @@ flt_enter_input_next_preset(sample_flt_t* const p_obj)
 static inline void
 flt_enter_filter_invalid(sample_flt_t* const p_obj)
 {
-    p_obj->filter_state = SAMPLE_FLT_FILTER_INVALID;
+    p_obj->filter_reg = SAMPLE_FLT_FILTER_INVALID;
 }
 
 /**
@@ -266,7 +273,7 @@ flt_enter_filter_invalid(sample_flt_t* const p_obj)
 static inline void
 flt_enter_filter_error(sample_flt_t* const p_obj)
 {
-    p_obj->finvalid_state = SAMPLE_FLT_FILTER_ERROR;
+    p_obj->rfinvalid = SAMPLE_FLT_FILTER_ERROR;
 }
 
 /**
@@ -276,7 +283,7 @@ flt_enter_filter_error(sample_flt_t* const p_obj)
 static inline void
 flt_enter_filter_valid(sample_flt_t* const p_obj)
 {
-    p_obj->filter_state = SAMPLE_FLT_FILTER_VALID;
+    p_obj->filter_reg = SAMPLE_FLT_FILTER_VALID;
 }
 
 /**
@@ -286,7 +293,7 @@ flt_enter_filter_valid(sample_flt_t* const p_obj)
 static inline void
 flt_enter_value_error(sample_flt_t* const p_obj)
 {
-    p_obj->value_state = SAMPLE_FLT_VALUE_ERROR;
+    p_obj->value_reg = SAMPLE_FLT_VALUE_ERROR;
 }
 
 /**
@@ -296,7 +303,7 @@ flt_enter_value_error(sample_flt_t* const p_obj)
 static inline void
 flt_enter_value_invalid(sample_flt_t* const p_obj)
 {
-    p_obj->value_state = SAMPLE_FLT_VALUE_INVALID;
+    p_obj->value_reg = SAMPLE_FLT_VALUE_INVALID;
 }
 
 /**
@@ -306,8 +313,74 @@ flt_enter_value_invalid(sample_flt_t* const p_obj)
 static inline void
 flt_enter_value_ok(sample_flt_t* const p_obj)
 {
-    p_obj->value_state = SAMPLE_FLT_VALUE_OK;
+    p_obj->value_reg = SAMPLE_FLT_VALUE_OK;
 }
+
+/**
+ * @brief Implements entry of the sample_reg region of the flt state machine.
+ * @param [in] p_obj The pointer to the self object.
+ * @return the initial transition dispatch status.
+ */
+static inline sm_event_status_t
+flt_enter_sample_reg(sample_flt_t* const p_obj)
+{
+    sm_event_status_t result;
+    p_obj->sample_reg = SAMPLE_FLT_INPUT_INITIAL;
+    flt_enter_input_invalid(p_obj);
+    result = CHANGEDSTATE;
+    return result;
+}
+
+
+/**
+ * @brief Implements entry of the rfinvalid region of the flt state machine.
+ * @param [in] p_obj The pointer to the self object.
+ * @return the initial transition dispatch status.
+ */
+static inline sm_event_status_t
+flt_enter_rfinvalid(sample_flt_t* const p_obj)
+{
+    sm_event_status_t result;
+    p_obj->rfinvalid = SAMPLE_FLT_RFINVALID_INL;
+    result = CHANGEDSTATE;
+    return result;
+}
+
+
+/**
+ * @brief Implements entry of the filter_reg region of the flt state machine.
+ * @param [in] p_obj The pointer to the self object.
+ * @return the initial transition dispatch status.
+ */
+static inline sm_event_status_t
+flt_enter_filter_reg(sample_flt_t* const p_obj)
+{
+    sm_event_status_t result;
+    p_obj->filter_reg = SAMPLE_FLT_FILTER_INITIAL;
+    flt_enter_filter_invalid(p_obj);
+    result = CHANGEDSTATE;
+    sm_event_status_t temp_status = IGNORED;
+    temp_status = flt_enter_rfinvalid(p_obj);
+    result = sm_event_resolve_status(result, temp_status);
+    return result;
+}
+
+
+/**
+ * @brief Implements entry of the value_reg region of the flt state machine.
+ * @param [in] p_obj The pointer to the self object.
+ * @return the initial transition dispatch status.
+ */
+static inline sm_event_status_t
+flt_enter_value_reg(sample_flt_t* const p_obj)
+{
+    sm_event_status_t result;
+    p_obj->value_reg = SAMPLE_FLT_VALUE_INITIAL;
+    flt_enter_value_invalid(p_obj);
+    result = CHANGEDSTATE;
+    return result;
+}
+
 
 /*******************************************************************************
  * 
@@ -481,7 +554,7 @@ sample_flt_preset(sample_flt_t* const p_obj)
 void
 sample_flt_lp(sample_flt_t* const p_obj, float32_t const filter_in)
 {
-    /*Code for handling a virtual operation generated automatically.*/
+    /*Code for handling a virtual operation.*/
     if((NULL != p_obj) && (NULL != p_obj->p_vtable))
     {
         void (*p_lp)(sample_flt_t* const p_obj, float32_t const filter_in)
@@ -527,7 +600,7 @@ sample_flt_predict(sample_flt_t* const p_obj)
 static void
 sample_flt_rank_output(sample_flt_t* const p_obj)
 {
-    
+    #error effect Behavior type not supported
 }
 
 /**
@@ -612,7 +685,7 @@ sample_flt_process_out_invalid(sample_flt_t* const p_obj)
 static void
 sample_flt_process_graded(sample_flt_t* const p_obj)
 {
-    
+    #error effect Behavior type not supported
 }
 
 /**
@@ -687,19 +760,16 @@ flt_dispatch_new_sample_call_event(sample_flt_t* const p_obj,\
                                    /**/const p_event)
 {
     sm_event_status_t result = IGNORED;
-    sm_event_status_t temp_status = IGNORED;
 
-    temp_status = flt_dispatch_new_sample_call_event_filter_state(p_obj,\
-                                                    p_event);
-    result = sm_event_resolve_status(result, temp_status);
-
-    temp_status = flt_dispatch_new_sample_call_event_sample_state(p_obj,\
-                                                    p_event);
-    result = sm_event_resolve_status(result, temp_status);
-
-    temp_status = flt_dispatch_new_sample_call_event_value_state(p_obj,\
-                                                   p_event);
-    result = sm_event_resolve_status(result, temp_status);
+    switch(p_obj->sample_reg)
+    {
+        case SAMPLE_FLT_INPUT_INVALID:
+            result = flt_dispatch_new_sample_call_event_input_invalid(p_obj,\
+                                                             p_event);
+            break;
+        default:
+            break;
+    }
 
     return result;
 }
@@ -715,16 +785,19 @@ flt_dispatch_valueokcallevent(sample_flt_t* const p_obj,\
                               sample_flt_valueokcallevent_t* const p_event)
 {
     sm_event_status_t result = IGNORED;
-    sm_event_status_t temp_status = IGNORED;
 
-    temp_status = flt_dispatch_valueokcallevent_filter_state(p_obj, p_event);
-    result = sm_event_resolve_status(result, temp_status);
-
-    temp_status = flt_dispatch_valueokcallevent_sample_state(p_obj, p_event);
-    result = sm_event_resolve_status(result, temp_status);
-
-    temp_status = flt_dispatch_valueokcallevent_value_state(p_obj, p_event);
-    result = sm_event_resolve_status(result, temp_status);
+    switch(p_obj->value_reg)
+    {
+        case SAMPLE_FLT_VALUE_ERROR:
+            result = flt_dispatch_valueokcallevent_value_error(p_obj, p_event);
+            break;
+        case SAMPLE_FLT_VALUE_INVALID:
+            result = flt_dispatch_valueokcallevent_value_invalid(p_obj,\
+                                                        p_event);
+            break;
+        default:
+            break;
+    }
 
     return result;
 }
@@ -742,16 +815,19 @@ flt_dispatch_valueerrorcallevent(sample_flt_t* const p_obj,\
                                  /**/const p_event)
 {
     sm_event_status_t result = IGNORED;
-    sm_event_status_t temp_status = IGNORED;
 
-    temp_status = flt_dispatch_valueerrorcallevent_filter_state(p_obj, p_event);
-    result = sm_event_resolve_status(result, temp_status);
-
-    temp_status = flt_dispatch_valueerrorcallevent_sample_state(p_obj, p_event);
-    result = sm_event_resolve_status(result, temp_status);
-
-    temp_status = flt_dispatch_valueerrorcallevent_value_state(p_obj, p_event);
-    result = sm_event_resolve_status(result, temp_status);
+    switch(p_obj->value_reg)
+    {
+        case SAMPLE_FLT_VALUE_INVALID:
+            result = flt_dispatch_valueerrorcallevent_value_invalid(p_obj,\
+                                                           p_event);
+            break;
+        case SAMPLE_FLT_VALUE_OK:
+            result = flt_dispatch_valueerrorcallevent_value_ok(p_obj, p_event);
+            break;
+        default:
+            break;
+    }
 
     return result;
 }
@@ -769,19 +845,16 @@ flt_dispatch_valueinvalidcallevent(sample_flt_t* const p_obj,\
                                    /**/const p_event)
 {
     sm_event_status_t result = IGNORED;
-    sm_event_status_t temp_status = IGNORED;
 
-    temp_status = flt_dispatch_valueinvalidcallevent_filter_state(p_obj,\
-                                                    p_event);
-    result = sm_event_resolve_status(result, temp_status);
-
-    temp_status = flt_dispatch_valueinvalidcallevent_sample_state(p_obj,\
-                                                    p_event);
-    result = sm_event_resolve_status(result, temp_status);
-
-    temp_status = flt_dispatch_valueinvalidcallevent_value_state(p_obj,\
-                                                   p_event);
-    result = sm_event_resolve_status(result, temp_status);
+    switch(p_obj->value_reg)
+    {
+        case SAMPLE_FLT_VALUE_OK:
+            result = flt_dispatch_valueinvalidcallevent_value_ok(p_obj,\
+                                                        p_event);
+            break;
+        default:
+            break;
+    }
 
     return result;
 }
@@ -799,181 +872,8 @@ flt_dispatch_filterinvalidcallevent(sample_flt_t* const p_obj,\
                                     /**/const p_event)
 {
     sm_event_status_t result = IGNORED;
-    sm_event_status_t temp_status = IGNORED;
 
-    temp_status = flt_dispatch_filterinvalidcallevent_filter_state(p_obj,\
-                                                     p_event);
-    result = sm_event_resolve_status(result, temp_status);
-
-    temp_status = flt_dispatch_filterinvalidcallevent_sample_state(p_obj,\
-                                                     p_event);
-    result = sm_event_resolve_status(result, temp_status);
-
-    temp_status = flt_dispatch_filterinvalidcallevent_value_state(p_obj,\
-                                                    p_event);
-    result = sm_event_resolve_status(result, temp_status);
-
-    return result;
-}
-
-/**
- * @brief Implements FilterNextPresetCallEvent event handling by the flt state
- * machine.
- * @param [in] p_obj The pointer to the self object.
- * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
- */
-static sm_event_status_t
-flt_dispatch_filternextpresetcallevent(sample_flt_t* const p_obj,\
-                                       sample_flt_filternextpresetcallevent_t* \
-                                       /**/const p_event)
-{
-    sm_event_status_t result = IGNORED;
-    sm_event_status_t temp_status = IGNORED;
-
-    temp_status = flt_dispatch_filternextpresetcallevent_filter_state(p_obj,\
-                                                        p_event);
-    result = sm_event_resolve_status(result, temp_status);
-
-    temp_status = flt_dispatch_filternextpresetcallevent_sample_state(p_obj,\
-                                                        p_event);
-    result = sm_event_resolve_status(result, temp_status);
-
-    temp_status = flt_dispatch_filternextpresetcallevent_value_state(p_obj,\
-                                                       p_event);
-    result = sm_event_resolve_status(result, temp_status);
-
-    return result;
-}
-
-/**
- * @brief Implements FilterFirstPresetCallEvent event handling by the flt state
- * machine.
- * @param [in] p_obj The pointer to the self object.
- * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
- */
-static sm_event_status_t
-flt_dispatch_filterfirstpresetcallevent(sample_flt_t* const p_obj,\
-        sample_flt_filterfirstpresetcallevent_t* const p_event)
-{
-    sm_event_status_t result = IGNORED;
-    sm_event_status_t temp_status = IGNORED;
-
-    temp_status = flt_dispatch_filterfirstpresetcallevent_filter_state(p_obj,\
-            p_event);
-    result = sm_event_resolve_status(result, temp_status);
-
-    temp_status = flt_dispatch_filterfirstpresetcallevent_sample_state(p_obj,\
-            p_event);
-    result = sm_event_resolve_status(result, temp_status);
-
-    temp_status = flt_dispatch_filterfirstpresetcallevent_value_state(p_obj,\
-                                                        p_event);
-    result = sm_event_resolve_status(result, temp_status);
-
-    return result;
-}
-
-/**
- * @brief Implements FilterValidCallEvent event handling by the flt state
- * machine.
- * @param [in] p_obj The pointer to the self object.
- * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
- */
-static sm_event_status_t
-flt_dispatch_filtervalidcallevent(sample_flt_t* const p_obj,\
-                                  sample_flt_filtervalidcallevent_t* \
-                                  /**/const p_event)
-{
-    sm_event_status_t result = IGNORED;
-    sm_event_status_t temp_status = IGNORED;
-
-    temp_status = flt_dispatch_filtervalidcallevent_filter_state(p_obj,\
-                                                   p_event);
-    result = sm_event_resolve_status(result, temp_status);
-
-    temp_status = flt_dispatch_filtervalidcallevent_sample_state(p_obj,\
-                                                   p_event);
-    result = sm_event_resolve_status(result, temp_status);
-
-    temp_status = flt_dispatch_filtervalidcallevent_value_state(p_obj, p_event);
-    result = sm_event_resolve_status(result, temp_status);
-
-    return result;
-}
-
-/**
- * @brief Implements SetFilterErrorCallEvent event handling by the flt state
- * machine.
- * @param [in] p_obj The pointer to the self object.
- * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
- */
-static sm_event_status_t
-flt_dispatch_setfiltererrorcallevent(sample_flt_t* const p_obj,\
-                                     sample_flt_setfiltererrorcallevent_t* \
-                                     /**/const p_event)
-{
-    sm_event_status_t result = IGNORED;
-    sm_event_status_t temp_status = IGNORED;
-
-    temp_status = flt_dispatch_setfiltererrorcallevent_filter_state(p_obj,\
-                                                      p_event);
-    result = sm_event_resolve_status(result, temp_status);
-
-    temp_status = flt_dispatch_setfiltererrorcallevent_sample_state(p_obj,\
-                                                      p_event);
-    result = sm_event_resolve_status(result, temp_status);
-
-    temp_status = flt_dispatch_setfiltererrorcallevent_value_state(p_obj,\
-                                                     p_event);
-    result = sm_event_resolve_status(result, temp_status);
-
-    return result;
-}
-
-/**
- * @brief Implements new_sample_call_event event handling by the sample_state
- * region of the flt state machine.
- * @param [in] p_obj The pointer to the self object.
- * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
- */
-static sm_event_status_t
-flt_dispatch_new_sample_call_event_sample_state(sample_flt_t* const p_obj,\
-        sample_flt_new_sample_call_event_t* const p_event)
-{
-    sm_event_status_t result = IGNORED;
-
-    switch(p_obj->sample_state)
-    {
-        case SAMPLE_FLT_INPUT_INVALID:
-            result = flt_dispatch_new_sample_call_event_input_invalid(p_obj,\
-                                                             p_event);
-            break;
-        default:
-            break;
-    }
-
-    return result;
-}
-
-/**
- * @brief Implements FilterInvalidCallEvent event handling by the filter_state
- * region of the flt state machine.
- * @param [in] p_obj The pointer to the self object.
- * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
- */
-static sm_event_status_t
-flt_dispatch_filterinvalidcallevent_filter_state(sample_flt_t* const p_obj,\
-        sample_flt_filterinvalidcallevent_t* const p_event)
-{
-    sm_event_status_t result = IGNORED;
-
-    switch(p_obj->filter_state)
+    switch(p_obj->filter_reg)
     {
         case SAMPLE_FLT_FILTER_INVALID:
             result = flt_dispatch_filterinvalidcallevent_filter_invalid(p_obj,\
@@ -991,19 +891,20 @@ flt_dispatch_filterinvalidcallevent_filter_state(sample_flt_t* const p_obj,\
 }
 
 /**
- * @brief Implements FilterNextPresetCallEvent event handling by the
- * filter_state region of the flt state machine.
+ * @brief Implements FilterNextPresetCallEvent event handling by the flt state
+ * machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
  * return the event dispatch status.
  */
 static sm_event_status_t
-flt_dispatch_filternextpresetcallevent_filter_state(sample_flt_t* const p_obj,\
-        sample_flt_filternextpresetcallevent_t* const p_event)
+flt_dispatch_filternextpresetcallevent(sample_flt_t* const p_obj,\
+                                       sample_flt_filternextpresetcallevent_t* \
+                                       /**/const p_event)
 {
     sm_event_status_t result = IGNORED;
 
-    switch(p_obj->filter_state)
+    switch(p_obj->filter_reg)
     {
         case SAMPLE_FLT_FILTER_INVALID:
             result = flt_dispatch_filternextpresetcallevent_filter_invalid\
@@ -1021,19 +922,19 @@ flt_dispatch_filternextpresetcallevent_filter_state(sample_flt_t* const p_obj,\
 }
 
 /**
- * @brief Implements FilterFirstPresetCallEvent event handling by the
- * filter_state region of the flt state machine.
+ * @brief Implements FilterFirstPresetCallEvent event handling by the flt state
+ * machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
  * return the event dispatch status.
  */
 static sm_event_status_t
-flt_dispatch_filterfirstpresetcallevent_filter_state(sample_flt_t* const p_obj,\
+flt_dispatch_filterfirstpresetcallevent(sample_flt_t* const p_obj,\
         sample_flt_filterfirstpresetcallevent_t* const p_event)
 {
     sm_event_status_t result = IGNORED;
 
-    switch(p_obj->filter_state)
+    switch(p_obj->filter_reg)
     {
         case SAMPLE_FLT_FILTER_INVALID:
             result = flt_dispatch_filterfirstpresetcallevent_filter_invalid\
@@ -1051,19 +952,20 @@ flt_dispatch_filterfirstpresetcallevent_filter_state(sample_flt_t* const p_obj,\
 }
 
 /**
- * @brief Implements FilterValidCallEvent event handling by the filter_state
- * region of the flt state machine.
+ * @brief Implements FilterValidCallEvent event handling by the flt state
+ * machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
  * return the event dispatch status.
  */
 static sm_event_status_t
-flt_dispatch_filtervalidcallevent_filter_state(sample_flt_t* const p_obj,\
-        sample_flt_filtervalidcallevent_t* const p_event)
+flt_dispatch_filtervalidcallevent(sample_flt_t* const p_obj,\
+                                  sample_flt_filtervalidcallevent_t* \
+                                  /**/const p_event)
 {
     sm_event_status_t result = IGNORED;
 
-    switch(p_obj->filter_state)
+    switch(p_obj->filter_reg)
     {
         case SAMPLE_FLT_FILTER_INVALID:
             result = flt_dispatch_filtervalidcallevent_filter_invalid(p_obj,\
@@ -1081,19 +983,183 @@ flt_dispatch_filtervalidcallevent_filter_state(sample_flt_t* const p_obj,\
 }
 
 /**
- * @brief Implements FilterInvalidCallEvent event handling by the finvalid_state
+ * @brief Implements SetFilterErrorCallEvent event handling by the flt state
+ * machine.
+ * @param [in] p_obj The pointer to the self object.
+ * @param [in] p_event The pointer to the event data.
+ * return the event dispatch status.
+ */
+static sm_event_status_t
+flt_dispatch_setfiltererrorcallevent(sample_flt_t* const p_obj,\
+                                     sample_flt_setfiltererrorcallevent_t* \
+                                     /**/const p_event)
+{
+    sm_event_status_t result = IGNORED;
+
+    return result;
+}
+
+/**
+ * @brief Implements new_sample_call_event event handling by the sample_reg
  * region of the flt state machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
  * return the event dispatch status.
  */
 static sm_event_status_t
-flt_dispatch_filterinvalidcallevent_finvalid_state(sample_flt_t* const p_obj,\
+flt_dispatch_new_sample_call_event_sample_reg(sample_flt_t* const p_obj,\
+        sample_flt_new_sample_call_event_t* const p_event)
+{
+    sm_event_status_t result = IGNORED;
+
+    switch(p_obj->sample_reg)
+    {
+        case SAMPLE_FLT_INPUT_INVALID:
+            result = flt_dispatch_new_sample_call_event_input_invalid(p_obj,\
+                                                             p_event);
+            break;
+        default:
+            break;
+    }
+
+    return result;
+}
+
+/**
+ * @brief Implements FilterInvalidCallEvent event handling by the filter_reg
+ * region of the flt state machine.
+ * @param [in] p_obj The pointer to the self object.
+ * @param [in] p_event The pointer to the event data.
+ * return the event dispatch status.
+ */
+static sm_event_status_t
+flt_dispatch_filterinvalidcallevent_filter_reg(sample_flt_t* const p_obj,\
         sample_flt_filterinvalidcallevent_t* const p_event)
 {
     sm_event_status_t result = IGNORED;
 
-    switch(p_obj->finvalid_state)
+    switch(p_obj->filter_reg)
+    {
+        case SAMPLE_FLT_FILTER_INVALID:
+            result = flt_dispatch_filterinvalidcallevent_filter_invalid(p_obj,\
+                    p_event);
+            break;
+        case SAMPLE_FLT_FILTER_VALID:
+            result = flt_dispatch_filterinvalidcallevent_filter_valid(p_obj,\
+                                                             p_event);
+            break;
+        default:
+            break;
+    }
+
+    return result;
+}
+
+/**
+ * @brief Implements FilterNextPresetCallEvent event handling by the filter_reg
+ * region of the flt state machine.
+ * @param [in] p_obj The pointer to the self object.
+ * @param [in] p_event The pointer to the event data.
+ * return the event dispatch status.
+ */
+static sm_event_status_t
+flt_dispatch_filternextpresetcallevent_filter_reg(sample_flt_t* const p_obj,\
+        sample_flt_filternextpresetcallevent_t* const p_event)
+{
+    sm_event_status_t result = IGNORED;
+
+    switch(p_obj->filter_reg)
+    {
+        case SAMPLE_FLT_FILTER_INVALID:
+            result = flt_dispatch_filternextpresetcallevent_filter_invalid\
+                   (p_obj, p_event);
+            break;
+        case SAMPLE_FLT_FILTER_VALID:
+            result = flt_dispatch_filternextpresetcallevent_filter_valid(p_obj,\
+                    p_event);
+            break;
+        default:
+            break;
+    }
+
+    return result;
+}
+
+/**
+ * @brief Implements FilterFirstPresetCallEvent event handling by the filter_reg
+ * region of the flt state machine.
+ * @param [in] p_obj The pointer to the self object.
+ * @param [in] p_event The pointer to the event data.
+ * return the event dispatch status.
+ */
+static sm_event_status_t
+flt_dispatch_filterfirstpresetcallevent_filter_reg(sample_flt_t* const p_obj,\
+        sample_flt_filterfirstpresetcallevent_t* const p_event)
+{
+    sm_event_status_t result = IGNORED;
+
+    switch(p_obj->filter_reg)
+    {
+        case SAMPLE_FLT_FILTER_INVALID:
+            result = flt_dispatch_filterfirstpresetcallevent_filter_invalid\
+                   (p_obj, p_event);
+            break;
+        case SAMPLE_FLT_FILTER_VALID:
+            result = flt_dispatch_filterfirstpresetcallevent_filter_valid\
+                   (p_obj, p_event);
+            break;
+        default:
+            break;
+    }
+
+    return result;
+}
+
+/**
+ * @brief Implements FilterValidCallEvent event handling by the filter_reg
+ * region of the flt state machine.
+ * @param [in] p_obj The pointer to the self object.
+ * @param [in] p_event The pointer to the event data.
+ * return the event dispatch status.
+ */
+static sm_event_status_t
+flt_dispatch_filtervalidcallevent_filter_reg(sample_flt_t* const p_obj,\
+                                             sample_flt_filtervalidcallevent_t* \
+                                             /**/const p_event)
+{
+    sm_event_status_t result = IGNORED;
+
+    switch(p_obj->filter_reg)
+    {
+        case SAMPLE_FLT_FILTER_INVALID:
+            result = flt_dispatch_filtervalidcallevent_filter_invalid(p_obj,\
+                                                             p_event);
+            break;
+        case SAMPLE_FLT_FILTER_VALID:
+            result = flt_dispatch_filtervalidcallevent_filter_valid(p_obj,\
+                                                           p_event);
+            break;
+        default:
+            break;
+    }
+
+    return result;
+}
+
+/**
+ * @brief Implements FilterInvalidCallEvent event handling by the rfinvalid
+ * region of the flt state machine.
+ * @param [in] p_obj The pointer to the self object.
+ * @param [in] p_event The pointer to the event data.
+ * return the event dispatch status.
+ */
+static sm_event_status_t
+flt_dispatch_filterinvalidcallevent_rfinvalid(sample_flt_t* const p_obj,\
+        sample_flt_filterinvalidcallevent_t* const p_event)
+{
+    sm_event_status_t result = IGNORED;
+
+    switch(p_obj->rfinvalid)
     {
         case SAMPLE_FLT_FILTER_ERROR:
             result = flt_dispatch_filterinvalidcallevent_filter_error(p_obj,\
@@ -1107,19 +1173,19 @@ flt_dispatch_filterinvalidcallevent_finvalid_state(sample_flt_t* const p_obj,\
 }
 
 /**
- * @brief Implements FilterNextPresetCallEvent event handling by the
- * finvalid_state region of the flt state machine.
+ * @brief Implements FilterNextPresetCallEvent event handling by the rfinvalid
+ * region of the flt state machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
  * return the event dispatch status.
  */
 static sm_event_status_t
-flt_dispatch_filternextpresetcallevent_finvalid_state(sample_flt_t* \
-        /**/const p_obj, sample_flt_filternextpresetcallevent_t* const p_event)
+flt_dispatch_filternextpresetcallevent_rfinvalid(sample_flt_t* const p_obj,\
+        sample_flt_filternextpresetcallevent_t* const p_event)
 {
     sm_event_status_t result = IGNORED;
 
-    switch(p_obj->finvalid_state)
+    switch(p_obj->rfinvalid)
     {
         case SAMPLE_FLT_FILTER_ERROR:
             result = flt_dispatch_filternextpresetcallevent_filter_error(p_obj,\
@@ -1133,19 +1199,20 @@ flt_dispatch_filternextpresetcallevent_finvalid_state(sample_flt_t* \
 }
 
 /**
- * @brief Implements FilterValidCallEvent event handling by the finvalid_state
- * region of the flt state machine.
+ * @brief Implements FilterValidCallEvent event handling by the rfinvalid region
+ * of the flt state machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
  * return the event dispatch status.
  */
 static sm_event_status_t
-flt_dispatch_filtervalidcallevent_finvalid_state(sample_flt_t* const p_obj,\
-        sample_flt_filtervalidcallevent_t* const p_event)
+flt_dispatch_filtervalidcallevent_rfinvalid(sample_flt_t* const p_obj,\
+                                            sample_flt_filtervalidcallevent_t* \
+                                            /**/const p_event)
 {
     sm_event_status_t result = IGNORED;
 
-    switch(p_obj->finvalid_state)
+    switch(p_obj->rfinvalid)
     {
         case SAMPLE_FLT_FILTER_ERROR:
             result = flt_dispatch_filtervalidcallevent_filter_error(p_obj,\
@@ -1159,20 +1226,20 @@ flt_dispatch_filtervalidcallevent_finvalid_state(sample_flt_t* const p_obj,\
 }
 
 /**
- * @brief Implements ValueOkCallEvent event handling by the value_state region
- * of the flt state machine.
+ * @brief Implements ValueOkCallEvent event handling by the value_reg region of
+ * the flt state machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
  * return the event dispatch status.
  */
 static sm_event_status_t
-flt_dispatch_valueokcallevent_value_state(sample_flt_t* const p_obj,\
-                                          sample_flt_valueokcallevent_t* \
-                                          /**/const p_event)
+flt_dispatch_valueokcallevent_value_reg(sample_flt_t* const p_obj,\
+                                        sample_flt_valueokcallevent_t* \
+                                        /**/const p_event)
 {
     sm_event_status_t result = IGNORED;
 
-    switch(p_obj->value_state)
+    switch(p_obj->value_reg)
     {
         case SAMPLE_FLT_VALUE_ERROR:
             result = flt_dispatch_valueokcallevent_value_error(p_obj, p_event);
@@ -1189,20 +1256,20 @@ flt_dispatch_valueokcallevent_value_state(sample_flt_t* const p_obj,\
 }
 
 /**
- * @brief Implements ValueErrorCallEvent event handling by the value_state
- * region of the flt state machine.
+ * @brief Implements ValueErrorCallEvent event handling by the value_reg region
+ * of the flt state machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
  * return the event dispatch status.
  */
 static sm_event_status_t
-flt_dispatch_valueerrorcallevent_value_state(sample_flt_t* const p_obj,\
-                                             sample_flt_valueerrorcallevent_t* \
-                                             /**/const p_event)
+flt_dispatch_valueerrorcallevent_value_reg(sample_flt_t* const p_obj,\
+                                           sample_flt_valueerrorcallevent_t* \
+                                           /**/const p_event)
 {
     sm_event_status_t result = IGNORED;
 
-    switch(p_obj->value_state)
+    switch(p_obj->value_reg)
     {
         case SAMPLE_FLT_VALUE_INVALID:
             result = flt_dispatch_valueerrorcallevent_value_invalid(p_obj,\
@@ -1219,19 +1286,19 @@ flt_dispatch_valueerrorcallevent_value_state(sample_flt_t* const p_obj,\
 }
 
 /**
- * @brief Implements ValueInvalidCallEvent event handling by the value_state
+ * @brief Implements ValueInvalidCallEvent event handling by the value_reg
  * region of the flt state machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
  * return the event dispatch status.
  */
 static sm_event_status_t
-flt_dispatch_valueinvalidcallevent_value_state(sample_flt_t* const p_obj,\
+flt_dispatch_valueinvalidcallevent_value_reg(sample_flt_t* const p_obj,\
         sample_flt_valueinvalidcallevent_t* const p_event)
 {
     sm_event_status_t result = IGNORED;
 
-    switch(p_obj->value_state)
+    switch(p_obj->value_reg)
     {
         case SAMPLE_FLT_VALUE_OK:
             result = flt_dispatch_valueinvalidcallevent_value_ok(p_obj,\
@@ -1249,7 +1316,7 @@ flt_dispatch_valueinvalidcallevent_value_state(sample_flt_t* const p_obj,\
  * state of the flt state machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
+ * @return the event dispatch status.
  */
 static sm_event_status_t
 flt_dispatch_new_sample_call_event_input_invalid(sample_flt_t* const p_obj,\
@@ -1257,7 +1324,7 @@ flt_dispatch_new_sample_call_event_input_invalid(sample_flt_t* const p_obj,\
 {
     sm_event_status_t result = IGNORED;
 
-    
+    result = flt_enter_choice18(p_obj);
 
     return result;
 }
@@ -1267,7 +1334,7 @@ flt_dispatch_new_sample_call_event_input_invalid(sample_flt_t* const p_obj,\
  * state of the flt state machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
+ * @return the event dispatch status.
  */
 static sm_event_status_t
 flt_dispatch_filterinvalidcallevent_filter_invalid(sample_flt_t* const p_obj,\
@@ -1275,21 +1342,23 @@ flt_dispatch_filterinvalidcallevent_filter_invalid(sample_flt_t* const p_obj,\
 {
     sm_event_status_t result = IGNORED;
 
-    result = flt_dispatch_filterinvalidcallevent_finvalid_state(p_obj, p_event);
+    result = flt_dispatch_filterinvalidcallevent_rfinvalid(p_obj, p_event);
 
     if(IGNORED == result)
     {
-        #error local transition execution not supported yet.
+        sample_flt_preset(p_obj);
+        result = flt_enter_choice4(p_obj);
     }
 
     return result;
 }
+
 /**
  * @brief Implements FilterInvalidCallEvent event handling by the FILTER_VALID
  * state of the flt state machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
+ * @return the event dispatch status.
  */
 static sm_event_status_t
 flt_dispatch_filterinvalidcallevent_filter_valid(sample_flt_t* const p_obj,\
@@ -1297,7 +1366,7 @@ flt_dispatch_filterinvalidcallevent_filter_valid(sample_flt_t* const p_obj,\
 {
     sm_event_status_t result = IGNORED;
 
-    
+    result = flt_enter_choice14(p_obj);
 
     return result;
 }
@@ -1307,7 +1376,7 @@ flt_dispatch_filterinvalidcallevent_filter_valid(sample_flt_t* const p_obj,\
  * FILTER_INVALID state of the flt state machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
+ * @return the event dispatch status.
  */
 static sm_event_status_t
 flt_dispatch_filternextpresetcallevent_filter_invalid(sample_flt_t* \
@@ -1315,22 +1384,23 @@ flt_dispatch_filternextpresetcallevent_filter_invalid(sample_flt_t* \
 {
     sm_event_status_t result = IGNORED;
 
-    result = flt_dispatch_filternextpresetcallevent_finvalid_state(p_obj,\
-                                                          p_event);
+    result = flt_dispatch_filternextpresetcallevent_rfinvalid(p_obj, p_event);
 
     if(IGNORED == result)
     {
-        #error local transition execution not supported yet.
+        sample_flt_preset(p_obj);
+        result = flt_enter_choice4(p_obj);
     }
 
     return result;
 }
+
 /**
  * @brief Implements FilterNextPresetCallEvent event handling by the
  * FILTER_VALID state of the flt state machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
+ * @return the event dispatch status.
  */
 static sm_event_status_t
 flt_dispatch_filternextpresetcallevent_filter_valid(sample_flt_t* const p_obj,\
@@ -1338,7 +1408,7 @@ flt_dispatch_filternextpresetcallevent_filter_valid(sample_flt_t* const p_obj,\
 {
     sm_event_status_t result = IGNORED;
 
-    
+    result = flt_enter_choice14(p_obj);
 
     return result;
 }
@@ -1348,7 +1418,7 @@ flt_dispatch_filternextpresetcallevent_filter_valid(sample_flt_t* const p_obj,\
  * FILTER_INVALID state of the flt state machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
+ * @return the event dispatch status.
  */
 static sm_event_status_t
 flt_dispatch_filterfirstpresetcallevent_filter_invalid\
@@ -1362,12 +1432,13 @@ flt_dispatch_filterfirstpresetcallevent_filter_invalid\
 
     return result;
 }
+
 /**
  * @brief Implements FilterFirstPresetCallEvent event handling by the
  * FILTER_VALID state of the flt state machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
+ * @return the event dispatch status.
  */
 static sm_event_status_t
 flt_dispatch_filterfirstpresetcallevent_filter_valid(sample_flt_t* const p_obj,\
@@ -1386,7 +1457,7 @@ flt_dispatch_filterfirstpresetcallevent_filter_valid(sample_flt_t* const p_obj,\
  * state of the flt state machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
+ * @return the event dispatch status.
  */
 static sm_event_status_t
 flt_dispatch_filtervalidcallevent_filter_invalid(sample_flt_t* const p_obj,\
@@ -1394,21 +1465,23 @@ flt_dispatch_filtervalidcallevent_filter_invalid(sample_flt_t* const p_obj,\
 {
     sm_event_status_t result = IGNORED;
 
-    result = flt_dispatch_filtervalidcallevent_finvalid_state(p_obj, p_event);
+    result = flt_dispatch_filtervalidcallevent_rfinvalid(p_obj, p_event);
 
     if(IGNORED == result)
     {
-        
+        sample_flt_lp(p_obj,p_obj->raw_sample);
+        result = flt_enter_choice7(p_obj);
     }
 
     return result;
 }
+
 /**
  * @brief Implements FilterValidCallEvent event handling by the FILTER_VALID
  * state of the flt state machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
+ * @return the event dispatch status.
  */
 static sm_event_status_t
 flt_dispatch_filtervalidcallevent_filter_valid(sample_flt_t* const p_obj,\
@@ -1428,7 +1501,7 @@ flt_dispatch_filtervalidcallevent_filter_valid(sample_flt_t* const p_obj,\
  * state of the flt state machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
+ * @return the event dispatch status.
  */
 static sm_event_status_t
 flt_dispatch_filterinvalidcallevent_filter_error(sample_flt_t* const p_obj,\
@@ -1448,7 +1521,7 @@ flt_dispatch_filterinvalidcallevent_filter_error(sample_flt_t* const p_obj,\
  * FILTER_ERROR state of the flt state machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
+ * @return the event dispatch status.
  */
 static sm_event_status_t
 flt_dispatch_filternextpresetcallevent_filter_error(sample_flt_t* const p_obj,\
@@ -1468,7 +1541,7 @@ flt_dispatch_filternextpresetcallevent_filter_error(sample_flt_t* const p_obj,\
  * state of the flt state machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
+ * @return the event dispatch status.
  */
 static sm_event_status_t
 flt_dispatch_filtervalidcallevent_filter_error(sample_flt_t* const p_obj,\
@@ -1476,7 +1549,8 @@ flt_dispatch_filtervalidcallevent_filter_error(sample_flt_t* const p_obj,\
 {
     sm_event_status_t result = IGNORED;
 
-    
+    sample_flt_lp(p_obj,p_obj->raw_sample);
+    result = flt_enter_choice11(p_obj);
 
     return result;
 }
@@ -1486,7 +1560,7 @@ flt_dispatch_filtervalidcallevent_filter_error(sample_flt_t* const p_obj,\
  * the flt state machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
+ * @return the event dispatch status.
  */
 static sm_event_status_t
 flt_dispatch_valueokcallevent_value_error(sample_flt_t* const p_obj,\
@@ -1495,16 +1569,18 @@ flt_dispatch_valueokcallevent_value_error(sample_flt_t* const p_obj,\
 {
     sm_event_status_t result = IGNORED;
 
-    
+    flt_enter_value_ok(p_obj);
+    result = CHANGEDSTATE;
 
     return result;
 }
+
 /**
  * @brief Implements ValueOkCallEvent event handling by the VALUE_INVALID state
  * of the flt state machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
+ * @return the event dispatch status.
  */
 static sm_event_status_t
 flt_dispatch_valueokcallevent_value_invalid(sample_flt_t* const p_obj,\
@@ -1513,7 +1589,8 @@ flt_dispatch_valueokcallevent_value_invalid(sample_flt_t* const p_obj,\
 {
     sm_event_status_t result = IGNORED;
 
-    
+    flt_enter_value_ok(p_obj);
+    result = CHANGEDSTATE;
 
     return result;
 }
@@ -1523,7 +1600,7 @@ flt_dispatch_valueokcallevent_value_invalid(sample_flt_t* const p_obj,\
  * state of the flt state machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
+ * @return the event dispatch status.
  */
 static sm_event_status_t
 flt_dispatch_valueerrorcallevent_value_invalid(sample_flt_t* const p_obj,\
@@ -1531,16 +1608,18 @@ flt_dispatch_valueerrorcallevent_value_invalid(sample_flt_t* const p_obj,\
 {
     sm_event_status_t result = IGNORED;
 
-    
+    flt_enter_value_error(p_obj);
+    result = CHANGEDSTATE;
 
     return result;
 }
+
 /**
  * @brief Implements ValueErrorCallEvent event handling by the VALUE_OK state of
  * the flt state machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
+ * @return the event dispatch status.
  */
 static sm_event_status_t
 flt_dispatch_valueerrorcallevent_value_ok(sample_flt_t* const p_obj,\
@@ -1549,7 +1628,8 @@ flt_dispatch_valueerrorcallevent_value_ok(sample_flt_t* const p_obj,\
 {
     sm_event_status_t result = IGNORED;
 
-    
+    flt_enter_value_error(p_obj);
+    result = CHANGEDSTATE;
 
     return result;
 }
@@ -1559,7 +1639,7 @@ flt_dispatch_valueerrorcallevent_value_ok(sample_flt_t* const p_obj,\
  * of the flt state machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
+ * @return the event dispatch status.
  */
 static sm_event_status_t
 flt_dispatch_valueinvalidcallevent_value_ok(sample_flt_t* const p_obj,\
@@ -1568,7 +1648,185 @@ flt_dispatch_valueinvalidcallevent_value_ok(sample_flt_t* const p_obj,\
 {
     sm_event_status_t result = IGNORED;
 
-    
+    flt_enter_value_invalid(p_obj);
+    result = CHANGEDSTATE;
+
+    return result;
+}
+
+/**
+ * @brief Implements entry of the Choice19 choice Pseudostate of the flt state
+ * machine.
+ * @param [in] p_obj The pointer to the self object.
+ * @return the event dispatch status.
+ */
+static sm_event_status_t
+flt_enter_choice19(sample_flt_t* const p_obj)
+{
+    sm_event_status_t result = CHANGEDSTATE;
+
+    if(sample_flt_check_slope(p_obj, sample))
+    {
+        flt_enter_input_valid(p_obj);
+        result = CHANGEDSTATE;
+    }
+    else 
+    {
+        flt_enter_input_next_preset(p_obj);
+        result = CHANGEDSTATE;
+    }
+
+    return result;
+}
+/**
+ * @brief Implements entry of the Choice18 choice Pseudostate of the flt state
+ * machine.
+ * @param [in] p_obj The pointer to the self object.
+ * @return the event dispatch status.
+ */
+static sm_event_status_t
+flt_enter_choice18(sample_flt_t* const p_obj)
+{
+    sm_event_status_t result = CHANGEDSTATE;
+
+    if(b_is_valid)
+    {
+        flt_enter_input_first_preset(p_obj);
+        result = CHANGEDSTATE;
+    }
+    else 
+    {
+        flt_enter_junction24(p_obj);
+        result = CHANGEDSTATE;
+    }
+
+    return result;
+}
+/**
+ * @brief Implements entry of the Choice21 choice Pseudostate of the flt state
+ * machine.
+ * @param [in] p_obj The pointer to the self object.
+ * @return the event dispatch status.
+ */
+static sm_event_status_t
+flt_enter_choice21(sample_flt_t* const p_obj)
+{
+    sm_event_status_t result = CHANGEDSTATE;
+
+    if(b_is_valid)
+    {
+        result = flt_enter_choice19(p_obj);
+    }
+    else 
+    {
+        flt_enter_junction24(p_obj);
+        result = CHANGEDSTATE;
+    }
+
+    return result;
+}
+/**
+ * @brief Implements entry of the Choice4 choice Pseudostate of the flt state
+ * machine.
+ * @param [in] p_obj The pointer to the self object.
+ * @return the event dispatch status.
+ */
+static sm_event_status_t
+flt_enter_choice4(sample_flt_t* const p_obj)
+{
+    sm_event_status_t result = CHANGEDSTATE;
+
+    if(sample_flt_inc_fail(p_obj))
+    {
+        flt_enter_filter_error(p_obj);
+        result = CHANGEDSTATE;
+    }
+    else 
+    {
+        result = CHANGEDSTATE;
+        sm_event_status_t temp_status = IGNORED;
+        temp_status = flt_enter_rfinvalid(p_obj);
+        result = sm_event_resolve_status(result, temp_status);
+    }
+
+    return result;
+}
+/**
+ * @brief Implements entry of the Choice7 choice Pseudostate of the flt state
+ * machine.
+ * @param [in] p_obj The pointer to the self object.
+ * @return the event dispatch status.
+ */
+static sm_event_status_t
+flt_enter_choice7(sample_flt_t* const p_obj)
+{
+    sm_event_status_t result = CHANGEDSTATE;
+
+    if(sample_flt_inc_pass(p_obj))
+    {
+        flt_enter_filter_valid(p_obj);
+        result = CHANGEDSTATE;
+    }
+    else 
+    {
+        flt_enter_filter_invalid(p_obj);
+        result = CHANGEDSTATE;
+        sm_event_status_t temp_status = IGNORED;
+        temp_status = flt_enter_rfinvalid(p_obj);
+        result = sm_event_resolve_status(result, temp_status);
+    }
+
+    return result;
+}
+/**
+ * @brief Implements entry of the Choice11 choice Pseudostate of the flt state
+ * machine.
+ * @param [in] p_obj The pointer to the self object.
+ * @return the event dispatch status.
+ */
+static sm_event_status_t
+flt_enter_choice11(sample_flt_t* const p_obj)
+{
+    sm_event_status_t result = CHANGEDSTATE;
+
+    if(sample_flt_inc_pass(p_obj))
+    {
+        flt_enter_filter_valid(p_obj);
+        result = CHANGEDSTATE;
+    }
+    else 
+    {
+        flt_enter_filter_invalid(p_obj);
+        flt_enter_filter_error(p_obj);
+        result = CHANGEDSTATE;
+    }
+
+    return result;
+}
+/**
+ * @brief Implements entry of the Choice14 choice Pseudostate of the flt state
+ * machine.
+ * @param [in] p_obj The pointer to the self object.
+ * @return the event dispatch status.
+ */
+static sm_event_status_t
+flt_enter_choice14(sample_flt_t* const p_obj)
+{
+    sm_event_status_t result = CHANGEDSTATE;
+
+    if(sample_flt_inc_fail(p_obj))
+    {
+        sample_flt_preset(p_obj);
+        flt_enter_filter_invalid(p_obj);
+        flt_enter_filter_error(p_obj);
+        result = CHANGEDSTATE;
+    }
+    else 
+    {
+        sample_flt_predict(p_obj);
+        flt_enter_filter_valid(p_obj);
+        result = CHANGEDSTATE;
+    }
 
     return result;
 }

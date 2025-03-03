@@ -30,12 +30,12 @@ extern "C" {
             sample_flt_t;
 
     /**
-     * @brief The enumeration of all substates of sample_state Region of flt
+     * @brief The enumeration of all substates of sample_reg Region of flt
      * StateMachine.
      */
     typedef enum{
         /**
-         * @brief The default substate of the sample_state Region of flt
+         * @brief The default substate of the sample_reg Region of flt
          * StateMachine.
          */
         SAMPLE_FLT_INPUT_INITIAL,
@@ -54,19 +54,19 @@ extern "C" {
          */
         SAMPLE_FLT_INPUT_NEXT_PRESET,
         /**
-         * @brief The number of all substates of sample_state Region of flt
+         * @brief The number of all substates of sample_reg Region of flt
          * StateMachine.
          */
-        SAMPLE_FLT_SAMPLE_STATE_SIZE
-    }sample_flt_sample_state_t;
+        SAMPLE_FLT_SAMPLE_REG_SIZE
+    }sample_flt_sample_reg_t;
     
     /**
-     * @brief The enumeration of all substates of filter_state Region of flt
+     * @brief The enumeration of all substates of filter_reg Region of flt
      * StateMachine.
      */
     typedef enum{
         /**
-         * @brief The default substate of the filter_state Region of flt
+         * @brief The default substate of the filter_reg Region of flt
          * StateMachine.
          */
         SAMPLE_FLT_FILTER_INITIAL,
@@ -77,39 +77,39 @@ extern "C" {
          */
         SAMPLE_FLT_FILTER_VALID,
         /**
-         * @brief The number of all substates of filter_state Region of flt
+         * @brief The number of all substates of filter_reg Region of flt
          * StateMachine.
          */
-        SAMPLE_FLT_FILTER_STATE_SIZE
-    }sample_flt_filter_state_t;
+        SAMPLE_FLT_FILTER_REG_SIZE
+    }sample_flt_filter_reg_t;
     
     /**
-     * @brief The enumeration of all substates of finvalid_state Region of flt
+     * @brief The enumeration of all substates of rfinvalid Region of flt
      * StateMachine.
      */
     typedef enum{
         /**
-         * @brief The default substate of the finvalid_state Region of flt
+         * @brief The default substate of the rfinvalid Region of flt
          * StateMachine.
          */
-        SAMPLE_FLT_FINVALID_STATE_INITIAL,
+        SAMPLE_FLT_RFINVALID_INL,
         /**
          */
         SAMPLE_FLT_FILTER_ERROR,
         /**
-         * @brief The number of all substates of finvalid_state Region of flt
+         * @brief The number of all substates of rfinvalid Region of flt
          * StateMachine.
          */
-        SAMPLE_FLT_FINVALID_STATE_SIZE
-    }sample_flt_finvalid_state_t;
+        SAMPLE_FLT_RFINVALID_SIZE
+    }sample_flt_rfinvalid_t;
     
     /**
-     * @brief The enumeration of all substates of value_state Region of flt
+     * @brief The enumeration of all substates of value_reg Region of flt
      * StateMachine.
      */
     typedef enum{
         /**
-         * @brief The default substate of the value_state Region of flt
+         * @brief The default substate of the value_reg Region of flt
          * StateMachine.
          */
         SAMPLE_FLT_VALUE_INITIAL,
@@ -123,11 +123,11 @@ extern "C" {
          */
         SAMPLE_FLT_VALUE_OK,
         /**
-         * @brief The number of all substates of value_state Region of flt
+         * @brief The number of all substates of value_reg Region of flt
          * StateMachine.
          */
-        SAMPLE_FLT_VALUE_STATE_SIZE
-    }sample_flt_value_state_t;
+        SAMPLE_FLT_VALUE_REG_SIZE
+    }sample_flt_value_reg_t;
     
     /**
      * @brief The enumeration of all events handled by flt Class.
@@ -525,16 +525,16 @@ extern "C" {
     {
         /**
          */
-        sample_flt_sample_state_t       sample_state;
+        sample_flt_sample_reg_t         sample_reg;
         /**
          */
-        sample_flt_filter_state_t       filter_state;
+        sample_flt_filter_reg_t         filter_reg;
         /**
          */
-        sample_flt_finvalid_state_t     finvalid_state;
+        sample_flt_rfinvalid_t          rfinvalid;
         /**
          */
-        sample_flt_value_state_t        value_state;
+        sample_flt_value_reg_t          value_reg;
         /**
          * @brief The type of the first event in the event pool of the flt
          * class.

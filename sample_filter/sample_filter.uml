@@ -442,7 +442,7 @@ This method is used for filltration when the fail or pass counter hasn't reached
         <ownedParameter xmi:type="uml:Parameter" xmi:id="_d_kl8AiKEe6xH9UuctTWYA" name="max_slope" type="_qXoxoOYWEe2qqeuoL4z2nw" effect="read"/>
         <ownedParameter xmi:type="uml:Parameter" xmi:id="_phmesAiKEe6xH9UuctTWYA" type="_4qPzkE_UEe2aj809ZQ7CAQ" direction="return"/>
       </ownedOperation>
-      <region xmi:type="uml:Region" xmi:id="_4qiugE_UEe2aj809ZQ7CAQ" name="sample_state">
+      <region xmi:type="uml:Region" xmi:id="_4qiugE_UEe2aj809ZQ7CAQ" name="sample_reg">
         <transition xmi:type="uml:Transition" xmi:id="_WjTp0E_cEe2aj809ZQ7CAQ" source="_UC8l4E_cEe2aj809ZQ7CAQ" target="_Dc2agE_VEe2aj809ZQ7CAQ"/>
         <transition xmi:type="uml:Transition" xmi:id="_VnWwME_iEe2aj809ZQ7CAQ" guard="_tTB7UE_iEe2aj809ZQ7CAQ" source="_3oHscFF6Ee2LhuD-jDJqtA" target="_2NjZIFK9Ee2FBYrqfqLMzA">
           <ownedRule xmi:type="uml:Constraint" xmi:id="_tTB7UE_iEe2aj809ZQ7CAQ" name="check_sample_invalid" constrainedElement="_JLJgck_dEe2aj809ZQ7CAQ">
@@ -514,7 +514,7 @@ This method is used for filltration when the fail or pass counter hasn't reached
         <subvertex xmi:type="uml:Pseudostate" xmi:id="_ifkWoFGAEe2LhuD-jDJqtA" name="Junction24" kind="junction"/>
         <subvertex xmi:type="uml:State" xmi:id="_2NjZIFK9Ee2FBYrqfqLMzA" name="INPUT_NEXT_PRESET"/>
       </region>
-      <region xmi:type="uml:Region" xmi:id="_M4Aq0FHtEe2SabfwKFHwQA" name="filter_state">
+      <region xmi:type="uml:Region" xmi:id="_M4Aq0FHtEe2SabfwKFHwQA" name="filter_reg">
         <transition xmi:type="uml:Transition" xmi:id="_77zhAFHvEe2SabfwKFHwQA" guard="_-x2hEFHvEe2SabfwKFHwQA" source="_PtmF8FHvEe2SabfwKFHwQA" target="_BWMimVHvEe2SabfwKFHwQA">
           <ownedRule xmi:type="uml:Constraint" xmi:id="_-x2hEFHvEe2SabfwKFHwQA">
             <specification xmi:type="uml:OpaqueExpression" xmi:id="_-x2hEVHvEe2SabfwKFHwQA">
@@ -647,7 +647,7 @@ sample_flt_lp(p_obj,p_obj->raw_sample);</body>
           <trigger xmi:type="uml:Trigger" xmi:id="_NMGuEFS3Ee2qLo7_gNrJzw" event="_J_3bkFS3Ee2qLo7_gNrJzw"/>
         </transition>
         <subvertex xmi:type="uml:State" xmi:id="_gYo8YFHuEe2SabfwKFHwQA" name="FILTER_INVALID">
-          <region xmi:type="uml:Region" xmi:id="_BWMiklHvEe2SabfwKFHwQA" name="finvalid_state">
+          <region xmi:type="uml:Region" xmi:id="_BWMiklHvEe2SabfwKFHwQA" name="rfinvalid">
             <transition xmi:type="uml:Transition" xmi:id="_3XXlIFHyEe2SabfwKFHwQA" kind="internal" source="_BWMimVHvEe2SabfwKFHwQA" target="_BWMimVHvEe2SabfwKFHwQA">
               <ownedRule xmi:type="uml:Constraint" xmi:id="_cRZ-kFMdEe2FBYrqfqLMzA">
                 <specification xmi:type="uml:OpaqueExpression" xmi:id="_cRZ-kVMdEe2FBYrqfqLMzA">
@@ -681,7 +681,7 @@ sample_flt_preset(p_obj);</body>
         <subvertex xmi:type="uml:Pseudostate" xmi:id="_1FtiMFILEe2SabfwKFHwQA" name="FILTER_INITIAL"/>
         <subvertex xmi:type="uml:Pseudostate" xmi:id="_bAmOIFS2Ee2qLo7_gNrJzw" name="Junction22" kind="junction"/>
       </region>
-      <region xmi:type="uml:Region" xmi:id="_ZbpxgFKxEe2FBYrqfqLMzA" name="value_state">
+      <region xmi:type="uml:Region" xmi:id="_ZbpxgFKxEe2FBYrqfqLMzA" name="value_reg">
         <transition xmi:type="uml:Transition" xmi:id="_DmVbsFMMEe2FBYrqfqLMzA" source="_iUYlYFK0Ee2FBYrqfqLMzA" target="_ugzmUFKxEe2FBYrqfqLMzA"/>
         <transition xmi:type="uml:Transition" xmi:id="_dLdJ0FMOEe2FBYrqfqLMzA" source="_ugzmUFKxEe2FBYrqfqLMzA" target="_yPzAkFKxEe2FBYrqfqLMzA">
           <trigger xmi:type="uml:Trigger" xmi:id="_hQdQUFMOEe2FBYrqfqLMzA" event="_hAgv0FMOEe2FBYrqfqLMzA"/>

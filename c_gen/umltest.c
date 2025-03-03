@@ -172,7 +172,7 @@ typedef enum{
      * @brief The default substate of the Region3 Region of exitbhv_test_sm
      * StateMachine.
      */
-    UMLTEST_EXITBHV_TEST_SM_REGION3_INITIAL,
+    UMLTEST_EXITBHV_TEST_SM_REGION3_INL,
     /**
      */
     UMLTEST_EXITBHV_TEST_SM_R3S1,
@@ -192,7 +192,7 @@ typedef enum{
      * @brief The default substate of the Region2 Region of exitbhv_test_sm
      * StateMachine.
      */
-    UMLTEST_EXITBHV_TEST_SM_REGION2_INITIAL,
+    UMLTEST_EXITBHV_TEST_SM_REGION2_INL,
     /**
      * @brief A pseudostate reserved for execution of the entry behavior of the
      * R2S1 state.
@@ -313,7 +313,7 @@ umltest_app_t* umltest_app_create_coeff(umltest_app_t* const p_obj,\
 
 
 void umltest_emotor_start_bhv(umltest_iface_t* const p_obj);
-void umltest_emotor_stop_bhv(umltest_iface_t* const p_obj);
+bool umltest_emotor_stop_bhv(umltest_iface_t* const p_obj);
 
 
 void umltest_engine_start_bhv(umltest_iface_t* const p_obj);
@@ -323,24 +323,18 @@ void umltest_engine_accel_bhv(umltest_iface_t* const p_obj);
 void umltest_hybrid_start_bhv(umltest_iface_t* const p_obj);
 
 
-void umltest_propulsion_stop_bhv(umltest_iface_t* const p_obj);
+bool umltest_propulsion_stop_bhv(umltest_iface_t* const p_obj);
 
 /*******************************************************************************
  * 
  * Private function prototypes.
  * 
  ******************************************************************************/
-
 static void umltest_app_lp_bh(sample_flt_t* const p_obj,\
                               float32_t const filter_in);
 
 static void umltest_app_init_df(umltest_app_t* const p_obj);
-
-
 static void umltest_classtmp_init_df(umltest_classtmp_t* const p_obj);
-
-
-
 
 static sm_event_status_t efsm_dispatch_call_flip(umltest_efsm_t* const p_obj,\
                                                  umltest_tmpcombo_call_flip_t* \
@@ -357,14 +351,17 @@ static sm_event_status_t efsm_dispatch_callflap_r1s2\
        (umltest_efsm_t* const p_obj,\
         umltest_tmpcombo_callflap_t* const p_event);
 
-
-
 static void umltest_emotor_init_df(umltest_emotor_t* const p_obj);
-
-
 static void umltest_engine_init_df(umltest_engine_t* const p_obj);
 
+static sm_event_status_t entrysm_dispatch_confentry_ce\
+       (umltest_entrysm_t* const p_obj,\
+        umltest_tmpcombo_confentry_ce_t* const p_event);
 
+
+static sm_event_status_t entrysm_dispatch_confentry_ce_state2\
+       (umltest_entrysm_t* const p_obj,\
+        umltest_tmpcombo_confentry_ce_t* const p_event);
 
 
 static sm_event_status_t exitbhv_test_sm_dispatch_callflap\
@@ -376,12 +373,7 @@ static sm_event_status_t exitbhv_test_sm_dispatch_callflap_r1s1\
        (umltest_exitbhv_test_sm_t* const p_obj,\
         umltest_tmpcombo_callflap_t* const p_event);
 
-
-
 static void umltest_hybrid_init_df(umltest_hybrid_t* const p_obj);
-
-
-
 
 static sm_event_status_t nested_sm_dispatch_call_flip\
        (umltest_nested_sm_t* const p_obj,\
@@ -392,11 +384,9 @@ static sm_event_status_t nested_sm_dispatch_call_flip_state1\
        (umltest_nested_sm_t* const p_obj,\
         umltest_tmpcombo_call_flip_t* const p_event);
 
-
-
 static void umltest_propulsion_init_df(umltest_propulsion_t* const p_obj);
-
-
+static bool umltest_tmpCombo_bhv_guard(umltest_tmpCombo_t* const p_obj,\
+                                       float32_t const Parameter1);
 
 static bool sm1_exit_region1(umltest_sm1_t* const p_obj);
 static bool sm1_exit_region2(umltest_sm1_t* const p_obj);
@@ -468,9 +458,6 @@ static sm_event_status_t sm1_dispatch_flepcallevt_subflip3\
         umltest_tmpcombo_flepcallevt_t* const p_event);
 
 
-
-
-
 static sm_event_status_t sment_dispatch_call_flip(umltest_sment_t* \
         /**/const p_obj, umltest_tmpcombo_call_flip_t* const p_event);
 
@@ -479,12 +466,9 @@ static sm_event_status_t sment_dispatch_call_flip_r1s1\
        (umltest_sment_t* const p_obj,\
         umltest_tmpcombo_call_flip_t* const p_event);
 
-
 static void umltest_tmpCombo_sm1(umltest_tmpCombo_t* const p_obj);
 
 static void umltest_tmpCombo_init_df(umltest_tmpCombo_t* const p_obj);
-
-
 static void umltest_tmpHybrid_init_df(umltest_tmpHybrid_t* const p_obj);
 /*******************************************************************************
  * 
@@ -549,6 +533,68 @@ efsm_enter_finalstate4(umltest_efsm_t* const p_obj)
 }
 
 /**
+ * @brief Implements entry of the Region1 region of the efsm state machine.
+ * @param [in] p_obj The pointer to the self object.
+ * @return the initial transition dispatch status.
+ */
+static inline sm_event_status_t
+efsm_enter_region1(umltest_efsm_t* const p_obj)
+{
+    sm_event_status_t result;
+    p_obj->region1 = UMLTEST_EFSM_INITIAL1;
+    efsm_enter_r1s1(p_obj);
+    result = CHANGEDSTATE;
+    return result;
+}
+
+
+/**
+ * @brief Enters the State2 state of the entrysm state machine.
+ * @param [in] p_obj The pointer to the self object.
+ */
+static inline void
+entrysm_enter_state2(umltest_entrysm_t* const p_obj)
+{
+    p_obj->region1 = UMLTEST_ENTRYSM_STATE2;
+}
+
+/**
+ * @brief Enters the State3 state of the entrysm state machine.
+ * @param [in] p_obj The pointer to the self object.
+ */
+static inline void
+entrysm_enter_state3(umltest_entrysm_t* const p_obj)
+{
+    p_obj->region1 = UMLTEST_ENTRYSM_STATE3;
+}
+
+/**
+ * @brief Enters the FinalState4 state of the entrysm state machine.
+ * @param [in] p_obj The pointer to the self object.
+ */
+static inline void
+entrysm_enter_finalstate4(umltest_entrysm_t* const p_obj)
+{
+    p_obj->region1 = UMLTEST_ENTRYSM_FINALSTATE4;
+}
+
+/**
+ * @brief Implements entry of the Region1 region of the entrysm state machine.
+ * @param [in] p_obj The pointer to the self object.
+ * @return the initial transition dispatch status.
+ */
+static inline sm_event_status_t
+entrysm_enter_region1(umltest_entrysm_t* const p_obj)
+{
+    sm_event_status_t result;
+    p_obj->region1 = UMLTEST_ENTRYSM_INITIAL1;
+    entrysm_enter_state2(p_obj);
+    result = CHANGEDSTATE;
+    return result;
+}
+
+
+/**
  * @brief Enters the R1S1 state of the exitbhv_test_sm state machine.
  * @param [in] p_obj The pointer to the self object.
  */
@@ -566,7 +612,7 @@ static inline void
 exitbhv_test_sm_enter_r1s2(umltest_exitbhv_test_sm_t* const p_obj)
 {
     p_obj->region1 = UMLTEST_EXITBHV_TEST_SM_R1S2;
-    
+    #error effect Behavior type not supported
 }
 
 /**
@@ -587,7 +633,7 @@ static inline void
 exitbhv_test_sm_enter_r2s1(umltest_exitbhv_test_sm_t* const p_obj)
 {
     p_obj->region2 = UMLTEST_EXITBHV_TEST_SM_R2S1;
-    
+    #error effect Behavior type not supported
 }
 
 /**
@@ -599,6 +645,55 @@ exitbhv_test_sm_enter_finalstate6(umltest_exitbhv_test_sm_t* const p_obj)
 {
     p_obj->region1 = UMLTEST_EXITBHV_TEST_SM_FINALSTATE6;
 }
+
+/**
+ * @brief Implements entry of the Region3 region of the exitbhv_test_sm state
+ * machine.
+ * @param [in] p_obj The pointer to the self object.
+ * @return the initial transition dispatch status.
+ */
+static inline sm_event_status_t
+exitbhv_test_sm_enter_region3(umltest_exitbhv_test_sm_t* const p_obj)
+{
+    sm_event_status_t result;
+    p_obj->region3 = UMLTEST_EXITBHV_TEST_SM_REGION3_INL;
+    result = CHANGEDSTATE;
+    return result;
+}
+
+
+/**
+ * @brief Implements entry of the Region2 region of the exitbhv_test_sm state
+ * machine.
+ * @param [in] p_obj The pointer to the self object.
+ * @return the initial transition dispatch status.
+ */
+static inline sm_event_status_t
+exitbhv_test_sm_enter_region2(umltest_exitbhv_test_sm_t* const p_obj)
+{
+    sm_event_status_t result;
+    p_obj->region2 = UMLTEST_EXITBHV_TEST_SM_REGION2_INL;
+    result = CHANGEDSTATE;
+    return result;
+}
+
+
+/**
+ * @brief Implements entry of the Region1 region of the exitbhv_test_sm state
+ * machine.
+ * @param [in] p_obj The pointer to the self object.
+ * @return the initial transition dispatch status.
+ */
+static inline sm_event_status_t
+exitbhv_test_sm_enter_region1(umltest_exitbhv_test_sm_t* const p_obj)
+{
+    sm_event_status_t result;
+    p_obj->region1 = UMLTEST_EXITBHV_TEST_SM_INITIAL3;
+    exitbhv_test_sm_enter_r1s1(p_obj);
+    result = CHANGEDSTATE;
+    return result;
+}
+
 
 /**
  * @brief Enters the State1 state of the nested_sm state machine.
@@ -629,6 +724,22 @@ nested_sm_enter_finalstate4(umltest_nested_sm_t* const p_obj)
 {
     p_obj->region1 = UMLTEST_NESTED_SM_FINALSTATE4;
 }
+
+/**
+ * @brief Implements entry of the Region1 region of the nested_sm state machine.
+ * @param [in] p_obj The pointer to the self object.
+ * @return the initial transition dispatch status.
+ */
+static inline sm_event_status_t
+nested_sm_enter_region1(umltest_nested_sm_t* const p_obj)
+{
+    sm_event_status_t result;
+    p_obj->region1 = UMLTEST_NESTED_SM_INITIAL2;
+    nested_sm_enter_state1(p_obj);
+    result = CHANGEDSTATE;
+    return result;
+}
+
 
 /**
  * @brief Enters the FLOP state of the sm1 state machine.
@@ -680,6 +791,7 @@ static inline void
 sm1_enter_subflip(umltest_sm1_t* const p_obj)
 {
     p_obj->region3 = UMLTEST_SM1_SUBFLIP;
+    #error effect Behavior type not supported
 }
 
 /**
@@ -703,13 +815,79 @@ sm1_enter_subflip3(umltest_sm1_t* const p_obj)
 }
 
 /**
+ * @brief Implements entry of the Region2 region of the sm1 state machine.
+ * @param [in] p_obj The pointer to the self object.
+ * @return the initial transition dispatch status.
+ */
+static inline sm_event_status_t
+sm1_enter_region2(umltest_sm1_t* const p_obj)
+{
+    sm_event_status_t result;
+    p_obj->region2 = UMLTEST_SM1_INIFLOP;
+    sm1_enter_subflop(p_obj);
+    result = CHANGEDSTATE;
+    return result;
+}
+
+
+/**
+ * @brief Implements entry of the Region3 region of the sm1 state machine.
+ * @param [in] p_obj The pointer to the self object.
+ * @return the initial transition dispatch status.
+ */
+static inline sm_event_status_t
+sm1_enter_region3(umltest_sm1_t* const p_obj)
+{
+    sm_event_status_t result;
+    p_obj->region3 = UMLTEST_SM1_INIFLIP1;
+    sm1_enter_subflip(p_obj);
+    result = TRANSITION;
+    return result;
+}
+
+
+/**
+ * @brief Implements entry of the Region4 region of the sm1 state machine.
+ * @param [in] p_obj The pointer to the self object.
+ * @return the initial transition dispatch status.
+ */
+static inline sm_event_status_t
+sm1_enter_region4(umltest_sm1_t* const p_obj)
+{
+    sm_event_status_t result;
+    p_obj->region4 = UMLTEST_SM1_INIFLIP2;
+    sm1_enter_subflip2(p_obj);
+    result = CHANGEDSTATE;
+    return result;
+}
+
+
+/**
+ * @brief Implements entry of the Region1 region of the sm1 state machine.
+ * @param [in] p_obj The pointer to the self object.
+ * @return the initial transition dispatch status.
+ */
+static inline sm_event_status_t
+sm1_enter_region1(umltest_sm1_t* const p_obj)
+{
+    sm_event_status_t result;
+    p_obj->region1 = UMLTEST_SM1_INISM1;
+    sm1_enter_flop(p_obj);
+    result = CHANGEDSTATE;
+    sm_event_status_t temp_status = IGNORED;
+    temp_status = sm1_enter_region2(p_obj);
+    result = sm_event_resolve_status(result, temp_status);
+    return result;
+}
+
+
+/**
  * @param [in] p_obj The pointer to the self object.
  */
-static inline bool
+static inline void
 umltest_tmpCombo_exit_flop(umltest_sm1_t* const p_obj)
 {
     printf("exit FLOP");
-    return true;
 }
 
 /**
@@ -725,7 +903,8 @@ sm1_exit_flop(umltest_sm1_t* const p_obj)
 
     if(b_is_completed)
     {
-        b_is_completed &= umltest_tmpCombo_exit_flop(p_obj);
+        umltest_tmpCombo_exit_flop(p_obj);
+        b_is_completed &= true
     }
 
     return b_is_completed;
@@ -734,11 +913,10 @@ sm1_exit_flop(umltest_sm1_t* const p_obj)
 /**
  * @param [in] p_obj The pointer to the self object.
  */
-static inline bool
+static inline void
 umltest_tmpCombo_prntex(umltest_sm1_t* const p_obj)
 {
     printf("Exit subflop");
-    return true;
 }
 
 /**
@@ -750,18 +928,18 @@ static inline bool
 sm1_exit_subflop(umltest_sm1_t* const p_obj)
 {
     bool b_is_completed = true;
-    b_is_completed &= umltest_tmpCombo_prntex(p_obj);
+    umltest_tmpCombo_prntex(p_obj);
+    b_is_completed &= true
     return b_is_completed;
 }
 
 /**
  * @param [in] p_obj The pointer to the self object.
  */
-static inline bool
+static inline void
 umltest_tmpCombo_exit_flip(umltest_sm1_t* const p_obj)
 {
     printf("exit FLIP");
-    return true;
 }
 
 /**
@@ -778,7 +956,8 @@ sm1_exit_flip(umltest_sm1_t* const p_obj)
 
     if(b_is_completed)
     {
-        b_is_completed &= umltest_tmpCombo_exit_flip(p_obj);
+        umltest_tmpCombo_exit_flip(p_obj);
+        b_is_completed &= true
     }
 
     return b_is_completed;
@@ -787,11 +966,10 @@ sm1_exit_flip(umltest_sm1_t* const p_obj)
 /**
  * @param [in] p_obj The pointer to the self object.
  */
-static inline bool
+static inline void
 umltest_tmpCombo_exit_subflip(umltest_sm1_t* const p_obj)
 {
     printf("SUBFLIP exited.\n");
-    return true;
 }
 
 /**
@@ -803,18 +981,18 @@ static inline bool
 sm1_exit_subflip(umltest_sm1_t* const p_obj)
 {
     bool b_is_completed = true;
-    b_is_completed &= umltest_tmpCombo_exit_subflip(p_obj);
+    umltest_tmpCombo_exit_subflip(p_obj);
+    b_is_completed &= true
     return b_is_completed;
 }
 
 /**
  * @param [in] p_obj The pointer to the self object.
  */
-static inline bool
+static inline void
 umltest_tmpCombo_exit_subflip2(umltest_sm1_t* const p_obj)
 {
     printf("exit SUBFLIP2");
-    return true;
 }
 
 /**
@@ -826,18 +1004,18 @@ static inline bool
 sm1_exit_subflip2(umltest_sm1_t* const p_obj)
 {
     bool b_is_completed = true;
-    b_is_completed &= umltest_tmpCombo_exit_subflip2(p_obj);
+    umltest_tmpCombo_exit_subflip2(p_obj);
+    b_is_completed &= true
     return b_is_completed;
 }
 
 /**
  * @param [in] p_obj The pointer to the self object.
  */
-static inline bool
+static inline void
 umltest_tmpCombo_exitbhv_test_sm(umltest_sm1_t* const p_obj)
 {
-    
-    return false;
+    #error effect Behavior type not supported
 }
 
 /**
@@ -849,7 +1027,8 @@ static inline bool
 sm1_exit_subflip3(umltest_sm1_t* const p_obj)
 {
     bool b_is_completed = true;
-    b_is_completed &= umltest_tmpCombo_exitbhv_test_sm(p_obj);
+    umltest_tmpCombo_exitbhv_test_sm(p_obj);
+    b_is_completed &= false
     return b_is_completed;
 }
 
@@ -882,6 +1061,22 @@ sment_enter_finalstate3(umltest_sment_t* const p_obj)
 {
     p_obj->region1 = UMLTEST_SMENT_FINALSTATE3;
 }
+
+/**
+ * @brief Implements entry of the Region1 region of the sment state machine.
+ * @param [in] p_obj The pointer to the self object.
+ * @return the initial transition dispatch status.
+ */
+static inline sm_event_status_t
+sment_enter_region1(umltest_sment_t* const p_obj)
+{
+    sm_event_status_t result;
+    p_obj->region1 = UMLTEST_SMENT_INITIAL4;
+    sment_enter_r1s1(p_obj);
+    result = CHANGEDSTATE;
+    return result;
+}
+
 
 /*******************************************************************************
  * 
@@ -1017,7 +1212,7 @@ void
 umltest_classtmp_add(umltest_classtmp_t* const p_obj,\
                      const umltest_E_t* const x)
 {
-    /*Code for handling a virtual operation generated automatically.*/
+    /*Code for handling a virtual operation.*/
     if((NULL != p_obj) && (NULL != p_obj->p_vtable))
     {
         void (*p_add)(umltest_classtmp_t* const p_obj,\
@@ -1044,8 +1239,9 @@ umltest_emotor_start_bhv(umltest_iface_t* const p_obj)
 
 /**
  * @param [in] p_obj The pointer to the self object.
+ * @return 
  */
-void
+bool
 umltest_emotor_stop_bhv(umltest_iface_t* const p_obj)
 {
     
@@ -1086,7 +1282,7 @@ umltest_hybrid_start_bhv(umltest_iface_t* const p_obj)
 void
 umltest_iface_start(umltest_iface_t* const p_obj)
 {
-    /*Code for handling a virtual operation generated automatically.*/
+    /*Code for handling a virtual operation.*/
     if((NULL != p_obj) && (NULL != p_obj->p_vtable))
     {
         void (*p_start)(umltest_iface_t* const p_obj)
@@ -1101,21 +1297,26 @@ umltest_iface_start(umltest_iface_t* const p_obj)
 
 /**
  * @param [in] p_obj The pointer to the self object.
+ * @return 
  */
-void
+bool
 umltest_iface_stop(umltest_iface_t* const p_obj)
 {
-    /*Code for handling a virtual operation generated automatically.*/
+    bool b_is_stopped                = false;
+
+    /*Code for handling a virtual operation.*/
     if((NULL != p_obj) && (NULL != p_obj->p_vtable))
     {
-        void (*p_stop)(umltest_iface_t* const p_obj)
+        bool (*p_stop)(umltest_iface_t* const p_obj)
             = p_obj->p_vtable->p_stop;
 
         if(NULL != p_stop)
         {
-            p_stop(p_obj);
+            b_is_stopped = p_stop(p_obj);
         }
     }
+
+    return b_is_stopped;
 }
 
 /**
@@ -1124,7 +1325,7 @@ umltest_iface_stop(umltest_iface_t* const p_obj)
 void
 umltest_iface_accelerate(umltest_iface_t* const p_obj)
 {
-    /*Code for handling a virtual operation generated automatically.*/
+    /*Code for handling a virtual operation.*/
     if((NULL != p_obj) && (NULL != p_obj->p_vtable))
     {
         void (*p_accelerate)(umltest_iface_t* const p_obj)
@@ -1143,7 +1344,7 @@ umltest_iface_accelerate(umltest_iface_t* const p_obj)
 void
 umltest_iface_decelerate(umltest_iface_t* const p_obj)
 {
-    /*Code for handling a virtual operation generated automatically.*/
+    /*Code for handling a virtual operation.*/
     if((NULL != p_obj) && (NULL != p_obj->p_vtable))
     {
         void (*p_decelerate)(umltest_iface_t* const p_obj)
@@ -1159,8 +1360,9 @@ umltest_iface_decelerate(umltest_iface_t* const p_obj)
 
 /**
  * @param [in] p_obj The pointer to the self object.
+ * @return 
  */
-void
+bool
 umltest_propulsion_stop_bhv(umltest_iface_t* const p_obj)
 {
     
@@ -1206,6 +1408,14 @@ umltest_tmpCombo_flup(umltest_tmpCombo_t* const p_obj)
 {
 }
 
+/**
+ * @param [in] p_obj The pointer to the self object.
+ */
+void
+umltest_tmpCombo_confirm_entry(umltest_tmpCombo_t* const p_obj)
+{
+}
+
 
 /*******************************************************************************
  * 
@@ -1224,7 +1434,6 @@ umltest_app_init_df(umltest_app_t* const p_obj)
     p_obj->coefficient               = UMLTEST_DEFAULT_COEFF;
     p_obj->flt.p_vtable              = &umltest_app_vtable.flt;
 }
-
 /**
  * @param [in] p_obj The pointer to the self object.
  * @param [in] filter_in The filter input value.
@@ -1256,11 +1465,6 @@ umltest_classtmp_init_df(umltest_classtmp_t* const p_obj)
     p_obj->flt.p_vtable              = &umltest_classtmp_vtable.flt;
     p_obj->p_vtable                  = &umltest_classtmp_vtable;
 }
-
-
-
-
-
 /**
  * @brief Implements call_flip event handling by the efsm state machine.
  * @param [in] p_obj The pointer to the self object.
@@ -1315,7 +1519,7 @@ efsm_dispatch_callflap(umltest_efsm_t* const p_obj,\
  * state machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
+ * @return the event dispatch status.
  */
 static sm_event_status_t
 efsm_dispatch_call_flip_r1s1(umltest_efsm_t* const p_obj,\
@@ -1323,7 +1527,8 @@ efsm_dispatch_call_flip_r1s1(umltest_efsm_t* const p_obj,\
 {
     sm_event_status_t result = IGNORED;
 
-    
+    efsm_enter_r1s2(p_obj);
+    result = CHANGEDSTATE;
 
     return result;
 }
@@ -1333,7 +1538,7 @@ efsm_dispatch_call_flip_r1s1(umltest_efsm_t* const p_obj,\
  * machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
+ * @return the event dispatch status.
  */
 static sm_event_status_t
 efsm_dispatch_callflap_r1s2(umltest_efsm_t* const p_obj,\
@@ -1341,7 +1546,8 @@ efsm_dispatch_callflap_r1s2(umltest_efsm_t* const p_obj,\
 {
     sm_event_status_t result = IGNORED;
 
-    
+    efsm_enter_finalstate4(p_obj);
+    result = CHANGEDSTATE;
 
     return result;
 }
@@ -1357,8 +1563,6 @@ umltest_emotor_init_df(umltest_emotor_t* const p_obj)
 {
     p_obj->propulsion.iface.p_vtable = &umltest_emotor_vtable.propulsion.iface;
 }
-
-
 /**
  * @brief The initializer function of the default values and virtual tables of
  * the umltest_engine_s struct. Generated automatically for properties for which
@@ -1370,10 +1574,50 @@ umltest_engine_init_df(umltest_engine_t* const p_obj)
 {
     p_obj->propulsion.iface.p_vtable = &umltest_engine_vtable.propulsion.iface;
 }
+/**
+ * @brief Implements confentry_ce event handling by the entrysm state machine.
+ * @param [in] p_obj The pointer to the self object.
+ * @param [in] p_event The pointer to the event data.
+ * return the event dispatch status.
+ */
+static sm_event_status_t
+entrysm_dispatch_confentry_ce(umltest_entrysm_t* const p_obj,\
+                              umltest_tmpcombo_confentry_ce_t* const p_event)
+{
+    sm_event_status_t result = IGNORED;
+
+    switch(p_obj->region1)
+    {
+        case UMLTEST_ENTRYSM_STATE2:
+            result = entrysm_dispatch_confentry_ce_state2(p_obj, p_event);
+            break;
+        default:
+            break;
+    }
+
+    return result;
+}
 
 
+/**
+ * @brief Implements confentry_ce event handling by the State2 state of the
+ * entrysm state machine.
+ * @param [in] p_obj The pointer to the self object.
+ * @param [in] p_event The pointer to the event data.
+ * @return the event dispatch status.
+ */
+static sm_event_status_t
+entrysm_dispatch_confentry_ce_state2(umltest_entrysm_t* const p_obj,\
+                                     umltest_tmpcombo_confentry_ce_t* \
+                                     /**/const p_event)
+{
+    sm_event_status_t result = IGNORED;
 
+    entrysm_enter_state3(p_obj);
+    result = CHANGEDSTATE;
 
+    return result;
+}
 
 /**
  * @brief Implements callFlap event handling by the exitbhv_test_sm state
@@ -1406,7 +1650,7 @@ exitbhv_test_sm_dispatch_callflap(umltest_exitbhv_test_sm_t* const p_obj,\
  * exitbhv_test_sm state machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
+ * @return the event dispatch status.
  */
 static sm_event_status_t
 exitbhv_test_sm_dispatch_callflap_r1s1(umltest_exitbhv_test_sm_t* const p_obj,\
@@ -1415,7 +1659,8 @@ exitbhv_test_sm_dispatch_callflap_r1s1(umltest_exitbhv_test_sm_t* const p_obj,\
 {
     sm_event_status_t result = IGNORED;
 
-    
+    exitbhv_test_sm_enter_r1s2(p_obj);
+    result = TRANSITION;
 
     return result;
 }
@@ -1436,11 +1681,6 @@ umltest_hybrid_init_df(umltest_hybrid_t* const p_obj)
                                      = &umltest_hybrid_vtable.engine.propulsion
                                         .iface;
 }
-
-
-
-
-
 /**
  * @brief Implements call_flip event handling by the nested_sm state machine.
  * @param [in] p_obj The pointer to the self object.
@@ -1471,7 +1711,7 @@ nested_sm_dispatch_call_flip(umltest_nested_sm_t* const p_obj,\
  * nested_sm state machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
+ * @return the event dispatch status.
  */
 static sm_event_status_t
 nested_sm_dispatch_call_flip_state1(umltest_nested_sm_t* const p_obj,\
@@ -1479,7 +1719,8 @@ nested_sm_dispatch_call_flip_state1(umltest_nested_sm_t* const p_obj,\
 {
     sm_event_status_t result = IGNORED;
 
-    
+    nested_sm_enter_state3(p_obj);
+    result = CHANGEDSTATE;
 
     return result;
 }
@@ -1495,10 +1736,14 @@ umltest_propulsion_init_df(umltest_propulsion_t* const p_obj)
 {
     p_obj->iface.p_vtable            = &umltest_propulsion_vtable.iface;
 }
-
-
-
-
+/**
+ */
+static bool
+umltest_tmpCombo_bhv_guard(umltest_tmpCombo_t* const p_obj,\
+                           float32_t const Parameter1)
+{
+    return true;
+}
 
 /**
  * @brief Exits the Region1 region of the sm1 state machine.
@@ -1850,7 +2095,7 @@ sm1_dispatch_flepcallevt_region4(umltest_sm1_t* const p_obj,\
  * machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
+ * @return the event dispatch status.
  */
 static sm_event_status_t
 sm1_dispatch_call_flip_flop(umltest_sm1_t* const p_obj,\
@@ -1860,6 +2105,19 @@ sm1_dispatch_call_flip_flop(umltest_sm1_t* const p_obj,\
 
     bool b_is_completed = sm1_exit_flop(p_obj);
     
+    if(b_is_completed)
+    {
+        sm1_enter_flip(p_obj);
+        sm1_enter_subflip(p_obj);
+        result = TRANSITION;
+        sm_event_status_t temp_status = IGNORED;
+        temp_status = sm1_enter_region4(p_obj);
+        result = sm_event_resolve_status(result, temp_status);
+    }
+    else
+    {
+        result = TRANSITION;
+    }
 
     return result;
 }
@@ -1869,7 +2127,7 @@ sm1_dispatch_call_flip_flop(umltest_sm1_t* const p_obj,\
  * machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
+ * @return the event dispatch status.
  */
 static sm_event_status_t
 sm1_dispatch_call_flop_flop(umltest_sm1_t* const p_obj,\
@@ -1879,14 +2137,35 @@ sm1_dispatch_call_flop_flop(umltest_sm1_t* const p_obj,\
 
     result = sm1_dispatch_call_flop_region2(p_obj, p_event);
 
+    if(IGNORED == result)
+    {
+        bool b_is_completed = sm1_exit_flop(p_obj);
+        
+        if(b_is_completed)
+        {
+            sm1_enter_flip(p_obj);
+            result = CHANGEDSTATE;
+            sm_event_status_t temp_status = IGNORED;
+            temp_status = sm1_enter_region3(p_obj);
+            result = sm_event_resolve_status(result, temp_status);
+            temp_status = sm1_enter_region4(p_obj);
+            result = sm_event_resolve_status(result, temp_status);
+        }
+        else
+        {
+            result = TRANSITION;
+        }
+    }
+
     return result;
 }
+
 /**
  * @brief Implements call_flop event handling by the FLIP state of the sm1 state
  * machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
+ * @return the event dispatch status.
  */
 static sm_event_status_t
 sm1_dispatch_call_flop_flip(umltest_sm1_t* const p_obj,\
@@ -1896,6 +2175,19 @@ sm1_dispatch_call_flop_flip(umltest_sm1_t* const p_obj,\
 
     bool b_is_completed = sm1_exit_flip(p_obj);
     
+    if(b_is_completed)
+    {
+        printf("Execute effect Behavior");
+        sm1_enter_flop(p_obj);
+        result = CHANGEDSTATE;
+        sm_event_status_t temp_status = IGNORED;
+        temp_status = sm1_enter_region2(p_obj);
+        result = sm_event_resolve_status(result, temp_status);
+    }
+    else
+    {
+        result = TRANSITION;
+    }
 
     return result;
 }
@@ -1905,7 +2197,7 @@ sm1_dispatch_call_flop_flip(umltest_sm1_t* const p_obj,\
  * machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
+ * @return the event dispatch status.
  */
 static sm_event_status_t
 sm1_dispatch_callflap_flop(umltest_sm1_t* const p_obj,\
@@ -1915,14 +2207,34 @@ sm1_dispatch_callflap_flop(umltest_sm1_t* const p_obj,\
 
     result = sm1_dispatch_callflap_region2(p_obj, p_event);
 
+    if(IGNORED == result)
+    {
+        bool b_is_completed = sm1_exit_flop(p_obj);
+        
+        if(b_is_completed)
+        {
+            sm1_enter_flip(p_obj);
+            sm1_enter_subflip2(p_obj);
+            result = CHANGEDSTATE;
+            sm_event_status_t temp_status = IGNORED;
+            temp_status = sm1_enter_region3(p_obj);
+            result = sm_event_resolve_status(result, temp_status);
+        }
+        else
+        {
+            result = TRANSITION;
+        }
+    }
+
     return result;
 }
+
 /**
  * @brief Implements callFlap event handling by the FLIP state of the sm1 state
  * machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
+ * @return the event dispatch status.
  */
 static sm_event_status_t
 sm1_dispatch_callflap_flip(umltest_sm1_t* const p_obj,\
@@ -1941,6 +2253,19 @@ sm1_dispatch_callflap_flip(umltest_sm1_t* const p_obj,\
     {
         bool b_is_completed = sm1_exit_flip(p_obj);
         
+        if(b_is_completed)
+        {
+            printf("Execute effect Behavior");
+            sm1_enter_flop(p_obj);
+            result = CHANGEDSTATE;
+            sm_event_status_t temp_status = IGNORED;
+            temp_status = sm1_enter_region2(p_obj);
+            result = sm_event_resolve_status(result, temp_status);
+        }
+        else
+        {
+            result = TRANSITION;
+        }
     }
 
     return result;
@@ -1951,7 +2276,7 @@ sm1_dispatch_callflap_flip(umltest_sm1_t* const p_obj,\
  * state machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
+ * @return the event dispatch status.
  */
 static sm_event_status_t
 sm1_dispatch_flepcallevt_flip(umltest_sm1_t* const p_obj,\
@@ -1969,7 +2294,7 @@ sm1_dispatch_flepcallevt_flip(umltest_sm1_t* const p_obj,\
  * state machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
+ * @return the event dispatch status.
  */
 static sm_event_status_t
 sm1_dispatch_flupcalevt_flip(umltest_sm1_t* const p_obj,\
@@ -1978,7 +2303,7 @@ sm1_dispatch_flupcalevt_flip(umltest_sm1_t* const p_obj,\
     sm_event_status_t result = IGNORED;
 
     printf("flup event detected");
-    result = SAMESTATE;
+    result = TRANSITION;
 
     return result;
 }
@@ -1988,7 +2313,7 @@ sm1_dispatch_flupcalevt_flip(umltest_sm1_t* const p_obj,\
  * state machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
+ * @return the event dispatch status.
  */
 static sm_event_status_t
 sm1_dispatch_call_flop_subflop2(umltest_sm1_t* const p_obj,\
@@ -2006,7 +2331,7 @@ sm1_dispatch_call_flop_subflop2(umltest_sm1_t* const p_obj,\
  * state machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
+ * @return the event dispatch status.
  */
 static sm_event_status_t
 sm1_dispatch_callflap_subflop2(umltest_sm1_t* const p_obj,\
@@ -2014,7 +2339,8 @@ sm1_dispatch_callflap_subflop2(umltest_sm1_t* const p_obj,\
 {
     sm_event_status_t result = IGNORED;
 
-    
+    sm1_enter_subflop2(p_obj);
+    result = CHANGEDSTATE;
 
     return result;
 }
@@ -2024,7 +2350,7 @@ sm1_dispatch_callflap_subflop2(umltest_sm1_t* const p_obj,\
  * state machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
+ * @return the event dispatch status.
  */
 static sm_event_status_t
 sm1_dispatch_callflap_subflip(umltest_sm1_t* const p_obj,\
@@ -2034,6 +2360,15 @@ sm1_dispatch_callflap_subflip(umltest_sm1_t* const p_obj,\
 
     bool b_is_completed = sm1_exit_flip(p_obj);
     
+    if(b_is_completed)
+    {
+        #error effect Behavior type not supported
+        result = TRANSITION;
+    }
+    else
+    {
+        result = TRANSITION;
+    }
 
     return result;
 }
@@ -2043,7 +2378,7 @@ sm1_dispatch_callflap_subflip(umltest_sm1_t* const p_obj,\
  * state machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
+ * @return the event dispatch status.
  */
 static sm_event_status_t
 sm1_dispatch_callflap_subflip2(umltest_sm1_t* const p_obj,\
@@ -2055,8 +2390,19 @@ sm1_dispatch_callflap_subflip2(umltest_sm1_t* const p_obj,\
     {
         bool b_is_completed = sm1_exit_subflip2(p_obj);
         
+        if(b_is_completed)
+        {
+            sm1_enter_subflip3(p_obj);
+            result = CHANGEDSTATE;
+        }
+        else
+        {
+            result = TRANSITION;
+        }
     }
     else 
+    {
+    }
 
     return result;
 }
@@ -2066,7 +2412,7 @@ sm1_dispatch_callflap_subflip2(umltest_sm1_t* const p_obj,\
  * state machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
+ * @return the event dispatch status.
  */
 static sm_event_status_t
 sm1_dispatch_flepcallevt_subflip3(umltest_sm1_t* const p_obj,\
@@ -2074,14 +2420,26 @@ sm1_dispatch_flepcallevt_subflip3(umltest_sm1_t* const p_obj,\
 {
     sm_event_status_t result = IGNORED;
 
-    bool b_is_completed = sm1_exit_subflip3(p_obj);
-    
+    if(umltest_tmpCombo_bhv_guard(p_obj->p_ctx, 0.0f))
+    {
+        bool b_is_completed = sm1_exit_subflip3(p_obj);
+        
+        if(b_is_completed)
+        {
+            sm1_enter_subflip2(p_obj);
+            result = CHANGEDSTATE;
+        }
+        else
+        {
+            result = TRANSITION;
+        }
+    }
+    else 
+    {
+    }
 
     return result;
 }
-
-
-
 
 /**
  * @brief Implements call_flip event handling by the sment state machine.
@@ -2113,7 +2471,7 @@ sment_dispatch_call_flip(umltest_sment_t* const p_obj,\
  * state machine.
  * @param [in] p_obj The pointer to the self object.
  * @param [in] p_event The pointer to the event data.
- * return the event dispatch status.
+ * @return the event dispatch status.
  */
 static sm_event_status_t
 sment_dispatch_call_flip_r1s1(umltest_sment_t* const p_obj,\
@@ -2121,7 +2479,8 @@ sment_dispatch_call_flip_r1s1(umltest_sment_t* const p_obj,\
 {
     sm_event_status_t result = IGNORED;
 
-    
+    sment_enter_r1s2(p_obj);
+    result = CHANGEDSTATE;
 
     return result;
 }
@@ -2137,13 +2496,12 @@ umltest_tmpCombo_init_df(umltest_tmpCombo_t* const p_obj)
 {
     
 }
-
 /**
  */
 static void
 umltest_tmpCombo_sm1(umltest_tmpCombo_t* const p_obj)
 {
-    
+    #error effect Behavior type not supported
 }
 
 /**
@@ -2157,6 +2515,4 @@ umltest_tmpHybrid_init_df(umltest_tmpHybrid_t* const p_obj)
 {
     
 }
-
-
 /*** end of file ***/
