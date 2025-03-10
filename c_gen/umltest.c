@@ -1767,6 +1767,9 @@ sm1_exit_region1(umltest_sm1_t* const p_obj)
             break;
     }
 
+    // Mark the region is already exited.
+    p_obj->region1 = UMLTEST_SM1_INISM1;
+
     return b_is_completed;
 }
 
@@ -1789,6 +1792,9 @@ sm1_exit_region2(umltest_sm1_t* const p_obj)
             break;
     }
 
+    // Mark the region is already exited.
+    p_obj->region2 = UMLTEST_SM1_INIFLOP;
+
     return b_is_completed;
 }
 
@@ -1810,6 +1816,9 @@ sm1_exit_region3(umltest_sm1_t* const p_obj)
         default:
             break;
     }
+
+    // Mark the region is already exited.
+    p_obj->region3 = UMLTEST_SM1_INIFLIP1;
 
     return b_is_completed;
 }
@@ -1835,6 +1844,9 @@ sm1_exit_region4(umltest_sm1_t* const p_obj)
         default:
             break;
     }
+
+    // Mark the region is already exited.
+    p_obj->region4 = UMLTEST_SM1_INIFLIP2;
 
     return b_is_completed;
 }

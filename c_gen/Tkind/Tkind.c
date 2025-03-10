@@ -709,6 +709,9 @@ sm1_exit_region1(Tkind_sm1_t* const p_obj)
             break;
     }
 
+    // Mark the region is already exited.
+    p_obj->region1 = TKIND_SM1_INITIAL1;
+
     return b_is_completed;
 }
 
@@ -737,6 +740,9 @@ sm1_exit_region2(Tkind_sm1_t* const p_obj)
             break;
     }
 
+    // Mark the region is already exited.
+    p_obj->region2 = TKIND_SM1_INITIAL3;
+
     return b_is_completed;
 }
 
@@ -759,6 +765,9 @@ sm1_exit_region3(Tkind_sm1_t* const p_obj)
             break;
     }
 
+    // Mark the region is already exited.
+    p_obj->region3 = TKIND_SM1_REGION3_INL;
+
     return b_is_completed;
 }
 
@@ -780,6 +789,9 @@ sm1_exit_region4(Tkind_sm1_t* const p_obj)
         default:
             break;
     }
+
+    // Mark the region is already exited.
+    p_obj->region4 = TKIND_SM1_REGION4_INL;
 
     return b_is_completed;
 }
@@ -806,6 +818,9 @@ sm1_exit_region5(Tkind_sm1_t* const p_obj)
             break;
     }
 
+    // Mark the region is already exited.
+    p_obj->region5 = TKIND_SM1_REGION5_INL;
+
     return b_is_completed;
 }
 
@@ -827,6 +842,9 @@ sm1_exit_region6(Tkind_sm1_t* const p_obj)
         default:
             break;
     }
+
+    // Mark the region is already exited.
+    p_obj->region6 = TKIND_SM1_INITIAL4;
 
     return b_is_completed;
 }
@@ -1920,11 +1938,15 @@ sm1_dispatch_o_state1(Tkind_sm1_t* const p_obj, tkind_ctest_o_t* const p_event)
 {
     sm_event_status_t result = IGNORED;
 
-    bool b_is_completed = sm1_exit_region5(p_obj);
+    bool b_is_completed = sm1_exit_state1(p_obj);
     
     if(b_is_completed)
     {
+        sm1_enter_state1(p_obj);
         result = sm1_enter_choice1(p_obj);
+        sm_event_status_t temp_status = IGNORED;
+        temp_status = sm1_enter_region2(p_obj);
+        result = sm_event_resolve_status(result, temp_status);
     }
     else
     {
@@ -2462,19 +2484,10 @@ sm1_enter_choice1(Tkind_sm1_t* const p_obj)
     }
     else 
     {
-        bool b_is_completed = sm1_exit_region5(p_obj);
-        
-        if(b_is_completed)
-        {
-            result = CHANGEDSTATE;
-            sm_event_status_t temp_status = IGNORED;
-            temp_status = sm1_enter_region5(p_obj);
-            result = sm_event_resolve_status(result, temp_status);
-        }
-        else
-        {
-            result = TRANSITION;
-        }
+        result = CHANGEDSTATE;
+        sm_event_status_t temp_status = IGNORED;
+        temp_status = sm1_enter_region5(p_obj);
+        result = sm_event_resolve_status(result, temp_status);
     }
 
     return result;

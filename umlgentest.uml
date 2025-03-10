@@ -363,7 +363,7 @@ return p_obj;</body>
               <trigger xmi:type="uml:Trigger" xmi:id="_31jbIN27Ee-8CKMu-ENa-A" event="_3iswkN27Ee-8CKMu-ENa-A"/>
             </transition>
             <transition xmi:type="uml:Transition" xmi:id="_iqpLUN21Ee-8CKMu-ENa-A" source="_gwLpwN21Ee-8CKMu-ENa-A" target="_xRPncNw4Ee-clukbqF5Mtw"/>
-            <transition xmi:type="uml:Transition" xmi:id="_2YuTwPh1Ee-9W4mcsGdJGQ" kind="local" source="_xRPncNw4Ee-clukbqF5Mtw" target="_vz5U0Ph1Ee-9W4mcsGdJGQ">
+            <transition xmi:type="uml:Transition" xmi:id="_2YuTwPh1Ee-9W4mcsGdJGQ" source="_xRPncNw4Ee-clukbqF5Mtw" target="_vz5U0Ph1Ee-9W4mcsGdJGQ">
               <trigger xmi:type="uml:Trigger" xmi:id="_SdvdsPh2Ee-9W4mcsGdJGQ" event="_SJivUPh2Ee-9W4mcsGdJGQ"/>
             </transition>
             <subvertex xmi:type="uml:State" xmi:id="_xRPncNw4Ee-clukbqF5Mtw" name="State1">
