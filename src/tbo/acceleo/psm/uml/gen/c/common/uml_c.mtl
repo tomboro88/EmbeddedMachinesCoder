@@ -531,6 +531,10 @@ endif/]
 [query public uml_c_get_region_state_property_name(aRegion:Region):String
   = aRegion.name.toLower()/]
 
+[query public uml_c_get_sm_region_field(aRegion : Region) : String = 
+ utils_get_self_name()
+                 + '->' + aRegion.uml_c_get_region_state_property_name()/]
+
 [template public uml_c_get_literal_string(ls:LiteralSpecification)] 
 [let lun : LiteralUnlimitedNatural = ls]
 [lun.value/]u[elselet lr:LiteralReal = ls]
@@ -1575,8 +1579,7 @@ static bool
 {
 [spaces/]bool b_is_completed = true;
 
-[spaces/]switch([utils_get_self_name()
-                /]->[aRegion.uml_c_get_region_state_property_name()/])
+[spaces/]switch([aRegion.uml_c_get_sm_region_field()/])
 [spaces/]{
 [for (s:State | aRegion.request_region_states()
                   ->select(aState : State | aState.request_state_needs_exit()))
@@ -1591,6 +1594,10 @@ static bool
 [spaces/][spaces/]default:
 [spaces/][spaces/][spaces/]break;
 [spaces/]}
+
+[spaces/]// Mark the region is already exited.
+[spaces/][aRegion.uml_c_get_sm_region_field()
+                          /] = [aRegion.uml_c_get_region_initial_state_name()/];
 
 [spaces/]return b_is_completed;
 }
@@ -1993,7 +2000,11 @@ else
 [request_dispatch_result_name()
                          /] = [aTransition.request_transition_dispatch_result() 
 /];[else]
-[if aTransition.request_transition_needs_exit()]
+[if aTransition.request_transition_needs_exit() and 
+    not (aTransition.source.request_vertex_is_choice() 
+         and (aTransition.source.container 
+                         = aTransition.request_transition_effect_region())
+         and aTransition.request_transition_is_local())]
 [if aTransition.request_transition_is_local()]
 [comment local transitions require the exit of the transition topmost region/]
 [exit_result/][ uml_c_format_param_list(
