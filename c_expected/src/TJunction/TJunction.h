@@ -12,6 +12,7 @@ extern "C" {
 
 //Start of user code includes top
 //End of user code
+#    include <stddef.h>
 #    include <sm.h>
 //Start of user code includes bottom
 //End of user code
