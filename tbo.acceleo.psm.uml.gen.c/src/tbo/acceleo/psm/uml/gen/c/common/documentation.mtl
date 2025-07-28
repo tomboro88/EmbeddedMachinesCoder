@@ -1,0 +1,36 @@
+[comment encoding = UTF-8 /]
+[module documentation('http://www.eclipse.org/uml2/5.0.0/UML')]
+
+[import tbo::acceleo::psm::uml::gen::c::common::doxygen/]
+
+[template public documentationCFile(aBrief : String)]
+[doxygen_source_doc(aBrief)/]
+[/template]
+
+[template public documentationHFile(anElement: Element, line_width: Integer)]
+[doxygen_header_doc(anElement, line_width)/]
+[/template]
+
+[template public documentationHFileString(str: String, 
+                                          line_width: Integer)]
+[doxygen_header_doc_string(str, line_width)/]
+[/template]
+
+[template public documentationElement(anElement: Element, indentation: Integer)]
+[doxygen_documentation(anElement,
+                       getProperty('line_width').toInteger() - indentation)/]
+[/template]
+
+[template public documentation_string(aString: String, indentation: Integer)]
+[doxygen_doc_block_string(aString, 
+                          getProperty('line_width').toInteger() - indentation)/]
+[/template]
+
+[template public documentation_param(aDirection : ParameterDirectionKind,
+                            aName : String, aDescription : String)]
+[doxygen_param(aDirection, aName) + aDescription/]
+[/template]
+
+[template public documentation_return(aDescription : String)]
+[doxygen_return(aDescription)/]
+[/template]

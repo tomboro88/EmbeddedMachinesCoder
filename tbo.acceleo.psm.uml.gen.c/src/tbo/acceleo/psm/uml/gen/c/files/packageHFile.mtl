@@ -1,0 +1,62 @@
+[comment encoding = UTF-8 /]
+[module packageHFile('http://www.eclipse.org/uml2/5.0.0/UML')]
+
+[import tbo::acceleo::psm::uml::gen::c::common::documentation /]
+[import tbo::acceleo::psm::uml::gen::c::common::utils /]
+[import tbo::acceleo::psm::uml::gen::c::common::uml_c /]
+[import tbo::acceleo::psm::uml::gen::c::request::request/]
+
+[template public generatePackageH(aPackage : Package)
+ {visible_subpackages : Set(Package) = uml_c_header_subpackages(aPackage);
+  visible_dependencies : Set(Package) = uml_c_header_dependencies(aPackage);
+  headerLiteralSpecifications : Sequence(LiteralSpecification) = 
+    uml_c_header_literal_specifications(aPackage);
+  headerClassifiers : OrderedSet(Classifier) = 
+    utils_sort_by_name(aPackage.uml_c_header_classifiers())
+    .oclAsType(Classifier)->asOrderedSet();
+  indentation : Integer = getProperty('indent_width').toInteger();}]
+
+[file (get_package_h_qualified_path(aPackage), false, 'UTF-8')]
+[documentationHFile(aPackage,getProperty('line_width').toInteger())/]
+
+#ifndef [aPackage.name.header_guard()/]
+#define [aPackage.name.header_guard()/]
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
+//[protected('includes top')]
+//[/protected]
+[uml_c_include_dependencies(visible_dependencies, visible_subpackages, 
+                            indentation)
+/][if not headerClassifiers->selectByKind(StateMachine)->isEmpty()]
+#[utils_indent(indentation)/]include <sm.h>
+[/if]
+//[protected('includes bottom')]
+//[/protected]
+
+[if not headerLiteralSpecifications
+    ->select(ls : LiteralSpecification | ls.uml_c_literalspec_need_define())
+    ->isEmpty() ]
+[uml_c_literal_list(headerLiteralSpecifications, indentation)/]
+
+[/if]
+[if headerClassifiers->uml_c_classifiers_need_declare()]
+[uml_c_declare_structs(headerClassifiers, indentation)/]
+[/if]
+[for (aClassifier:Classifier|headerClassifiers)
+     ?(aClassifier.uml_c_operations_need_declaration(
+                          uml_c_header_operation_visibility())->notEmpty())]
+[uml_c_declare_operations(aClassifier, uml_c_header_operation_visibility(), 
+                          false, indentation)/]
+[/for]
+#ifdef  __cplusplus
+}
+#endif
+
+#endif  /* [aPackage.name.header_guard()/] */
+
+/*** end of file ***/
+[/file]
+[/template]

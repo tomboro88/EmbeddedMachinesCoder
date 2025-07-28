@@ -1,0 +1,834 @@
+[comment encoding = UTF-8 /]
+[module request('http://www.eclipse.org/uml2/5.0.0/UML')]
+
+
+[**
+ * Filters the OrderedSet of parameters from the return parameter.
+ * @param oP The list of parameters should be filtered. 
+ */]
+[query public request_parameter_only(osP : OrderedSet(Parameter)) 
+ : OrderedSet(Parameter) 
+ = osP->select(direction <> ParameterDirectionKind::return)/]
+
+[**
+ * @brief Get the OrderedSet of the Operation return values.
+ * @param o The operation for which the return values will be given.
+ */]
+[query public request_return_value(osP : OrderedSet(Parameter)) 
+ : OrderedSet(Parameter) 
+ = osP->select(direction = ParameterDirectionKind::return)/]
+
+[**
+ * Get a set of packages on which the given element depends. 
+ */]
+[query private request_dependency_packages(aNamedElement : NamedElement)
+: Set(Package) = aNamedElement.clientDependency.supplier->collect(
+       n:NamedElement | if n.oclIsKindOf(Package) then n.oclAsType(Package) 
+       else n.eContainer(Package)endif)->asSet()/]
+
+[**
+ * @brief Get all subpackages of a package with a specified visibility. 
+ */]
+[query public request_visible_subpackages(aPackage : Package,
+                            Visibilities : Set(VisibilityKind)) : Set(Package)
+         =  aPackage.packagedElement->filter(Package
+            )->select(p:Package | Visibilities->includes(p.visibility))/]
+
+[**
+ * @brief Get all children of a package with a specified visibility. 
+ */]
+[query private request_visible_children(aPackage : Package, 
+                                      Visibilities : Set(VisibilityKind)) 
+    : Set(PackageableElement) 
+     = aPackage.packagedElement->select(p : PackageableElement | 
+      Visibilities->includes(p.visibility))/]
+
+[**
+ * @brief Get a set of packages on which all non-Package children of the package
+ * depend. 
+ */]
+[query public request_visible_dependencies(aPackage : Package,
+                          Visibilities : Set(VisibilityKind)) : Set(Package) = 
+   aPackage.request_dependency_packages()->union(
+   request_visible_children(aPackage, Visibilities
+   ).request_dependency_packages()
+   )->union(request_visible_children(aPackage, Visibilities)
+       ->reject(p:PackageableElement | p.oclIsKindOf(Package)
+       ).eAllContents(NamedElement
+       ).request_dependency_packages())->asSet()/]
+
+[query public request_has_attributes(aClassifier:Classifier):Boolean = 
+   not aClassifier.attribute->select(p : Property | not p.isStatic)->isEmpty()/]
+
+[query public request_owns_states(aClassifier:Classifier) : Boolean = 
+  aClassifier.oclIsKindOf(StateMachine) and 
+   not aClassifier.oclAsType(StateMachine).region.subvertex->selectByKind(State)
+       ->isEmpty() /]
+
+[query public request_has_states(aClassifier:Classifier):Boolean = 
+   aClassifier.request_owns_states()
+   or (aClassifier.oclIsKindOf(BehavioredClassifier) 
+       and not aClassifier.oclAsType(BehavioredClassifier).ownedBehavior
+      ->select(b:Behavior | b.request_has_states())->isEmpty()) /]
+
+[query public request_direct_children(aPackage : Package) : 
+     Sequence(PackageableElement) 
+     = aPackage.eContents(PackageableElement)->select(p : PackageableElement | 
+       not p.oclIsKindOf(Package))/]
+
+[query public request_non_packaged_children(aPackage : Package) : 
+   Sequence(PackageableElement) = 
+   let directChildren : Sequence(PackageableElement) 
+                      = aPackage.request_direct_children() in
+   directChildren->union(directChildren.eAllContents(PackageableElement))/]
+
+[query public request_all_visibilities(traceabilityContext : OclAny) : 
+      Set(VisibilityKind) = 
+      Set{VisibilityKind::public, VisibilityKind::protected, 
+      VisibilityKind::_package, VisibilityKind::private}/]
+[**
+ * Returns the last whitespace index in the string up to th given index.
+ */]
+[query public  request_last_whitespace_index(aString:String, upto:Integer) 
+: Integer = let space_index : Integer = aString.lastIndex(' ', upto) in
+  let tab_index : Integer = aString.lastIndex('\t', upto) in
+  tab_index.max(space_index)/]
+
+[query public request_needs_generalization_storage(aClassifier : Classifier) 
+: Boolean = aClassifier.generalization->exists(g : Generalization 
+   | g.general.request_has_fields())/]
+
+[query public request_provides_nontemplate_fields(aClassifier : Classifier) 
+ : Boolean = 
+ aClassifier.request_has_attributes() 
+ or aClassifier.request_needs_generalization_storage()
+ or aClassifier.request_has_states()
+ 
+ or aClassifier.request_has_virtual_operations()/]
+
+[query public request_provides_fields(aClassifier : Classifier) : Boolean = 
+ aClassifier.request_provides_nontemplate_fields() 
+ or aClassifier.request_needs_vtable()/] 
+
+[query public request_has_fields(aClassifier : Classifier) : Boolean = 
+ aClassifier.request_provides_fields() 
+ or aClassifier.templateBinding->exists(tb : TemplateBinding | 
+               tb.signature.template.oclAsType(Classifier)
+               .request_has_fields())/] 
+
+[query public request_needs_storage(aClassifier : Classifier) 
+: Boolean = not aClassifier.isTemplate() 
+            and aClassifier.request_has_fields()/]
+
+[query private request_needs_generalization_vtable(aClassifier : Classifier) 
+  : Boolean = aClassifier.generalization->exists(g : Generalization
+    | g.general.request_needs_vtable())/]
+
+[query public request_needs_vtable(aClassifier : Classifier) : Boolean 
+ = aClassifier.request_has_virtual_operations()
+   or aClassifier.request_needs_generalization_vtable()
+   or aClassifier.templateBinding->exists(tb : TemplateBinding | 
+               tb.signature.template.oclAsType(Classifier)
+               .request_needs_vtable())/]
+
+[query public request_all_generals(aClassifier:Classifier) : Set(Classifier) = 
+ aClassifier.general->addAll(aClassifier.general.request_all_generals())/]
+
+[query public request_sort_classifiers(anOSet : OrderedSet(Classifier)) : 
+  OrderedSet(Classifier)
+  = if anOSet->size() <=1 then anOSet
+    else 
+      let aRest : OrderedSet(Classifier) = anOSet->drop(1) in
+      let aFirst : Classifier = anOSet->first() in
+      let aRest_dependencies:OrderedSet(Classifier) = aRest->select(
+          c:Classifier | aFirst.request_classifier_depends(c)) in
+      let aRest_non_dependencies:OrderedSet(Classifier) 
+          = aRest->removeAll(aRest_dependencies) in
+      aRest_dependencies->request_sort_classifiers()->append(aFirst)
+      ->addAll(aRest_non_dependencies->request_sort_classifiers())
+    endif/]
+
+[query public request_classifier_depends(aClassifier:Classifier,
+                                       bClassifier:Classifier):Boolean
+ =aClassifier.attribute.type->includes(bClassifier.oclAsType(Type))
+  or aClassifier.attribute.type->exists(t:Type|
+        t.oclAsType(Classifier).request_classifier_depends(bClassifier))
+        or aClassifier.generalization.general->includes(bClassifier)
+        or aClassifier.generalization.general
+           ->exists(c:Classifier|c.request_classifier_depends(bClassifier))/]
+
+[query public request_has_virtual_operations(aClassifier : Classifier) : Boolean 
+ = not aClassifier.request_virtual_operations()->isEmpty()/]
+
+[**
+ * @brief Returns true if an operation can be overriden in child classes. 
+ */]
+[query public request_is_virtual_operation(o : Operation) : Boolean
+ = (not o.isStatic) and (o.isAbstract or 
+    let aClassifier : Classifier = 
+    o.featuringClassifier->any(c : Classifier| not c.oclIsUndefined()) in 
+    if aClassifier.oclIsUndefined() then false 
+    else aClassifier.oclIsKindOf(Interface)
+         or o.method._context.request_all_generals()->includes(aClassifier) 
+    endif )/]
+
+[query public request_is_constructor(anOperation : Operation) : Boolean =
+ not anOperation.getAppliedStereotypes()
+            ->select(s : Stereotype | s.name = 'Create')->isEmpty()/]
+
+[query public request_virtual_operations(aClassifier : Classifier) : 
+ OrderedSet(Operation) = 
+          aClassifier.ownedMember->filter(Operation)
+                 ->select(o : Operation | o.request_is_virtual_operation())
+                 ->sortedBy(o:Operation|o.name.toLower())/]
+
+[query public request_method_from_context(aTree : Sequence(Classifier),
+                                  anOperation : Operation) : Behavior =
+  if aTree->size() > 0 then 
+   let bhv : Behavior = anOperation.method->any(
+   b : Behavior | b._context.oclAsType(Classifier) = aTree->first()) in 
+   if bhv.oclIsUndefined() 
+      and not anOperation.featuringClassifier->includes(aTree->first()) then 
+      request_method_from_context(aTree->drop(1),anOperation)
+   else bhv endif
+  else null endif/]
+
+[query public request_has_operation_spec(aBehavior : Behavior,
+                                         vis : Set(VisibilityKind)) : Boolean =
+    vis->includes(aBehavior.visibility) 
+    and (not aBehavior.specification.oclIsUndefined())
+    and aBehavior.specification.oclIsKindOf(Operation) 
+ /]
+
+[query public request_has_virtual_operation_spec(b : Behavior,
+                                         vis : Set(VisibilityKind)) : Boolean =
+    b.request_has_operation_spec(vis) 
+    and b.specification.oclAsType(Operation).request_is_virtual_operation()
+ /]
+
+[query public request_behaviors(aClassifier : BehavioredClassifier) : 
+  Set(Behavior) = 
+  aClassifier.ownedBehavior/]
+
+[query public request_behavior_visibility(aBehavior : Behavior):VisibilityKind
+ = if aBehavior.specification.oclIsUndefined() then VisibilityKind::private
+   else if aBehavior.visibility.oclIsUndefined() then VisibilityKind::public
+        else aBehavior.visibility endif endif/]
+
+[query public request_standalone_behaviors(aClassifier:BehavioredClassifier, 
+                                          vis : Set(VisibilityKind)) 
+: Set(Behavior) = aClassifier.request_behaviors()
+        ->select(b : Behavior | b.request_has_virtual_operation_spec(vis)
+        or (b.specification.oclIsUndefined() 
+             and vis->includes(b.request_behavior_visibility())))/]
+
+[query public request_has_default_values(aClassifier : Classifier) : Boolean = 
+  (not aClassifier.attribute->select(p : Property | 
+                   not p.defaultValue.oclIsUndefined())->isEmpty())
+  or (not (aClassifier.general.request_has_default_values()
+      ->select(b:Boolean | b))->isEmpty()) /]
+
+[**
+ * @brief returns true if the classifier needs a constructor. 
+ */]
+[query public request_needs_constructor(aClassifier : Classifier) : Boolean = 
+  aClassifier.request_needs_vtable() 
+  or aClassifier.request_has_default_values()/]
+
+[query public request_sorted_bindings(sB : Set(TemplateBinding)) 
+: OrderedSet(TemplateBinding) = sB->sortedBy(aTB : TemplateBinding | 
+     aTB.boundElement.oclAsType(Classifier).qualifiedName
+     + aTB.signature.template.oclAsType(Classifier).qualifiedName
+                    + aTB.signature.parameter
+             ->collect(tP : TemplateParameter | aTB.parameterSubstitution
+                 ->any(tps : TemplateParameterSubstitution | tps.formal = tP)
+                 .actual).toString())/]
+
+[query public request_needs_intermediate_binding(aClassifier : Classifier)
+ : Boolean = aClassifier.templateBinding->size() > 1 or 
+    (aClassifier.templateBinding->size() = 1
+       and aClassifier.request_provides_nontemplate_fields())/]
+
+[query public request_class_needs_event_defer(aClass : Class) : Boolean 
+= not aClass.ownedBehavior.eAllContents(Transition)
+->select(t : Transition | (not t.effect.oclIsUndefined()) and 
+          t.effect.oclIsKindOf(OpaqueBehavior)).effect
+  .oclAsType(OpaqueBehavior)->select(ob : OpaqueBehavior 
+  | (ob._body->size() = 1) and (ob._body->first() = 'defer'))->isEmpty()/]
+
+[query public request_event_needs_defer(aClass : Class, evt : Event) : Boolean 
+= not aClass.ownedBehavior.eAllContents(Transition)
+->select(t : Transition | (not t.effect.oclIsUndefined()) and 
+    t.effect.oclIsKindOf(OpaqueBehavior) and (t.trigger.event->includes(evt))
+          and (let ob : OpaqueBehavior = t.effect.oclAsType(OpaqueBehavior) in
+               ob._body->size() = 1 and ob._body->first() = 'defer')
+  )->isEmpty()/]
+
+[query public request_is_direct_binding(aClassifier : Classifier)
+ : Boolean = aClassifier.templateBinding->size() = 1 and 
+    not aClassifier.request_provides_nontemplate_fields()/]
+
+[query public request_regions_sorted(sr:Set(Region)) : OrderedSet(Region) = 
+ sr->asOrderedSet()
+ ->sortedBy(r:Region|r.containingStateMachine().eAllContents()->indexOf(r)) /]
+
+[query public request_is_in_region(v:Vertex,r:Region):Boolean = 
+ (v.container = r) /]
+
+[query public request_all_regions(sm:StateMachine):OrderedSet(Region)
+  = sm.eAllContents(Region)->select(r:Region|r.containingStateMachine() = sm)
+      ->asOrderedSet()/]
+
+[query public request_region_states(r:Region) : OrderedSet(State) = 
+    r.request_region_vertices()->selectByKind(State)/]
+
+[query public request_region_vertices(r:Region) : OrderedSet(Vertex) =
+    request_elements_sorted(r.subvertex)/]
+
+[query public request_incoming_transitions(v:Vertex) : OrderedSet(Transition) =
+    request_elements_sorted(v.incoming)/]
+
+[query public request_all_outgoing_transitions(v:Vertex) : 
+  OrderedSet(Transition) =
+    request_elements_sorted(v.outgoing)/]
+
+[**
+ * @brief Returns all events that need to be handled in the region 
+ */]
+[query public request_region_events(aRegion:Region) : OrderedSet(Event) = 
+    let states:Set(State) = aRegion.subvertex->selectByKind(State) in
+    let state_events:OrderedSet(Event) = states
+               ->collect(s:State|s.request_vertex_events())->flatten()
+                                ->asOrderedSet() in
+    request_elements_sorted(states->select(s:State|s.region->notEmpty())
+                              .region->flatten()
+                              .request_region_events()->flatten()->asSet()
+                            ->addAll(state_events))/]
+
+[**
+ * @brief Returns an OrderedSet of events outgoing from this vertex, even
+ * the events that trigger transitions from the following junction Pseudostates.
+*/]
+[query public request_vertex_events(aVertex:Vertex) : OrderedSet(Event) =
+    let events:Set(Event) = aVertex.outgoing.trigger->flatten()
+        .event->select(e:Event|not e->oclIsUndefined())
+        ->union(aVertex.outgoing
+                 ->select(t:Transition|t.trigger->isEmpty()).target
+                ->select(v:Vertex|v.request_is_static_junction())
+                  .request_vertex_events()->flatten()
+        )->asSet() in 
+         request_elements_sorted(events)/]
+
+[query public request_state_handles_event(aState:State, anEvent : Event) 
+ : Boolean =
+    aState.request_vertex_events()->includes(anEvent)/]
+
+[query public request_vertex_region(v : Vertex) : Region = 
+  v.container/]
+
+[**
+ * @brief Returns all parent regions of the vertex. The first is the one at the 
+ * top of the regions hierarchy.
+*/]
+[query public request_vertex_regions(v : Vertex) : OrderedSet(Region) = 
+  v.container.request_parent_regions()->append(v.container)/]
+
+[query public request_needs_event_loop(aClassifier : Classifier): Boolean  = 
+    if aClassifier.oclIsKindOf(StateMachine) then
+        aClassifier.oclAsType(Behavior)._context.oclIsUndefined()
+    else
+        aClassifier.oclIsKindOf(BehavioredClassifier) 
+        and not aClassifier.oclAsType(BehavioredClassifier).ownedBehavior
+            ->filter(StateMachine)->isEmpty()
+    endif
+/]
+
+[query public request_class_events(aClass : Class): OrderedSet(Event)
+ = aClass.eAllContents(Trigger)
+                          ->select(t : Trigger | (not t.event.oclIsUndefined()))
+                          .event->asOrderedSet()/]
+
+[query public request_sm_events(sm : StateMachine): OrderedSet(Event)
+ = request_elements_sorted(sm.eAllContents(Transition)
+                      ->select(t : Transition | t.containingStateMachine() = sm)
+                      ->collect(t:Transition|t.trigger)->flatten()
+                      ->collect(tr:Trigger|tr.event)->asSet())
+                      /]
+
+[query public request_sm_context(sm: StateMachine) : 
+  BehavioredClassifier = if sm._context.oclIsUndefined() then sm 
+           else sm._context endif/]
+
+[query public request_state_needs_region_exit(aState : State) : Boolean =  
+ (aState.region->size() > 0) and
+       aState.region->select(r : Region | r.request_region_needs_exit())
+             ->notEmpty() /]
+
+[query public request_state_needs_exit(aState : State): Boolean
+ = (not aState.oclIsUndefined()) and ((not aState.exit.oclIsUndefined()) 
+    or aState.request_state_needs_region_exit()) /]
+
+[query public request_region_needs_exit(aRegion : Region): Boolean
+ = aRegion.subvertex->selectByKind(State)
+    ->select(st : State | st.request_state_needs_exit())->notEmpty()/]
+
+[**
+ * @brief Returns an OrderedSet of states that need to handle an event
+*/]
+[query public request_region_event_states(aRegion:Region, anEvent:Event) 
+  : OrderedSet(State) = 
+    aRegion.request_region_states()
+                       ->select(s:State|s.request_state_handles_event(anEvent)
+      or ((s.region->size() > 0 ) 
+           and s.region->collect(r:Region|r.request_region_events())
+                 ->flatten()->includes(anEvent)))/]
+
+[query public request_event_subregions(regions:Set(Region), anEvent : Event)
+  : OrderedSet(Region) = regions
+           ->select(r:Region|r.request_region_events()->includes(anEvent))
+           ->asOrderedSet()->sortedBy(r:Region|
+                  r.containingStateMachine().eAllContents(Region)->indexOf(r))/]
+
+[**
+ * @brief Returns The topmost state that should be exited to execute the 
+ * transition.
+ */]
+[query public request_transition_exit_state(aTransition:Transition) : State
+ = 
+      let exitHierarchy : OrderedSet(State) =
+        request_transition_exit_states(aTransition) in
+      if exitHierarchy->isEmpty() then 
+          null
+      else exitHierarchy->first() endif/]
+
+[**
+ * @brief Returns The list of states that should be exited to execute the 
+ * transition. The first state is the the last to exit. 
+ */]
+[query public request_transition_exit_states(aTransition:Transition) : 
+ OrderedSet(State)
+ = 
+      let sourceHierarchy : OrderedSet(State) =
+        aTransition.source.request_parent_states() in
+      let targetHierarchy : OrderedSet(State) = 
+        aTransition.target.request_parent_states()in
+      let exitHierarchy : OrderedSet(State) =
+        sourceHierarchy->removeAll(targetHierarchy) in
+      if aTransition.source.oclIsKindOf(State) then
+          exitHierarchy->append(aTransition.source.oclAsType(State))
+      else
+          exitHierarchy
+      endif /]
+
+[**
+ * @brief Returns The states that should be entered to to complete the 
+ * transition. The first state is the first to enter. Does not include the 
+ * target state.
+ */]
+[query public request_transition_entry_states(aTransition:Transition) : 
+OrderedSet(State)
+ = 
+      let sourceHierarchy : OrderedSet(State) =
+        aTransition.source.request_parent_states() in
+      let targetHierarchy : OrderedSet(State) = 
+        aTransition.target.request_parent_states()in
+      let entry_states : OrderedSet(State) = 
+        targetHierarchy->removeAll(sourceHierarchy) in 
+        if aTransition.request_is_transition_local_to_child()
+        then entry_states->drop(1)
+        else entry_states endif/]
+
+[**
+ * @brief Returns The  additional regions that should be entered to 
+ * complete the transition with the given entry vertex sequence. The first 
+ * region is the first to enter. By definition these are all regions of the
+ * entered states that do not contain any target state.
+ */]
+[query public request_regions_init(aTransition:Transition) : 
+OrderedSet(Region)
+ = if aTransition.request_is_transition_local_to_parent() 
+  then OrderedSet{aTransition.request_transition_effect_region()}
+  else let target_vertices : OrderedSet(Vertex) = 
+        aTransition.request_transition_target_vertices() in
+      target_vertices->selectByKind(State)
+       ->select(aState:State | aState.region->notEmpty())
+       ->collect(aState : State | aState.region->request_regions_sorted()
+                   ->select(r:Region|target_vertices->excludesAll(r.subvertex)))
+       ->asOrderedSet() endif
+   /]
+
+[**
+ * @brief Returns a list of parent state with the top most state in the 
+ * hierarchy as the first.
+ * @param aVertex The vertex for which parent hierarchy should be returned 
+ */]
+[query public request_parent_states(aVertex:Vertex):OrderedSet(State) = 
+ if aVertex.container.state.oclIsUndefined() then
+    OrderedSet{}
+ else
+    aVertex.container.state.request_parent_states()
+                            ->append(aVertex.container.state)
+ endif/]
+
+[**
+ * @brief Returns a list of parent regions with the top most region in the 
+ * hierarchy as the first.
+ * @param aRegion The region for which parent hierarchy should be returned 
+ */]
+[query public request_parent_regions(aRegion:Region):OrderedSet(Region) = 
+ if aRegion.state.oclIsUndefined() then
+    OrderedSet{}
+ else
+    aRegion.state.container.request_parent_regions()
+                            ->append(aRegion.state.container)
+ endif/]
+
+[query public request_state_machine_states(sm:StateMachine):OrderedSet(State) = 
+ sm.eAllContents(State)->select(s:State|s.containingStateMachine() = sm)
+    ->asOrderedSet()/]
+
+[query public request_state_machine_transitions(sm:StateMachine):
+  OrderedSet(Transition) = 
+ sm.eAllContents(Transition)
+    ->select(t:Transition|t.containingStateMachine() = sm)
+    ->asOrderedSet()/]
+
+[**
+ *@brief Returns the region that should handle the effect behavior of the 
+ *       transition. This is the topmost region that will be reached
+ *       during transition traversal.
+*/]
+[query public request_transition_effect_region(aTransition:Transition):
+  Region = let exit_state : State = aTransition.request_transition_exit_state()
+  in if not exit_state.oclIsUndefined() then 
+      if aTransition.kind = TransitionKind::external
+          or aTransition.kind = TransitionKind::internal
+      then exit_state.request_vertex_region()
+      else 
+          if aTransition.request_is_transition_local_to_parent()
+          then request_vertex_regions(aTransition.source)
+                        ->removeAll(request_vertex_regions(exit_state))->first()
+          else
+              if aTransition.request_is_transition_local_to_child()
+              then
+                  aTransition.request_transition_target_vertices()
+                                                           ->first().container
+              else
+                  exit_state.request_vertex_region()
+              endif
+          endif
+      endif
+  else aTransition.source.request_vertex_region() endif/]
+
+[**
+ * @brief Checks if the transition meets all the conditions to be treated as 
+ * local transition.
+*/]
+[query public request_transition_is_local(aTransition : Transition) :
+ Boolean = 
+ aTransition.request_is_transition_local_to_parent()
+ or aTransition.request_is_transition_local_to_child()/]
+
+[**
+ * @brief Checks if the transition meets all the conditions to be treated as 
+ * local transition.
+*/]
+[query public request_is_transition_local_to_parent(aTransition : Transition) :
+ Boolean = 
+ aTransition.kind = TransitionKind::local
+      and aTransition.target.oclIsKindOf(State) 
+      and aTransition.source.request_parent_states()
+                           ->includes(aTransition.target.oclAsType(State))/]
+
+[**
+ * @brief Checks if the transition meets all the conditions to be treated as 
+ * local transition.
+*/]
+[query public request_is_transition_local_to_child(aTransition : Transition) :
+ Boolean = 
+ aTransition.kind = TransitionKind::local
+      and aTransition.source.oclIsKindOf(State) 
+      and aTransition.target.request_parent_states()
+                           ->includes(aTransition.source.oclAsType(State))/]
+
+
+[query public request_region_effect_sm_transitions(aRegion:Region):
+  OrderedSet(Transition) = aRegion.containingStateMachine()
+      .request_state_machine_transitions()
+      ->select(t:Transition|t.request_transition_effect_region()=aRegion)
+      ->select(t:Transition|t.effect.request_behavior_needs_async_call())/]
+
+[query public request_transitions_by_event(transitions:OrderedSet(Transition),
+              anEvent:Event):
+  OrderedSet(Transition) = 
+  transitions->select(t:Transition|t.trigger->notEmpty() 
+               and t.trigger->collect(tr:Trigger|tr.event)->includes(anEvent))/]
+
+[query public request_is_top_level_region(aRegion : Region)
+ : Boolean =
+ let sm : StateMachine = aRegion.containingStateMachine() in  
+  (sm.region->size() = 1) and (sm.region->includes(aRegion))/]
+
+[query public request_matching_guard(t:Transition, guardS : String)
+ : Boolean = if guardS = '' then true
+             else if guardS = 'No' then t.guard.oclIsUndefined()
+             else if guardS = 'Any' then not t.guard.oclIsUndefined()
+             else if guardS = 'Guard' then 
+                 not t.guard.oclIsUndefined() and 
+                 not t.request_matching_guard('Else')
+             else if guardS = 'Else' then
+                 (not t.guard.oclIsUndefined()) 
+                 and (not t.guard.specification.oclIsUndefined()) 
+                 and t.guard.specification.oclIsKindOf(Expression) 
+                 and t.guard.specification.oclAsType(Expression).symbol = 'else'
+             else false endif endif endif endif endif/]
+[**
+ * Returns vertex outgoing transitions that handle the given event.
+ * The transitions are ordered in the same sequence as they appear in the model.
+ */]
+[query public request_outgoing_transitions(aVertex:Vertex, anEvent:Event, 
+                                           guardS : String):
+ OrderedSet(Transition) = 
+ let aStateMachine : StateMachine = aVertex.containingStateMachine() in
+ aStateMachine.eAllContents(Transition)
+ ->select(t:Transition|aVertex.outgoing->includes(t))
+ ->select(t:Transition|if anEvent.oclIsUndefined() then
+                           t.request_is_completion_transition(guardS)
+                       else 
+                           t.request_is_event_transition(anEvent, guardS)
+                       endif
+  )->asOrderedSet()/]
+
+[**
+ * @brief Checks if the transition and any following junction type transitions
+ * are transitions with no trigger and specified guard type.
+*/]
+[query public request_is_completion_transition(t:Transition, guardS : String)
+ : Boolean = t.trigger->isEmpty() and (
+                                (t.request_matching_guard(guardS) 
+                                 and not t.target.request_is_static_junction()) 
+                or (t.target.request_is_static_junction() 
+                    and t.request_match_if_no_guard(guardS)
+                    and t.target.request_outgoing_transitions(null, 
+                               t.request_any_guard_if_match(guardS))->notEmpty()
+                   )
+                                      )
+ /]
+
+[**
+ * @brief Checks if the transition or any following junction type transitions
+ * are triggered by the given Event and specified guard type.
+*/]
+[query public request_is_event_transition(t:Transition, anEvent: Event, 
+                                          guardS : String)
+ : Boolean = (t.trigger.event->includes(anEvent)
+              and t.request_matching_guard(guardS) 
+              and not t.target.request_is_static_junction())
+           or (t.target.request_is_static_junction()
+               and t.request_match_if_no_guard(guardS)
+               and ((t.trigger.event->includes(anEvent) 
+                     and t.target.request_outgoing_transitions(null, 
+                              t.request_any_guard_if_match(guardS))->notEmpty()
+                    ) or
+                    (t.trigger->isEmpty()
+                     and t.target.request_outgoing_transitions(anEvent, 
+                              t.request_any_guard_if_match(guardS))->notEmpty()
+                    )
+                   ) 
+              ) 
+ /]
+
+[query public request_match_if_no_guard(t:Transition, guardS : String): Boolean
+ = t.request_matching_guard(guardS)
+   or (guardS<>'No' and t.request_matching_guard('No'))/]
+
+[query public request_any_guard_if_match(t:Transition, guardS:String) 
+ : String = if guardS<>'No'  and t.request_matching_guard(guardS) 
+                          then '' else guardS endif/]
+
+[query public request_elements_sorted(aSet:Set(Element))
+  :OrderedSet(Element) = aSet->sortedBy(e:Element|
+          e.eContainer(Model).eAllContents()->indexOf(e))/]
+
+[query public request_has_standalone_behaviors(aClassifier:Classifier, 
+                                          vis : Set(VisibilityKind)):Boolean =
+aClassifier.oclIsKindOf(BehavioredClassifier)
+           and aClassifier.oclAsType(BehavioredClassifier)
+               .request_standalone_behaviors(vis)->notEmpty()/]
+
+[query public request_transition_needs_exit(aTransition:Transition):Boolean =
+let exitState : State = request_transition_exit_state(aTransition) in
+    (not exitState.oclIsUndefined())
+    and (
+    if aTransition.request_transition_is_local() then
+        aTransition.request_transition_effect_region()
+                                                   .request_region_needs_exit()
+    else
+        (aTransition.kind = TransitionKind::external
+         or aTransition.kind = TransitionKind::local)
+              and  exitState.request_state_needs_exit()
+    endif)/]
+
+[query public request_region_initial_pseudostates(r:Region) 
+ : Set(Pseudostate) = 
+ r.subvertex->selectByKind(Pseudostate)
+   ->select(p:Pseudostate|p.kind=PseudostateKind::initial)/]
+
+[query public request_region_has_initial_pseudostate(r:Region) : Boolean = 
+ r.request_region_initial_pseudostates()->notEmpty()/]
+
+[query public request_region_has_one_initial_pseudostate(r:Region) : Boolean = 
+ r.request_region_initial_pseudostates()->size() = 1/]
+
+[query public request_region_initial_pseudostate(r:Region) 
+ : Pseudostate = 
+   if r.request_region_has_one_initial_pseudostate() then
+      r.request_region_initial_pseudostates()
+          ->any(p:Pseudostate | not p.oclIsUndefined())
+   else null endif/]
+
+[query public request_behavior_needs_async_call(aBehavior:Behavior):Boolean = 
+ (not aBehavior.oclIsUndefined()) and aBehavior.oclIsKindOf(StateMachine)/]
+
+[**
+ * Returns an OrderedSet of Vertices whose entry calls can be executed 
+ * synchronously at the time they are called, with the exception of the last
+ * Vertex, which can be called asynchronously in order to start the asynchronous
+ * chain of calls.
+*/]
+[query public request_synchronous_entry_calls(anOSet:OrderedSet(Vertex))
+ : OrderedSet(Vertex) = 
+   let lastVertex : Vertex = 
+    anOSet->select(v:Vertex | v.request_vertex_needs_async_entry())->first() in
+   let lastIndex : Integer = if lastVertex.oclIsUndefined() then anOSet->size()
+                             else anOSet->indexOf(lastVertex) endif in
+   if anOSet->notEmpty() then anOSet->subOrderedSet(1, lastIndex)
+   else anOSet endif/]
+
+[query public request_vertex_needs_async_entry(v:Vertex):Boolean = 
+  (v.oclIsKindOf(State) and 
+    v.oclAsType(State).entry.request_behavior_needs_async_call())
+  or (v.oclIsKindOf(Pseudostate) and 
+       let p:Pseudostate = v.oclAsType(Pseudostate) in (
+           (p.kind=PseudostateKind::initial and p.outgoing
+             ->select(t:Transition|t.request_transition_needs_async_call())
+             ->notEmpty())
+       ))/]
+
+[query public request_region_needs_async_entry(r:Region):Boolean =
+   let p : Pseudostate = 
+           r.request_region_initial_pseudostate() in
+  (not p.oclIsUndefined()) and
+  p.outgoing->select(t:Transition|t.request_transition_needs_async_call())
+             ->notEmpty()/]
+
+[query public request_transition_needs_async_call(aTransition:Transition)
+ :Boolean = 
+ aTransition.effect.request_behavior_needs_async_call()
+ or (let target_vertices : OrderedSet(Vertex) = 
+        aTransition.request_transition_target_vertices() in
+    target_vertices
+    ->select(v:Vertex|v.request_vertex_needs_async_entry())->notEmpty()
+    or aTransition.request_regions_init()
+       ->select(r:Region|r.request_region_needs_async_entry())->notEmpty())/]
+
+[**
+ * @brief Returns a list of vertices that should be entered to make
+ * the run to completion step finished. This list does not include 
+ * the remaining regions that need to be initialized.
+*/]
+[query public request_transition_target_vertices(aTransition:Transition)
+ : OrderedSet(Vertex) = let entry_states : OrderedSet(State) = 
+            request_transition_entry_states(aTransition) in
+   if aTransition.request_is_transition_local_to_parent() then
+      entry_states else entry_states->append(aTransition.target) endif/]
+
+[**
+ * @brief Returns the list of the first synchronous entry call vertices
+ * that should be called at the time the transition is fired. The rest vertices
+ * will be called later after the async calls are completed.
+*/]
+[query public request_transition_target_sync_vertices(aTransition:Transition)
+ : OrderedSet(Vertex) = 
+ request_transition_target_vertices(aTransition)
+                        ->request_synchronous_entry_calls()/]
+
+[**
+ * @brief Returns the list of the first synchronous entry call regions
+ * that should be called at the time the transition is fired. The rest
+ * of regions will be called later as the chain of asynchronous calls
+ * executes.
+*/]
+[query public request_transition_target_sync_regions_init
+                                                        (aTransition:Transition)
+ : OrderedSet(Region) = 
+ let additional_regions : OrderedSet(Region) = 
+                   aTransition.request_regions_init() in 
+ if aTransition.request_is_transition_local_to_parent()
+ then additional_regions else
+   let sync_entry_states : OrderedSet(State) = 
+     request_transition_target_sync_vertices(aTransition)
+     ->selectByKind(State)
+     ->select(s:State|not s.request_vertex_needs_async_entry()) 
+     in
+   additional_regions->select(r:Region|sync_entry_states->includes(r.state)) 
+ endif /]
+
+[query public request_transition_dispatch_result(aTransition : Transition)
+ : String = if aTransition.request_transition_needs_async_call() 
+          then request_transition_transit_state() else 
+          if aTransition.kind = TransitionKind::internal then 
+                 request_transition_same_state()
+          else request_transition_changed_state() endif endif/]
+
+[query public request_transition_transit_state(traceabilityContext : OclAny)
+ : String = 'TRANSITION'/]
+
+[query public request_transition_ignored_state(traceabilityContext : OclAny)
+ : String = 'IGNORED'/]
+
+[query public request_transition_deferred_state(traceabilityContext : OclAny)
+ : String = 'DEFERRED'/]
+
+[query public request_transition_changed_state(traceabilityContext : OclAny)
+ : String = 'CHANGEDSTATE'/]
+
+[query public request_transition_same_state(traceabilityContext : OclAny)
+ : String = 'SAMESTATE'/]
+
+[query public request_sort_regions(anOSet : OrderedSet(Region)) : 
+  OrderedSet(Region)
+  = if anOSet->size() <=1 then anOSet
+    else 
+      let aRest : OrderedSet(Region) = anOSet->drop(1) in
+      let aFirst : Region = anOSet->first() in
+      let aRest_children:OrderedSet(Region) = aRest->select(
+          r:Region | r.request_parent_regions()->includes(aFirst)) in
+      let aRest_non_children:OrderedSet(Region) 
+          = aRest->removeAll(aRest_children) in
+      aRest_children->request_sort_regions()->append(aFirst)
+      ->addAll(aRest_non_children->request_sort_regions())
+    endif/]
+
+[query public request_state_machine_choices(sm : StateMachine)
+ : Sequence(Pseudostate) = sm.eAllContents(Pseudostate)
+      ->select(p : Pseudostate | p.kind = PseudostateKind::choice)/]
+
+[query public request_state_machine_junctions(sm : StateMachine)
+ : Sequence(Pseudostate) = sm.eAllContents(Pseudostate)
+      ->select(p : Pseudostate | p.kind = PseudostateKind::junction)/]
+
+[query public request_vertex_is_choice(aVertex : Vertex) : Boolean = 
+ aVertex.oclIsKindOf(Pseudostate) 
+ and aVertex.oclAsType(Pseudostate).kind = PseudostateKind::choice/]
+
+[query public request_temp_dispatch_result_name(traceabilityContext : OclAny)
+ : String = 'temp_status'/]
+
+[query public request_is_behavior_named(aBehavior:Behavior) : Boolean = 
+    (not aBehavior.oclIsUndefined()) 
+    and (not aBehavior.name.oclIsUndefined()) and aBehavior.name->notEmpty()/]
+
+[query public request_is_static_junction(aVertex:Vertex):Boolean = 
+ not aVertex.oclIsUndefined() and aVertex.oclIsKindOf(Pseudostate) 
+ and aVertex.oclAsType(Pseudostate).kind = PseudostateKind::junction/]

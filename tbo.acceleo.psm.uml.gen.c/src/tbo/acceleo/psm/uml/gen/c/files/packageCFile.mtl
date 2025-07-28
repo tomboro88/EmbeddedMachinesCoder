@@ -1,0 +1,275 @@
+[comment encoding = UTF-8 /]
+[module packageCFile('http://www.eclipse.org/uml2/5.0.0/UML')]
+
+[import tbo::acceleo::psm::uml::gen::c::common::utils /]
+[import tbo::acceleo::psm::uml::gen::c::common::documentation /]
+[import tbo::acceleo::psm::uml::gen::c::common::uml_c/]
+[import tbo::acceleo::psm::uml::gen::c::request::request/]
+
+[template public generatePackageC(aPackage : Package)
+  {header_packages : Set(Package) = uml_c_header_subpackages(aPackage)->union(
+   uml_c_header_dependencies(aPackage))->asSet();
+   source_subpackages : Set(Package) = uml_c_source_subpackages(aPackage);
+   source_dependencies  : Set(Package) = uml_c_source_dependencies(aPackage)
+      ->removeAll(header_packages);
+   sourceLiteralSpecifications : Sequence(LiteralSpecification) = 
+    uml_c_source_literal_specifications(aPackage);
+   allClassifiers : OrderedSet(Classifier) = 
+      utils_sort_by_name(aPackage.request_non_packaged_children()
+                         ->selectByKind(Classifier)).oclAsType(Classifier)
+                         ->asOrderedSet();
+   sourceClassifiers : OrderedSet(Classifier) = 
+      utils_sort_by_name(aPackage.uml_c_source_classifiers())
+              .oclAsType(Classifier)->asOrderedSet();
+   needs_get_specific : Boolean = not allClassifiers->select(
+       aClassifier : Classifier | aClassifier.request_needs_storage() 
+       and not aClassifier.general->isEmpty())->isEmpty();
+   general_extern_classifiers : OrderedSet(Classifier) = 
+     allClassifiers.general->asOrderedSet()
+                    ->select(c:Classifier|c._package <> aPackage);
+   non_public_bodies_visibility : Set(VisibilityKind) = 
+                                        Set{VisibilityKind::_package,
+                                            VisibilityKind::private,
+                                            VisibilityKind::protected};}]
+
+[file (get_package_c_qualified_path(aPackage), false, 'UTF-8')]
+[documentationCFile('The ' + aPackage.name + ' package source file.')/]
+
+/*******************************************************************************
+ * 
+ * Include statements.
+ * 
+ ******************************************************************************/
+//[protected('includes top')]
+//[/protected]
+#include "[get_package_h_filename(aPackage)/]"
+[uml_c_include_dependencies(source_dependencies, source_subpackages, 0)
+/][if needs_get_specific]
+#include <stddef.h>
+[/if][if needs_get_specific]
+#include <stdint.h>
+[/if][if needs_get_specific]
+#include <stdbool.h>
+[/if][if (not sourceClassifiers->selectByKind(StateMachine)->isEmpty())
+    and aPackage.uml_c_header_classifiers()
+        ->selectByKind(StateMachine)->isEmpty()]
+#include <sm.h>
+[/if]//[protected('includes bottom')]
+//[/protected]
+/*******************************************************************************
+ *
+ * Data type, constant, and macro definitions.
+ *
+ ******************************************************************************/
+[if not sourceLiteralSpecifications
+    ->select(ls : LiteralSpecification | ls.uml_c_literalspec_need_define())
+    ->isEmpty() ]
+[uml_c_literal_list(sourceLiteralSpecifications, 0)/]
+
+[/if]
+[if (not allClassifiers->select(
+ aClassifier : Classifier | aClassifier.request_needs_storage() 
+ and not aClassifier.general->isEmpty())->isEmpty())]
+[documentation_string('@brief The macro used to initialize a pointer to the '
+  + 'child class from a pointer to the base class.\n' 
+  + documentation_param(ParameterDirectionKind::_in, 
+               'child_type', 'The name of the child class type.') + '\n'
+  + documentation_param(ParameterDirectionKind::_in, 
+               'base_field', 'The name of the field of the base class.') + '\n'
+  + documentation_param(ParameterDirectionKind::_in, 
+               'child_ptr', 'The name of the child class target pointer.'), 0)/]
+#define [aPackage.name.toUpper()
+         /]_CHILD_FROM_BASE(child_type,base_field,child_ptr)\
+        [aPackage.name/]_set_specific((char*)p_obj, \
+                             offsetof(child_type,base_field), (char**)child_ptr)
+
+[/if]
+[if sourceClassifiers->uml_c_classifiers_need_declare()]
+[uml_c_declare_structs(sourceClassifiers, 0)/]
+[/if]
+/*******************************************************************************
+ * 
+ * Non-private function prototypes.
+ * 
+ ******************************************************************************/
+[for (aClassifier:Classifier|general_extern_classifiers)
+     ?(aClassifier.uml_c_operations_need_declaration(
+                          Set{VisibilityKind::protected})->notEmpty()
+       or (aClassifier.request_has_standalone_behaviors(
+                         Set{VisibilityKind::protected, 
+                             VisibilityKind::public})))]
+[uml_c_declare_operations(aClassifier, Set{VisibilityKind::protected}, 
+                          true, 0)/]
+[let bc:BehavioredClassifier=aClassifier]
+[uml_c_declare_behaviors(
+        bc, 
+        Set{VisibilityKind::protected, VisibilityKind::public}, true, 0)/]
+[/let]
+[/for]
+[for (aClassifier:Classifier|sourceClassifiers)
+     ?(aClassifier.uml_c_operations_need_declaration(
+                          Set{VisibilityKind::public})->notEmpty())]
+[uml_c_declare_operations(aClassifier, Set{VisibilityKind::public}, 
+                          false, 0)/]
+[/for]
+[for (aClassifier:Classifier|allClassifiers)
+     ?(aClassifier.uml_c_operations_need_declaration(
+                          Set{VisibilityKind::protected, 
+                              VisibilityKind::_package})->notEmpty()
+       or (aClassifier.request_has_standalone_behaviors(
+                                     Set{VisibilityKind::protected,
+                                         VisibilityKind::_package,
+                                         VisibilityKind::public})))]
+[uml_c_declare_operations(aClassifier, Set{VisibilityKind::protected,
+                                         VisibilityKind::_package,
+                                         VisibilityKind::public}, 
+                          false, 0)/]
+[let bc:BehavioredClassifier=aClassifier]
+[uml_c_declare_behaviors(bc, Set{VisibilityKind::protected,
+                                         VisibilityKind::_package,
+                                         VisibilityKind::public}, false, 0)/]
+[/let]
+[/for]
+/*******************************************************************************
+ * 
+ * Private function prototypes.
+ * 
+ ******************************************************************************/
+[for (aClassifier:Classifier|allClassifiers)
+  ?(aClassifier.uml_c_operations_need_declaration(Set{VisibilityKind::private})
+                ->notEmpty()
+       or aClassifier
+            .request_has_standalone_behaviors(Set{VisibilityKind::private})
+       or aClassifier.uml_c_needs_init_defaults()
+       or aClassifier.oclIsKindOf(StateMachine))
+    {vis : Set(VisibilityKind) = Set{VisibilityKind::private};}]
+[if aClassifier.uml_c_operations_need_declaration(vis)->notEmpty()]
+[uml_c_declare_operations(aClassifier, vis, false, 0)/]
+[/if]
+[let bc:BehavioredClassifier=aClassifier]
+[if bc.request_standalone_behaviors(vis)->notEmpty()]
+[uml_c_declare_behaviors(bc, vis, false, 0)/]
+[/if]
+[/let]
+[if aClassifier.uml_c_needs_init_defaults()]
+[uml_c_declare_defaults(aClassifier, 0)/]
+[/if]
+[let sm:StateMachine=aClassifier]
+[uml_c_declare_region_exit(sm,0)/]
+[uml_c_declare_sm_dispatch(sm, 0)/]
+[uml_c_declare_region_dispatch(sm,0)/]
+[uml_c_declare_state_dispatch(sm, 0)/]
+[if sm.request_state_machine_choices()->notEmpty() ]
+[uml_c_declare_choices(sm, 0)/]
+[/if]
+[/let]
+[/for]
+/*******************************************************************************
+ * 
+ * Inline functions.
+ * 
+ ******************************************************************************/
+[if (not allClassifiers->select(
+ aClassifier : Classifier | aClassifier.request_needs_storage() 
+ and not aClassifier.general->isEmpty())->isEmpty())]
+/**
+ * @brief Obtains the pointer to the specialized class from the pointer to
+ * the base class.
+ * @param ['['/]in[']'/] p_base The pointer to the base class object.
+ * @param ['['/]in[']'/] base_offset The amount by which the p_base is offset 
+ *     from the specific class pointer. Should be obtained using the 
+ *     offsetof(specific_type, base_field_name) macro.
+ * @param ['['/]out[']'/] pp_specific The pointer to the location where the 
+ *     seeked pointer should be stored.
+ * @return true if the searched pointer was found.
+ */
+static inline bool 
+[aPackage.name/]_set_specific(char* const p_base, size_t const base_offset,
+[utils_indent(aPackage.name.size())/]              char** const pp_specific)
+{
+    bool b_is_copied = false;
+
+    if((NULL != pp_specific) && (NULL != p_base) 
+            && (base_offset <= PTRDIFF_MAX))
+    {
+        *pp_specific = (&p_base['['/]-((ptrdiff_t)base_offset)[']'/]);
+        b_is_copied = true;
+    }
+
+    return b_is_copied;
+}
+
+[/if]
+[for (sm : StateMachine | allClassifiers->selectByKind(StateMachine))]
+[uml_c_define_state_entry(sm,0)/]
+[uml_c_implement_initial_transitions(sm, 0)/]
+[if not sm.eAllContents(State)
+          ->select(aState : State | aState.request_state_needs_exit())
+          ->isEmpty() ]
+[uml_c_define_state_exit(sm,0)/]
+[/if]
+[/for]
+/*******************************************************************************
+ * 
+ * Static data declarations.
+ * 
+ ******************************************************************************/
+[uml_c_init_vtables(allClassifiers, 0)/]
+/*******************************************************************************
+ * 
+ * Public function bodies.
+ * 
+ ******************************************************************************/
+[for (aClassifier:Classifier|allClassifiers)
+     ?(aClassifier.uml_c_get_operations(Set{VisibilityKind::public})
+       ->notEmpty()
+       or aClassifier
+                .request_has_standalone_behaviors(Set{VisibilityKind::public}))]
+[uml_c_define_operations(aClassifier, Set{VisibilityKind::public}, 0)/]
+[let bc:BehavioredClassifier=aClassifier]
+[uml_c_define_behaviors(bc,Set{VisibilityKind::public}, 0)/]
+[/let]
+[/for]
+/*******************************************************************************
+ * 
+ * Non-public function bodies.
+ * 
+ ******************************************************************************/
+[for (aClassifier:Classifier|allClassifiers)
+     ?(aClassifier.uml_c_needs_init_defaults()
+       or aClassifier.uml_c_get_operations(non_public_bodies_visibility)
+                                                                    ->notEmpty()
+       or aClassifier.request_has_standalone_behaviors(
+                                                   non_public_bodies_visibility)
+       or aClassifier.oclIsKindOf(StateMachine)) ]
+[if aClassifier.uml_c_needs_init_defaults()]
+[uml_c_define_defaults(aClassifier,0)/]
+[/if]
+[if aClassifier.uml_c_get_operations(non_public_bodies_visibility)->notEmpty()]
+[uml_c_define_operations(aClassifier, non_public_bodies_visibility, 0)/]
+[/if]
+[let bc:BehavioredClassifier=aClassifier]
+[if bc.request_standalone_behaviors(non_public_bodies_visibility)->notEmpty()]
+[uml_c_define_behaviors(bc, non_public_bodies_visibility, 0)/]
+[/if]
+[/let]
+[let sm:StateMachine=aClassifier]
+[if sm.request_all_regions()
+                          ->select(r: Region | r.request_region_needs_exit())
+                          ->notEmpty()]
+[uml_c_define_region_exit(sm,0)/]
+[/if]
+[uml_c_implement_sm_dispatch(sm, 0)/]
+[uml_c_implement_region_dispatch(sm,0)/]
+[uml_c_implement_state_dispatch(sm, 0)/]
+[if sm.request_state_machine_choices()->notEmpty() ]
+[uml_c_implement_choices(sm, 0)/]
+[/if]
+[if sm.request_state_machine_junctions()->notEmpty() ]
+[uml_c_implement_junctions(sm, 0)/]
+[/if]
+[/let]
+[/for]
+/*** end of file ***/
+[/file]
+[/template]

@@ -1,0 +1,144 @@
+[comment encoding = UTF-8 /]
+[module utils('http://www.eclipse.org/uml2/5.0.0/UML')]
+
+[**
+ * @brief Follows each newline symbol with a prefix string.
+ * @param aString The string in which the newlines should be replaced.
+ * @param line_prefix The string that should be inserted after each line 
+ *     separator. 
+ */]
+[query public indent_newlines(aString : String, line_prefix : String) : String =
+  aString.replaceAll('\\r\\n|[\\r\\n]', utils_newline()+line_prefix)/]
+
+[**
+ * @brief Returns the guard definition for the header file. 
+ */]
+[query public header_guard(name : String) : String 
+   = name.toUpper().concat('_H')/]
+
+[query public get_package_folder(aPackage : Package) : String = 
+                                       aPackage.name + '/'/]
+
+[query public get_package_h_filename(aPackage : Package) : String = 
+                             aPackage.name+'.h'/]
+
+[query public get_package_h_path(aPackage : Package) : String = 
+               get_package_folder(aPackage) + get_package_h_filename(aPackage)/]
+
+[query public get_package_qualified_folder(aPackage : Package) : String = 
+   if aPackage.eContainer(Package).oclIsUndefined() then ''
+   else get_package_qualified_folder(aPackage.eContainer(Package)) 
+   + get_package_folder(aPackage) endif/]
+
+[query public get_package_h_qualified_path(aPackage : Package) : String = 
+     get_package_qualified_folder(aPackage) + get_package_h_filename(aPackage)/]
+
+[query public get_package_c_filename(aPackage : Package) : String = 
+                                       aPackage.name + '.c'/]
+
+[query public get_package_c_path(aPackage : Package) : String = 
+               get_package_folder(aPackage) + get_package_c_filename(aPackage)/]
+
+[query public get_package_c_qualified_path(aPackage : Package) : String = 
+     get_package_qualified_folder(aPackage) + get_package_c_filename(aPackage)/]
+
+[**
+ * Produces a string of spaces of specified length. 
+ * @length The number of spaces.
+ */]
+[query public utils_indent(length:Integer) : String = 
+ if length > 0 then ' ' + utils_indent(length-1) else '' endif/]
+
+[query public utils_get_indent_string(traceabilityContext : OclAny) : String
+ = let indent_width : Integer = getProperty('indent_width').toInteger() in
+   utils_indent(indent_width)/]
+
+[query private utils_concat(aSequence : Sequence(String)):String
+= if aSequence->isEmpty() then '' 
+  else aSequence->first().concat(utils_concat(aSequence->drop(1))) endif/]
+
+[query public utils_newline(traceabilityContext : OclAny): String = 
+utils_files_newline().characters()
+->select(s : String | Set{'\r','\n'}->includes(s))->utils_concat()/]
+
+[query public utils_sort_by_name(aSeq:Sequence(NamedElement)) : 
+  Sequence(NamedElement)=
+  aSeq->select(n:NamedElement| ((not n.name.oclIsUndefined()) 
+                           and (not n.name.oclIsInvalid()) 
+                           and (not n.name->isEmpty())) )
+    ->sortedBy(n:NamedElement|n.name.toLower())/]
+
+[query public utils_get_self_name(traceabilityContext: OclAny) : 
+  String = 'p_obj'/]
+
+[query public utils_get_context_name(traceabilityContext: OclAny) : 
+  String = 'p_ctx'/]
+
+[query public utils_get_vtable_name(traceabilityContext: OclAny) :
+ String = 'p_vtable'/]
+
+[query public utils_get_event_head_name(traceabilityContext: OclAny) :
+ String = 'event_head'/]
+
+[query public utils_get_event_tail_name(traceabilityContext: OclAny) :
+ String = 'event_tail'/]
+
+[query public utils_get_event_next_name(traceabilityContext: OclAny) :
+ String = 'event_next'/]
+
+[query public utils_get_defer_head_name(traceabilityContext: OclAny) :
+ String = 'defer_head'/]
+
+[query public utils_get_defer_tail_name(traceabilityContext: OclAny) :
+ String = 'defer_tail'/]
+
+[query public utils_dispatch_junction_result_name
+                 (traceabilityContext : OclAny) : String = 'p_result'/]
+
+[query public utils_dispatch_result_name(traceabilityContext: OclAny)
+ : String = 'result'/]
+
+[**
+ * @brief Joins the strings in the aSeq Sequence so that whey will fit into a 
+ * line of entry_width and so that the length of the last line is 
+ * last_line_width.
+ * 
+ *   Useful for inserting chains to nested struct fields.
+ */]
+[query public utils_query_nested_field(aSeq : Sequence(String), 
+                                        entry_width : Integer,
+                                        last_line_width : Integer,
+                                        position : Integer) : 
+ String = aSeq->first() + 
+ if aSeq->size() > 1 then
+     if aSeq->drop(1)->first().size() 
+            > (entry_width - aSeq->first().size() - position) then
+         utils_newline() + 
+         aSeq->drop(1)->utils_query_nested_field(entry_width, last_line_width,
+                                                 0)
+     else 
+         aSeq->drop(1)->utils_query_nested_field(entry_width, last_line_width,
+                                                 position 
+                                                 + aSeq->first().size())
+     endif
+ else
+     if position + aSeq->first().size() > last_line_width then
+         utils_newline() + utils_indent(last_line_width)
+     else
+         utils_indent(last_line_width - position - aSeq->first().size())
+     endif
+ endif/]
+
+[query public utils_get_max_name_length(OclTreceabilityContext : OclAny) : 
+ Integer = 31/]
+
+[**
+ * @brief this template is a template of a newline character.
+ * 
+ * It allows to use the same new line delimiter that is used in the source
+ * files of this generator. Then the new line delimiters in the generated files
+ * can be consistent.
+ */]
+[template private utils_files_newline(traceabilityContext : OclAny)]
+
+[/template]
