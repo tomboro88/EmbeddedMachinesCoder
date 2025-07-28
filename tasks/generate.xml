@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project default="generate" name="tbo.acceleo.psm.uml.gen.c">
-    <property name="ECLIPSE_HOME" value="../../../../../../../../../home/tomasz/Papyrus"/>
+    <property name="ECLIPSE_HOME" value="../../../../../Papyrus"/>
     <property name="ECLIPSE_WORKSPACE" value="../../../UMLWorkspace"/>
 
     <!-- The classpath with only the dependencies used by the project -->

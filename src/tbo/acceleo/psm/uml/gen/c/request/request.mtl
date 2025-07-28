@@ -285,13 +285,20 @@
 [query public request_region_vertices(r:Region) : OrderedSet(Vertex) =
     request_elements_sorted(r.subvertex)/]
 
+[query public request_incoming_transitions(v:Vertex) : OrderedSet(Transition) =
+    request_elements_sorted(v.incoming)/]
+
+[query public request_all_outgoing_transitions(v:Vertex) : 
+  OrderedSet(Transition) =
+    request_elements_sorted(v.outgoing)/]
+
 [**
  * @brief Returns all events that need to be handled in the region 
  */]
 [query public request_region_events(aRegion:Region) : OrderedSet(Event) = 
     let states:Set(State) = aRegion.subvertex->selectByKind(State) in
     let state_events:OrderedSet(Event) = states
-               ->collect(s:State|s.request_state_events())->flatten()
+               ->collect(s:State|s.request_vertex_events())->flatten()
                                 ->asOrderedSet() in
     request_elements_sorted(states->select(s:State|s.region->notEmpty())
                               .region->flatten()
@@ -299,16 +306,22 @@
                             ->addAll(state_events))/]
 
 [**
- * @brief Returns an OrderedSet of events handled specifically by this state.
+ * @brief Returns an OrderedSet of events outgoing from this vertex, even
+ * the events that trigger transitions from the following junction Pseudostates.
 */]
-[query public request_state_events(aState:State) : OrderedSet(Event) =
-    let events:Set(Event) = aState.outgoing.trigger->flatten()
-        .event->select(e:Event|not e->oclIsUndefined())->asSet() in 
+[query public request_vertex_events(aVertex:Vertex) : OrderedSet(Event) =
+    let events:Set(Event) = aVertex.outgoing.trigger->flatten()
+        .event->select(e:Event|not e->oclIsUndefined())
+        ->union(aVertex.outgoing
+                 ->select(t:Transition|t.trigger->isEmpty()).target
+                ->select(v:Vertex|v.request_is_static_junction())
+                  .request_vertex_events()->flatten()
+        )->asSet() in 
          request_elements_sorted(events)/]
 
 [query public request_state_handles_event(aState:State, anEvent : Event) 
  : Boolean =
-    aState.request_state_events()->includes(anEvent)/]
+    aState.request_vertex_events()->includes(anEvent)/]
 
 [query public request_vertex_region(v : Vertex) : Region = 
   v.container/]
@@ -375,22 +388,6 @@
            ->select(r:Region|r.request_region_events()->includes(anEvent))
            ->asOrderedSet()->sortedBy(r:Region|
                   r.containingStateMachine().eAllContents(Region)->indexOf(r))/]
-[**
- * @brief Selects only transitions with 'else' guard.
-*/]
-[query public request_else_transitions(transitions : OrderedSet(Transition))
-       : OrderedSet(Transition) = transitions
-                 ->select(t:Transition | (not t.guard.oclIsUndefined()) 
-                           and (not t.guard.specification.oclIsUndefined()) 
-                           and t.guard.specification.oclIsKindOf(Expression) 
-                           and t.guard.specification.oclAsType(Expression).symbol = 'else')/]
-
-[**
- * brief Selects transitions with specified guards, including 'else' guards.
-*/]
-[query public request_guard_transitions(transitions : OrderedSet(Transition))
-       : OrderedSet(Transition) = transitions
-                 ->select(t:Transition | not t.guard.oclIsUndefined())/]
 
 [**
  * @brief Returns The topmost state that should be exited to execute the 
@@ -572,16 +569,82 @@ OrderedSet(Region)
  let sm : StateMachine = aRegion.containingStateMachine() in  
   (sm.region->size() = 1) and (sm.region->includes(aRegion))/]
 
+[query public request_matching_guard(t:Transition, guardS : String)
+ : Boolean = if guardS = '' then true
+             else if guardS = 'No' then t.guard.oclIsUndefined()
+             else if guardS = 'Any' then not t.guard.oclIsUndefined()
+             else if guardS = 'Guard' then 
+                 not t.guard.oclIsUndefined() and 
+                 not t.request_matching_guard('Else')
+             else if guardS = 'Else' then
+                 (not t.guard.oclIsUndefined()) 
+                 and (not t.guard.specification.oclIsUndefined()) 
+                 and t.guard.specification.oclIsKindOf(Expression) 
+                 and t.guard.specification.oclAsType(Expression).symbol = 'else'
+             else false endif endif endif endif endif/]
 [**
- * Returns vertex outgoing transitions thet handle the given event.
+ * Returns vertex outgoing transitions that handle the given event.
  * The transitions are ordered in the same sequence as they appear in the model.
  */]
-[query public request_outgoing_transitions(aVertex:Vertex, anEvent:Event):
+[query public request_outgoing_transitions(aVertex:Vertex, anEvent:Event, 
+                                           guardS : String):
  OrderedSet(Transition) = 
  let aStateMachine : StateMachine = aVertex.containingStateMachine() in
  aStateMachine.eAllContents(Transition)
- ->select(t:Transition|t.trigger.event->includes(anEvent))
- ->select(t:Transition|aVertex.outgoing->includes(t))->asOrderedSet()/]
+ ->select(t:Transition|aVertex.outgoing->includes(t))
+ ->select(t:Transition|if anEvent.oclIsUndefined() then
+                           t.request_is_completion_transition(guardS)
+                       else 
+                           t.request_is_event_transition(anEvent, guardS)
+                       endif
+  )->asOrderedSet()/]
+
+[**
+ * @brief Checks if the transition and any following junction type transitions
+ * are transitions with no trigger and specified guard type.
+*/]
+[query public request_is_completion_transition(t:Transition, guardS : String)
+ : Boolean = t.trigger->isEmpty() and (
+                                (t.request_matching_guard(guardS) 
+                                 and not t.target.request_is_static_junction()) 
+                or (t.target.request_is_static_junction() 
+                    and t.request_match_if_no_guard(guardS)
+                    and t.target.request_outgoing_transitions(null, 
+                               t.request_any_guard_if_match(guardS))->notEmpty()
+                   )
+                                      )
+ /]
+
+[**
+ * @brief Checks if the transition or any following junction type transitions
+ * are triggered by the given Event and specified guard type.
+*/]
+[query public request_is_event_transition(t:Transition, anEvent: Event, 
+                                          guardS : String)
+ : Boolean = (t.trigger.event->includes(anEvent)
+              and t.request_matching_guard(guardS) 
+              and not t.target.request_is_static_junction())
+           or (t.target.request_is_static_junction()
+               and t.request_match_if_no_guard(guardS)
+               and ((t.trigger.event->includes(anEvent) 
+                     and t.target.request_outgoing_transitions(null, 
+                              t.request_any_guard_if_match(guardS))->notEmpty()
+                    ) or
+                    (t.trigger->isEmpty()
+                     and t.target.request_outgoing_transitions(anEvent, 
+                              t.request_any_guard_if_match(guardS))->notEmpty()
+                    )
+                   ) 
+              ) 
+ /]
+
+[query public request_match_if_no_guard(t:Transition, guardS : String): Boolean
+ = t.request_matching_guard(guardS)
+   or (guardS<>'No' and t.request_matching_guard('No'))/]
+
+[query public request_any_guard_if_match(t:Transition, guardS:String) 
+ : String = if guardS<>'No'  and t.request_matching_guard(guardS) 
+                          then '' else guardS endif/]
 
 [query public request_elements_sorted(aSet:Set(Element))
   :OrderedSet(Element) = aSet->sortedBy(e:Element|
@@ -751,12 +814,13 @@ let exitState : State = request_transition_exit_state(aTransition) in
  : Sequence(Pseudostate) = sm.eAllContents(Pseudostate)
       ->select(p : Pseudostate | p.kind = PseudostateKind::choice)/]
 
+[query public request_state_machine_junctions(sm : StateMachine)
+ : Sequence(Pseudostate) = sm.eAllContents(Pseudostate)
+      ->select(p : Pseudostate | p.kind = PseudostateKind::junction)/]
+
 [query public request_vertex_is_choice(aVertex : Vertex) : Boolean = 
  aVertex.oclIsKindOf(Pseudostate) 
  and aVertex.oclAsType(Pseudostate).kind = PseudostateKind::choice/]
-
-[query public request_dispatch_result_name(traceabilityContext : OclAny)
- : String = 'result'/]
 
 [query public request_temp_dispatch_result_name(traceabilityContext : OclAny)
  : String = 'temp_status'/]
@@ -764,3 +828,7 @@ let exitState : State = request_transition_exit_state(aTransition) in
 [query public request_is_behavior_named(aBehavior:Behavior) : Boolean = 
     (not aBehavior.oclIsUndefined()) 
     and (not aBehavior.name.oclIsUndefined()) and aBehavior.name->notEmpty()/]
+
+[query public request_is_static_junction(aVertex:Vertex):Boolean = 
+ not aVertex.oclIsUndefined() and aVertex.oclIsKindOf(Pseudostate) 
+ and aVertex.oclAsType(Pseudostate).kind = PseudostateKind::junction/]

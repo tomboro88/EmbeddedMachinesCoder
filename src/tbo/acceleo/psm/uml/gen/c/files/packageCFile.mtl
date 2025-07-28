@@ -265,6 +265,9 @@ static inline bool
 [if sm.request_state_machine_choices()->notEmpty() ]
 [uml_c_implement_choices(sm, 0)/]
 [/if]
+[if sm.request_state_machine_junctions()->notEmpty() ]
+[uml_c_implement_junctions(sm, 0)/]
+[/if]
 [/let]
 [/for]
 /*** end of file ***/

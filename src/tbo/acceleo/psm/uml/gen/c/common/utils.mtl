@@ -92,6 +92,12 @@ utils_files_newline().characters()
 [query public utils_get_defer_tail_name(traceabilityContext: OclAny) :
  String = 'defer_tail'/]
 
+[query public utils_dispatch_junction_result_name
+                 (traceabilityContext : OclAny) : String = 'p_result'/]
+
+[query public utils_dispatch_result_name(traceabilityContext: OclAny)
+ : String = 'result'/]
+
 [**
  * @brief Joins the strings in the aSeq Sequence so that whey will fit into a 
  * line of entry_width and so that the length of the last line is 

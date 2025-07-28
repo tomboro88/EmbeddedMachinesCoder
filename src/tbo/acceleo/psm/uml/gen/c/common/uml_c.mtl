@@ -516,6 +516,23 @@ endif/]
 [query public uml_c_get_entry_name(aVertex : Vertex) : String = 
  (aVertex.containingStateMachine().name + '_enter_' + aVertex.name).toLower()/]
 
+[query public uml_c_getjunction_entry_id(aSeq : Sequence(Transition)):String
+ = if aSeq->notEmpty() and aSeq->last().target.request_is_static_junction() then 
+      aSeq->first().containingStateMachine().eAllContents(Transition)
+          ->indexOf(aSeq->first()).toString()
+             .concat(aSeq->drop(1)->uml_c_getjunction_entry_id())else '' endif/]
+
+[query public uml_c_get_junction_entry_name(aSeq : Sequence(Transition), 
+                                            anEvent : Event) 
+ : String = if aSeq->notEmpty() 
+            and aSeq->last().target.request_is_static_junction()then 
+               (aSeq->last().containingStateMachine().name + '_enter_' 
+               + aSeq->last().target.name 
+               + if anEvent.oclIsUndefined() then '' 
+                    else '_' + anEvent.name endif
+               + '_' + aSeq->uml_c_getjunction_entry_id()).toLower() 
+            else ' #error Empty transition sequence' endif/]
+
 [query public uml_c_get_exit_name(aState : State) : String = 
  (aState.containingStateMachine().name + '_exit_' + aState.name).toLower()/]
 
@@ -1242,11 +1259,20 @@ memset(&[return_name/], 0, sizeof([return_name/]));
     {s : String = '                               ';
      sep : String = '\\' +utils_newline() + s + ' ';
      line_width : Integer = getProperty('line_width').toInteger() 
-                          - indentation;}]
-[t/][(if t.size() <= s.size() then s.substring(t.size()) 
+                          - indentation;
+     p_name : String = if n.oclIsUndefined() then 
+                          '#error Missing property name'
+                       else n endif;
+     p_type : String = if t.oclIsUndefined() then 
+                          '#error Missing property type'
+                       else t endif;
+     p_mul : String = if m.oclIsUndefined() then 
+                          '#error Missing property multiplicity'
+                       else m endif;}]
+[p_type/][(if p_type.size() <= s.size() then s.substring(p_type.size()) 
       else ' '+sep
-      endif)/][n/][if ((n.size() + m.size()+1)
-                             >(line_width-s.size()-1))][sep/][/if][m/];
+      endif)/][p_name/][if ((p_name.size() + p_mul.size()+1)
+                             >(line_width-s.size()-1))][sep/][/if][p_mul/];
 [/template]
 
 [**
@@ -1614,6 +1640,14 @@ static bool
     Sequence{uml_c_param_decl(uml_c_get_type_name(sm) + '*', 
                                     utils_get_self_name())}/]
 
+[query public uml_c_get_junction_entry_params(aJunction:Pseudostate)
+ : Sequence(String)
+  = let sm :StateMachine = aJunction.containingStateMachine() in
+    Sequence{uml_c_param_decl(uml_c_get_type_name(sm) + '*', 
+                                    utils_get_self_name()),
+            uml_c_param_decl(uml_c_get_event_status_type() + '*', 
+                                    utils_dispatch_junction_result_name())}/]
+
 [query public uml_c_get_region_event_dispatch_params(aRegion:Region, 
    anEvent:Event):Sequence(String)
   = let sm :StateMachine = aRegion.containingStateMachine() in
@@ -1667,7 +1701,7 @@ static bool
 [template public uml_c_implement_region_dispatch(sm : StateMachine, 
                                           indentation : Integer)
  {spaces : String = utils_get_indent_string();
-  assign_result : String = request_dispatch_result_name() + ' = ';}]
+  assign_result : String = utils_dispatch_result_name() + ' = ';}]
 [for (aRegion : Region | sm.request_all_regions()) 
      separator(utils_newline())
      ?(not aRegion.request_region_events()->isEmpty()
@@ -1692,7 +1726,7 @@ static [uml_c_get_event_status_type()/]
 
 [uml_c_region_dispatch_body(aRegion, anEvent, indentation)/]
 
-[spaces/]return [request_dispatch_result_name()/];
+[spaces/]return [utils_dispatch_result_name()/];
 }
 [/for]
 [/for]
@@ -1705,20 +1739,18 @@ static [uml_c_get_event_status_type()/]
 [template public uml_c_region_dispatch_body(aRegion:Region, anEvent:Event, 
                                             indentation : Integer)
  {spaces : String = utils_get_indent_string();
-  assign_result : String = request_dispatch_result_name()+' = ';}]
+  assign_result : String = utils_dispatch_result_name()+' = ';}]
 [spaces/]switch([utils_get_self_name()/]->[
                               aRegion.uml_c_get_region_state_property_name()/])
 [spaces/]{
-[for (s:State | aRegion.request_region_states())
-     separator(utils_newline()) after(utils_newline())
-     ?(aRegion.request_region_event_states(anEvent)->includes(s))]
-[if aRegion.request_region_event_states(anEvent)->includes(s)]
+[for (s:State | aRegion.request_region_event_states(anEvent))
+     separator(utils_newline()) after(utils_newline())]
 [spaces/][spaces/]case [s.uml_c_get_state_full_name()/]:
 [spaces/][spaces/][spaces/][assign_result/][uml_c_format_param_list(
          s.uml_c_get_state_event_dispatch(anEvent),
          Sequence{ utils_get_self_name(), 'p_event'}, 
          indentation+(spaces.size()*3) + assign_result.size() + 1)/];
-[spaces/][spaces/][spaces/]break;[/if][/for]
+[spaces/][spaces/][spaces/]break;[/for]
 [spaces/][spaces/]default:
 [spaces/][spaces/][spaces/]break;
 [spaces/]}
@@ -1748,7 +1780,7 @@ static [uml_c_get_event_status_type()/]
  {spaces : String = utils_get_indent_string();
   temp_name : String = request_temp_dispatch_result_name();
   assign_temp_status : String = temp_name + ' = ';
-  assign_result : String = request_dispatch_result_name() + ' = ';}]
+  assign_result : String = utils_dispatch_result_name() + ' = ';}]
 [for (anEvent : Event | sm.request_sm_events()) 
      separator(utils_newline())]
 [documentation_string('@brief Implements ' + anEvent.name + ' event handling by'
@@ -1778,7 +1810,7 @@ static [uml_c_get_event_status_type()/]
                     indentation+spaces.size()+assign_temp_status.size()+1)/];
 [spaces/][assign_result/][uml_c_format_param_list(
                     uml_c_get_event_resolve_status_name(),
-                    Sequence{ request_dispatch_result_name(), temp_name}, 
+                    Sequence{ utils_dispatch_result_name(), temp_name}, 
                     indentation+spaces.size()+assign_result.size()+1)/];
 [/for]
 [elseif sm.region->request_event_subregions(anEvent)->size() = 1]
@@ -1787,7 +1819,7 @@ static [uml_c_get_event_status_type()/]
                             ->any(true), anEvent, indentation)/]
 [/if]
 
-[spaces/]return [request_dispatch_result_name()/];
+[spaces/]return [utils_dispatch_result_name()/];
 }
 [/for]
 [/template]
@@ -1821,7 +1853,7 @@ static [uml_c_get_event_status_type()/]
  {spaces : String = utils_get_indent_string();
   temp_name : String = request_temp_dispatch_result_name();
   assign_temp_status : String = temp_name + ' = ';
-  assign_result : String = request_dispatch_result_name()+' = ';}]
+  assign_result : String = utils_dispatch_result_name()+' = ';}]
 [for (aRegion : Region | sm.request_all_regions()) 
      separator(utils_newline())
      ?(not aRegion.request_region_events()->isEmpty())]
@@ -1861,7 +1893,7 @@ static [uml_c_get_event_status_type()/]
 [if aState.region->request_event_subregions(anEvent)->size() > 1]
 [spaces/][assign_result/][uml_c_format_param_list(
                     uml_c_get_event_resolve_status_name(),
-                    Sequence{ request_dispatch_result_name(), temp_name}, 
+                    Sequence{ utils_dispatch_result_name(), temp_name}, 
                     indentation+spaces.size()+assign_result.size()+1)/];
 [/if]
 [/for]
@@ -1869,7 +1901,7 @@ static [uml_c_get_event_status_type()/]
 [if (aState.region->request_event_subregions(anEvent)->size() > 0)]
 
 [spaces/]if([request_transition_ignored_state()
-                                      /] == [request_dispatch_result_name()/])
+                                      /] == [utils_dispatch_result_name()/])
 [spaces/]{
 [spaces/][spaces/][uml_c_implement_event_handler(aState, anEvent, 
                                                  indentation+spaces.size()*2)/]
@@ -1881,7 +1913,7 @@ static [uml_c_get_event_status_type()/]
 [/if]
 [/if]
 
-[spaces/]return [request_dispatch_result_name()/];
+[spaces/]return [utils_dispatch_result_name()/];
 }
 [/for]
 [/for]
@@ -1894,85 +1926,15 @@ static [uml_c_get_event_status_type()/]
  * The checked transitions are executed by the order of occurence in the model.
 */]
 [template public uml_c_implement_event_handler(aState: State, anEvent: Event,
-                                       indentation : Integer)
- {transitions: OrderedSet(Transition)= 
-                   aState.request_outgoing_transitions(anEvent);}]
-[uml_c_implement_vertex_transitions(aState, transitions, indentation)/]
-[/template]
-
-[template public uml_c_call_state_event_dispatch(aState:State, anEvent:Event, 
-                                                 indentation:Integer)
- {set_status:String = 'status = ';}]
-[set_status/][uml_c_format_param_list(
-                    aState.uml_c_get_state_event_dispatch(anEvent),
-                    aState.uml_c_get_state_event_dispatch_params(anEvent),
-                        indentation+set_status.size() + 1)/];
-[/template]
-
-[template public uml_c_implement_vertex_transitions(aVertex : Vertex, 
-                                       transitions : OrderedSet(Transition),
-                                       indentation : Integer)
- {elseTransitions : OrderedSet(Transition) = 
-                                    transitions->request_else_transitions();
-  guardTransitions : OrderedSet(Transition) =
-                                      request_guard_transitions(transitions);
-  sortedTransitions : OrderedSet(Transition) = 
-             guardTransitions->removeAll(elseTransitions);
-  spaces : String = utils_get_indent_string();}]
-[if ((elseTransitions->size() > 1) or 
-     (elseTransitions->size() > sortedTransitions->size()))]
-#error Redundant transition 'else' guard in\
-       [aVertex.uml_c_get_vertex_full_name()/] Vertex. \
-       Please check your model.
-[elseif ((guardTransitions->notEmpty() 
-         and (guardTransitions->size() <> transitions->size()))
-         or (guardTransitions->isEmpty() and transitions->size() > 1))]
-#error Missing transition guard in\
-       [aVertex.uml_c_get_vertex_full_name()/] Vertex. \
-       Please check your model.
-[elseif (transitions->size() = 1) and guardTransitions->isEmpty()]
-[if aVertex.oclIsKindOf(Pseudostate) 
-        and aVertex.oclAsType(Pseudostate).kind = PseudostateKind::choice]
-#error The Choice pseudostate named [aVertex.name/] has only one transition.
-[else]
-[uml_c_implement_transition_execution(transitions->first(), indentation)
-/][/if][elseif guardTransitions->notEmpty()]
-[for (aTransition : Transition | sortedTransitions)]
-[uml_c_implement_transition_guard(aTransition, indentation)/][/for]
-{
-[if elseTransitions->notEmpty()]
-[spaces/][uml_c_implement_transition_execution(elseTransitions->first(), 
-                                               indentation + spaces.size())/]
-[elseif aVertex.oclIsKindOf(Pseudostate) 
-        and aVertex.oclAsType(Pseudostate).kind = PseudostateKind::choice]
-#error The Choice pseudostate named [aVertex.name/] has no else transition.
-[/if]
-}[else]
-#error No transitions.
-[/if]
+                                       indentation : Integer)]
+[uml_c_implement_vertex_transitions(aState, Sequence{}, anEvent, indentation)/]
 [/template]
 
 [**
- * @brief The template responsible for implementation of guards. 
- */]
-[template public uml_c_implement_transition_guard(aTransition:Transition, 
-                                            indentation:Integer)
-    {spaces : String = utils_get_indent_string();}]
-[let anOpaqueExpression : OpaqueExpression = aTransition.guard.specification]
-[if (anOpaqueExpression.language->includes('C'))]
-if([uml_c_implement_opaque_expression(anOpaqueExpression,'C')/])
-{
-[spaces/][uml_c_implement_transition_execution(aTransition, 
-                                               indentation + spaces.size())/]
-}
-else 
-[else]
-#error Guard OpaqueExpression C language implementation missing\
-       in [aTransition.source.uml_c_get_vertex_full_name()/] vertex.
-[/if]
-[/let]
-[/template]
-
+ * @brief Implements OpaqueExpression.
+ * @param anOpaqueExpression The expression that should be implemented.
+ * @param aLanguage The language that should be selected for implementation.
+*/]
 [template public uml_c_implement_opaque_expression(
       anOpaqueExpression : OpaqueExpression, aLanguage : String)]
 [if (anOpaqueExpression.language->includes(aLanguage))]
@@ -1986,6 +1948,9 @@ else
 [**
  * @brief Implements the transition execution after the guard is fulfilled 
  * to true. 
+ * @param aTransition The Transition that should be implemented.
+ * @param indentation The indentation means the sum of all previous code 
+ * indentations.
  */]
 [template public uml_c_implement_transition_execution(aTransition:Transition,
                                                       indentation : Integer)
@@ -1997,7 +1962,7 @@ else
 [if not aTransition.effect.oclIsUndefined()]
 [uml_c_implement_transition_effect(aTransition, indentation)/]
 [/if]
-[request_dispatch_result_name()
+[utils_dispatch_result_name()
                          /] = [aTransition.request_transition_dispatch_result() 
 /];[else]
 [if aTransition.request_transition_needs_exit() and 
@@ -2025,7 +1990,7 @@ if(b_is_completed)
 }
 else
 {
-[spaces/][request_dispatch_result_name()
+[spaces/][utils_dispatch_result_name()
                                      /] = [request_transition_transit_state()/];
 }[else]
 [uml_c_implement_transition_transit(aTransition, 
@@ -2034,8 +1999,12 @@ else
 [/template]
 
 [**
- * Implements the steps of the transition after the source state exit is 
+ * @brief Implements the steps of the transition after the source state exit is 
  * completed.
+ * @param aTransition The transition that should be implemented.
+ * @details
+ * @param indentation The indentation means the sum of all previous code 
+ * indentations.
  * The following variables are initialized:
  * assign_choice_result - necessary, because ordinary States do not return entry
  *                 status, but Choice pseudostates return entry status.
@@ -2056,9 +2025,9 @@ else
    post(trim())
    {assign_choice_result : String = 
         if aTransition.target.request_vertex_is_choice() then 
-            request_dispatch_result_name() + ' = ' 
+            utils_dispatch_result_name() + ' = ' 
         else '' endif;
-    assign_result : String = request_dispatch_result_name() + ' = ';
+    assign_result : String = utils_dispatch_result_name() + ' = ';
     temp_name : String = request_temp_dispatch_result_name();
     assign_temp_status : String = temp_name + ' = ';
     sync_vertices : OrderedSet(Vertex) = 
@@ -2085,19 +2054,19 @@ else
 [if aTransition.request_is_transition_local_to_parent()]
 [comment In case of a local transition to parent the sync_vertices list
   is empty and it is ok/]
-[request_dispatch_result_name()/] = [request_transition_changed_state()/];
+[utils_dispatch_result_name()/] = [request_transition_changed_state()/];
 [elseif sync_vertices->isEmpty()]
 [comment This is not the case when the target vertex is a Choice pseudostate./]
-[request_dispatch_result_name()/] = [request_transition_transit_state()/];
+[utils_dispatch_result_name()/] = [request_transition_transit_state()/];
 [elseif sync_vertices->last() <> aTransition.target
         or sync_vertices->last().request_vertex_needs_async_entry()]
 [comment There are still some asynchronous calls that must be completed./]
-[request_dispatch_result_name()/] = [request_transition_transit_state()/];
+[utils_dispatch_result_name()/] = [request_transition_transit_state()/];
 [elseif not aTransition.target.request_vertex_is_choice()]
 [comment This line is needed only if the target is not a Choice pseudostate,
          since for a Choice pseudostate the result is assigned above in the 
          for loop./]
-[request_dispatch_result_name()/] = [request_transition_changed_state()/];
+[utils_dispatch_result_name()/] = [request_transition_changed_state()/];
 [/if]
 [comment then initialize all other concurrent regions that are
  activated as a side effect/]
@@ -2110,18 +2079,22 @@ else
          indentation + assign_temp_status.size() + 1)/];
 [assign_result/][uml_c_format_param_list(
                     uml_c_get_event_resolve_status_name(),
-                    Sequence{ request_dispatch_result_name(), temp_name}, 
+                    Sequence{ utils_dispatch_result_name(), temp_name}, 
                     indentation+assign_result.size()+1)/];
 [/for]
 [else]
 [comment When the transition effect behavior needs an asynchronous call, then 
  the transition must remain in the Transit state./]
-[request_dispatch_result_name()/] = [request_transition_transit_state()/];
+[utils_dispatch_result_name()/] = [request_transition_transit_state()/];
 [/if]
 [/template]
 
 [**
- * Implements the execution of transition effect Behavior.
+ * @brief Implements the execution of transition effect Behavior.
+ * @param aTransition The transition for which the effect Behavior should be 
+ * implemented. 
+ * @param indentation The indentation means the sum of all previous code 
+ * indentations.
 */]
 [template public uml_c_implement_transition_effect(aTransition:Transition,
                                                    indentation : Integer)
@@ -2129,9 +2102,17 @@ else
 [uml_c_implement_behavior(aTransition.effect,'C',indentation)/]
 [/template]
 
+[**
+ * @brief The event handling status type name.
+*/]
 [query public uml_c_get_event_status_type(traceabilityContext: OclAny)
     : String = 'sm_event_status_t'/]
 
+[**
+ * @brief Declares the event handling status type.
+ * @param indentation The indentation means the sum of all previous code 
+ * indentations.
+*/]
 [template public uml_c_declare_event_status(indentation : Integer)
     {spaces : String = utils_get_indent_string();}]
 typedef enum {
@@ -2147,9 +2128,16 @@ typedef enum {
 }[uml_c_get_event_status_type()/];
 [/template]
 
+[**
+ * @brief The name of the event handling status resolve function.
+*/]
 [query public uml_c_get_event_resolve_status_name(traceabilityContext: OclAny)
     : String = 'sm_event_resolve_status'/]
 
+[**
+ * @brief Returns the list of arguments accepted by the event handling status 
+ * resolve function.
+*/]
 [query public uml_c_get_event_resolve_state_params(traceabilityContext: OclAny)
   :Sequence(String)
   = Sequence{uml_c_param_decl(uml_c_get_event_status_type(), 
@@ -2157,6 +2145,11 @@ typedef enum {
              uml_c_param_decl(
                   uml_c_get_event_status_type(), 'status2')}/]
 
+[**
+ * @brief Declares the helper function for resolving the event handling status.
+ * @param indentation The indentation means the sum of all previous code 
+ * indentations.
+*/]
 [template public uml_c_declare_event_resolve_status(indentation : Integer)
     {spaces : String = utils_get_indent_string();}]
 [uml_c_format_param_list(uml_c_get_event_status_type() + ' ' 
@@ -2164,9 +2157,16 @@ typedef enum {
         uml_c_get_event_resolve_state_params(), indentation+1)/];
 [/template]
 
+[**
+ * @brief Implements the helper function the  resolves the correct event 
+ * handling status in case if the event was handled by multiple concurrent 
+ * regions.
+ * @param indentation The indentation means the sum of all previous code 
+ * indentations.
+*/]
 [template public uml_c_implement_event_resolve_status(indentation : Integer)
     {spaces : String = utils_get_indent_string();
-     result_name : String = request_dispatch_result_name();}]
+     result_name : String = utils_dispatch_result_name();}]
 [uml_c_get_event_status_type()/]
 [uml_c_format_param_list(uml_c_get_event_resolve_status_name(),
         uml_c_get_event_resolve_state_params(), indentation)/]
@@ -2204,8 +2204,12 @@ typedef enum {
 [/template]
 
 [**
- * Implements an initial transition for each region for which an initial
+ * @brief Implements an initial transition for each region for which an initial
  * pseudostate is defined. 
+ * @param sm The StateMachine for which all the initil transitions should be 
+ * implemented.
+ * @param indentation The indentation means the sum of all previous code 
+ * indentations.
  */]
 [template public uml_c_implement_initial_transitions(sm : StateMachine, 
                                           indentation : Integer)
@@ -2217,9 +2221,14 @@ typedef enum {
 [/template]
 
 [**
- * Implements an initialisation function for a region. It also implements
+ * @brief Implements an initialisation function for a region. 
+ * @details It also implements
  * the initial transition for a region for which an initial
  * pseudostate is defined. 
+ * @param aRegion The region for which the initialization function should be 
+ * implemented.
+ * @param indentation The indentation means the sum of all previous code 
+ * indentations.
  */]
 [template public uml_c_implement_initial_transition(aRegion: Region, 
                                           indentation : Integer)
@@ -2244,7 +2253,7 @@ may not complete synchronously. /]
                          indentation)/]
 {
 [spaces/][uml_c_get_event_status_type()
-                                      /] [request_dispatch_result_name()/];
+                                      /] [utils_dispatch_result_name()/];
 [spaces/][utils_get_self_name()
       /]->[aRegion
            .uml_c_get_region_state_property_name()
@@ -2255,25 +2264,26 @@ may not complete synchronously. /]
        .request_region_initial_pseudostate().outgoing->any(true), 
                       spaces.size() + indentation)/]
 [else]
-[spaces/][request_dispatch_result_name()
+[spaces/][utils_dispatch_result_name()
                                      /] = [request_transition_changed_state()/];
 [/if]
-[spaces/]return [request_dispatch_result_name()/];
+[spaces/]return [utils_dispatch_result_name()/];
 }
 [/if]
 [/template]
 
 [**
- * Implements a choice pseudostate entry function. 
+ * @brief Implements a choice pseudostate entry function. 
+ * @param aChoice The choice Pseudostate for which the entry function should 
+ * be implemented.
+ * @param indentation The indentation means the sum of all previous code 
+ * indentations.
  */]
 [template public uml_c_implement_choice(aChoice : Pseudostate, 
-                                          indentation : Integer)
+                                        indentation : Integer)
  ?(aChoice.kind = PseudostateKind::choice)
  {spaces : String = utils_get_indent_string();
-  transitions : OrderedSet(Transition) = aChoice.containingStateMachine()
-                  .eAllContents(Transition)->select(t:Transition
-                  | aChoice.outgoing->includes(t))->asOrderedSet();
-  assign_result : String = request_dispatch_result_name() + ' = ';}]
+  assign_result : String = utils_dispatch_result_name() + ' = ';}]
 [documentation_string('@brief Implements entry of'
  +' the ' + aChoice.name + ' choice Pseudostate of the ' 
  + aChoice.containingStateMachine().name + ' state machine.\n' 
@@ -2288,21 +2298,26 @@ static [uml_c_get_event_status_type()/]
 [spaces/][uml_c_get_event_status_type()/] [assign_result
                                         /][request_transition_changed_state()/];
 
-[if transitions->exists(t:Transition | t.trigger->notEmpty())]
+[if (aChoice.request_vertex_events()->notEmpty())]
 #error A choice vertex outgoing transitions cannot contain any trigger.
 [else]
-[spaces/][uml_c_implement_vertex_transitions(aChoice, transitions, 
+[spaces/][uml_c_implement_vertex_transitions(aChoice, Sequence{}, null, 
                                              indentation+spaces.size())/]
 [/if]
 
-[spaces/]return [request_dispatch_result_name()/];
+[spaces/]return [utils_dispatch_result_name()/];
 }
 [/template]
 
 [**
- * Declares a Choice Pseudostate entry function. 
+ * @brief Declares a Choice Pseudostate entry function.
+ * @param aChoice The pseudostate for which the entry function should be 
+ * declared.
+ * @param indentation The indentation means the sum of all previous code 
+ * indentations.
  */]
-[template public uml_c_declare_choice(aChoice : Pseudostate, indentation : Integer)
+[template public uml_c_declare_choice(aChoice : Pseudostate, 
+                                      indentation : Integer)
  ?(aChoice.kind = PseudostateKind::choice)]
 [uml_c_format_param_list('static ' + uml_c_get_event_status_type() + ' ' 
                         + aChoice.uml_c_get_entry_name(),
@@ -2311,7 +2326,11 @@ static [uml_c_get_event_status_type()/]
 [/template]
 
 [**
- * Declares all Choice Pseudostate entry functions for a StateMachine. 
+ * @brief Declares all Choice Pseudostate entry functions for a StateMachine. 
+ * @param sm The StateMachine for which all choice Pseudostates should be 
+ * declared.
+ * @param indentation The indentation means the sum of all previous code 
+ * indentations.
  */]
 [template public uml_c_declare_choices(sm : StateMachine, indentation : Integer)
  ?(sm.request_state_machine_choices()->notEmpty())]
@@ -2321,11 +2340,266 @@ static [uml_c_get_event_status_type()/]
 [/template]
 
 [**
- * Implements all Choice Pseudostate entry functions for a StateMachine. 
+ * @brief Implements all Choice Pseudostate entry functions for a StateMachine. 
+ * @param sm The StateMachine for which all choice Pseudostates should be 
+ * implemented.
+ * @param indentation The indentation means the sum of all previous code 
+ * indentations.
  */]
-[template public uml_c_implement_choices(sm : StateMachine, indentation : Integer)
+[template public uml_c_implement_choices(sm : StateMachine, 
+                                         indentation : Integer)
  ?(sm.request_state_machine_choices()->notEmpty())]
-[for (aChoice : Pseudostate | request_state_machine_choices(sm)) ]
+[for (aChoice : Pseudostate | request_state_machine_choices(sm)) 
+     separator(utils_newline())]
 [uml_c_implement_choice(aChoice, indentation)/]
 [/for]
+[/template]
+
+[**
+ * @brief Implements all Junction Pseudostate entry functions for 
+ * a StateMachine.
+ * @param sm The StateMachine for which all junction-type Pseudostates should 
+ * be implemented. 
+ * @param indentation The indentation means the sum of all previous code 
+ * indentations.
+ */]
+[template public uml_c_implement_junctions(sm : StateMachine, 
+                                         indentation : Integer)
+ ?(sm.request_state_machine_junctions()->notEmpty())]
+[for (aJunction : Pseudostate | request_state_machine_junctions(sm))]
+[uml_c_implement_junction(aJunction, indentation)/]
+[/for]
+[/template]
+
+[**
+ * @brief Implements all junction-type pseudostate functions handling all 
+ * compound transitions originating from this Pseudostate.
+ * @param aJunction The junction-type Pseudostate for which all the transition 
+ * handling functions should be generated.
+ * @param indentation The indentation means the sum of all previous code 
+ * indentations.
+*/]
+[template public uml_c_implement_junction(aJunction : Pseudostate,
+                                          indentation : Integer)
+ ?(aJunction.kind = PseudostateKind::junction)]
+[uml_c_implement_junction_seq(aJunction, Sequence{}, indentation)/]
+[/template]
+
+[**
+ * @brief The recursive template for all junction-type pseudostate functions 
+ * handling all compound transitions originating from this Pseudostate.
+ * @param aJunction The junction-type Pseudostate for which all the transition 
+ * handling functions should be generated.
+ * @param aSeq The sequence of the transitions in the incoming compound 
+ * transition path for which the function(s) should be implemented. Used for
+ * the template recursion.
+ * @param indentation The indentation means the sum of all previous code 
+ * indentations.
+*/]
+[template public uml_c_implement_junction_seq(aJunction : Pseudostate,
+                                              aSeq:Sequence(Transition), 
+                                              indentation : Integer)
+ {spaces : String = utils_get_indent_string();}]
+[for (aTransition:Transition|if aSeq->isEmpty() then aJunction 
+else aSeq->first().source endif.request_incoming_transitions())
+     separator(utils_newline())]
+[if aTransition.source.request_is_static_junction()]
+[comment this template must be nested since the junction implementation requires
+ the list of all Junction Pseudostates in a path until a non-Junction-type 
+ Vertex to call all actions required then the transition is executed./]
+[uml_c_implement_junction_seq(aJunction, aSeq->prepend(aTransition),
+                                                                  indentation)/]
+[else]
+[comment If we know the full path from the source State to the current Junction
+ Pseudostate, then we need to also know all transitions following this Junction
+ for which a trigger is specified. A separate function for each following Event
+ is required./]
+[if aJunction.request_vertex_events()->notEmpty()]
+[for (anEvent : Event | aJunction.request_vertex_events())
+     separator(utils_newline())]
+[uml_c_implement_junction_func(aJunction, aSeq->prepend(aTransition), 
+                               anEvent, indentation)/]
+[/for]
+[/if]
+[if aJunction.request_outgoing_transitions(null,'')->notEmpty()]
+[if aJunction.request_vertex_events()->notEmpty()]
+
+[/if]
+[uml_c_implement_junction_func(aJunction, aSeq->prepend(aTransition), 
+                               null, indentation)/]
+[/if]
+[/if]
+[/for]
+[/template]
+
+[**
+ * @brief Implements the junction entry function for the given source
+ * transition sequence and handled event.
+ * @param aJunction The junction-type Pseudostate for which the function should
+ * be implemented.
+ * @param aSeq The sequence of the previous transitions path in a compound 
+ * transition. 
+ * @param The event for which the function should be implemented. Each event
+ * must have separate function due to the way the guards are executed.
+ * @param indentation The indentation means the sum of all previous code 
+ * indentations.
+ */]
+[template public uml_c_implement_junction_func(aJunction : Pseudostate,
+                                               aSeq:Sequence(Transition),
+                                               anEvent : Event,
+                                              indentation : Integer)
+ ?(aSeq->notEmpty() and aSeq->last().target=aJunction)
+ {spaces : String = utils_get_indent_string();}]
+[documentation_string('@brief Implements entry of'
+ +' the ' + aJunction.name + ' junction Pseudostate of the ' 
+ + aJunction.containingStateMachine().name + ' state machine'
+ + if anEvent.oclIsUndefined() then '' 
+      else ' at the ' + anEvent.name 
+  + ' event' endif + '.\n' 
+  +'@details Transition sequence: '
+  +aSeq->collect(t:Transition|t.source.name+', ')+aSeq->last().target.name+'.\n'
+  + documentation_param(ParameterDirectionKind::_in, 
+               utils_get_self_name(), 'The pointer to the self object.\n')
+  + documentation_param(ParameterDirectionKind::out, 
+               utils_dispatch_junction_result_name(), 
+                     'The pointer to the transition execution result object.\n')
+  + '@return true if the junction transition was executed.', indentation)/]
+static bool
+[uml_c_format_param_list(uml_c_get_junction_entry_name(aSeq, anEvent),
+                        aJunction.uml_c_get_junction_entry_params(),
+                        indentation)/]
+{
+[spaces/]bool b_is_handled = false;
+
+[spaces/][uml_c_implement_vertex_transitions(aJunction, aSeq, anEvent, 
+                                             indentation+spaces.size())/]
+
+[spaces/]return b_is_handled;
+}
+[/template]
+
+[**
+ * @brief Implements the selection of a Vertex's outgoing transition for 
+ * the given event.
+ * @param aVertex The vertex for which the transitions should be executed.
+ * @param aSeq The sequence of the previous incoming transitions in the path
+ * in case of a junction-type Vertex in a compound transition.
+ * @param anEvent The event for which the transitions should be selected.
+ * @param indentation The indentation means the sum of all previous code 
+ * indentations.
+*/]
+[template public uml_c_implement_vertex_transitions(aVertex : Vertex,
+                                       aSeq:Sequence(Transition), 
+                                       anEvent : Event,
+                                       indentation : Integer)
+ {transitions: OrderedSet(Transition)= 
+                   aVertex.request_outgoing_transitions(anEvent,'');
+  elseTransitions : OrderedSet(Transition) = 
+                   aVertex.request_outgoing_transitions(anEvent, 'Else');
+  guardTransitions : OrderedSet(Transition) =
+                   aVertex.request_outgoing_transitions(anEvent, 'Any');
+  sortedTransitions : OrderedSet(Transition) = 
+                   aVertex.request_outgoing_transitions(anEvent, 'Guard');
+  spaces : String = utils_get_indent_string();}]
+[if ((elseTransitions->size() > 1) or 
+     (elseTransitions->size() > sortedTransitions->size()))]
+#error Redundant 'else' guard in [elseTransitions->size()/] transitions from\
+       [aVertex.uml_c_get_vertex_full_name()/] Vertex. \
+       Please check your model.
+[elseif ((guardTransitions->notEmpty() 
+         and (guardTransitions->size() <> transitions->size()))
+         or (guardTransitions->isEmpty() and transitions->size() > 1))]
+#error Missing transition guard in\
+       [aVertex.uml_c_get_vertex_full_name()/] Vertex. \
+       Please check your model.
+[elseif (transitions->size() = 1) and guardTransitions->isEmpty()]
+[if aVertex.oclIsKindOf(Pseudostate) 
+        and aVertex.oclAsType(Pseudostate).kind = PseudostateKind::choice]
+#error The Choice pseudostate named [aVertex.name/] has only one transition.
+[else]
+[comment There is only one transition without a guard./]
+[uml_c_implement_transition_execution(transitions->first(), indentation)
+/][/if][elseif guardTransitions->notEmpty()]
+[for (aTransition : Transition | sortedTransitions) after(utils_newline())]
+[uml_c_implement_transition_guard(aTransition, aSeq, anEvent, indentation)
+/] [/for]
+{
+[if elseTransitions->notEmpty()]
+[spaces/][uml_c_implement_transition_execution(elseTransitions->first(), 
+                                               indentation + spaces.size())/]
+[elseif aVertex.oclIsKindOf(Pseudostate) 
+        and aVertex.oclAsType(Pseudostate).kind = PseudostateKind::choice]
+#error The Choice pseudostate named [aVertex.name/] has no else transition.
+[/if]
+}[else]
+#error No transitions.
+[/if]
+[/template]
+
+[**
+ * @brief The template responsible for implementation of a single guard's 
+ *        if-else branch. 
+ * @param aTransition The transition for which the guard is implemented.
+ * @param aSeq The sequence of previous transitions in case if the guard is 
+ * for a junction-type vertex in a compound transition.
+ * @param anEvent The event for which the transition is being implemented.
+ * @param indentation The indentation means the sum of all previous code 
+ * indentations.
+ */]
+[template public uml_c_implement_transition_guard(aTransition:Transition, 
+                                            aSeq:Sequence(Transition),
+                                            anEvent : Event,
+                                            indentation:Integer)
+    {spaces : String = utils_get_indent_string();}]
+if([uml_c_implement_guard_expression(aTransition, aSeq, anEvent, 
+                                     indentation + 4)/])
+{
+[if not aTransition.target.request_is_static_junction()]
+[spaces/][uml_c_implement_transition_execution(aTransition, 
+                                               indentation + spaces.size())/]
+[/if]
+}
+else 
+[/template]
+
+[**
+ * @brief Implementation if the transition's guard condition inside the 'if'
+ * guard statement.
+ * @param aTransition The transition object for which the guard is to be 
+ * implemented.
+ * @param aSeq The sequence of previous transitions in case of a compound 
+ * transition with junction-type pseudostates.
+ * @param anEvent The event for which the given transition is being implemented.
+ * @param indentation The indentation means the sum of all previous code 
+ * indentations.
+*/]
+[template public uml_c_implement_guard_expression(aTransition:Transition, 
+                                                  aSeq:Sequence(Transition),
+                                                  anEvent : Event,
+                                                  indentation:Integer)
+ post(trim())
+ { resultname : String = 
+                   if request_is_static_junction(aTransition.source) then
+                       utils_dispatch_junction_result_name(null)
+                   else '&' + utils_dispatch_result_name(null) endif;
+   and_sep : String = 
+            if aTransition.guard.oclIsUndefined() then '' else '   && ' endif;}]
+[if not aTransition.guard.oclIsUndefined()]
+[let anOpaqueExpression : OpaqueExpression = aTransition.guard.specification]
+[if (anOpaqueExpression.language->includes('C'))]
+[uml_c_implement_opaque_expression(anOpaqueExpression,'C')/]
+[else]
+#error Guard OpaqueExpression C language implementation missing\
+       in [aTransition.source.uml_c_get_vertex_full_name()/] vertex.
+[/if]
+[/let]
+[/if]
+[if request_is_static_junction(aTransition.target)]
+[and_sep/][uml_c_format_param_list(
+         uml_c_get_junction_entry_name(
+                                     aSeq->append(aTransition), 
+            if aTransition.trigger->isEmpty() then anEvent else null endif),
+         Sequence{ utils_get_self_name(), resultname}, 
+         indentation + and_sep.size())/]
+[/if]
 [/template]
