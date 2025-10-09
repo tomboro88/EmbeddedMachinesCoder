@@ -336,7 +336,6 @@ sm1_enter_region2(Tkind_sm1_t* const p_obj)
 {
     sm_event_status_t result;
     p_obj->region2 = TKIND_SM1_INITIAL3;
-    /*debug marker uml_c_implement_transition_transit 1*/
     sm1_enter_state2(p_obj);
     result = CHANGEDSTATE;
     return result;
@@ -353,7 +352,6 @@ sm1_enter_region6(Tkind_sm1_t* const p_obj)
 {
     sm_event_status_t result;
     p_obj->region6 = TKIND_SM1_INITIAL4;
-    /*debug marker uml_c_implement_transition_transit 1*/
     sm1_enter_state9(p_obj);
     result = CHANGEDSTATE;
     return result;
@@ -385,7 +383,6 @@ sm1_enter_region1(Tkind_sm1_t* const p_obj)
 {
     sm_event_status_t result;
     p_obj->region1 = TKIND_SM1_INITIAL1;
-    /*debug marker uml_c_implement_transition_transit 1*/
     sm1_enter_state1(p_obj);
     result = CHANGEDSTATE;
     sm_event_status_t temp_status = IGNORED;
@@ -1824,17 +1821,13 @@ static sm_event_status_t
 sm1_dispatch_i_state1(Tkind_sm1_t* const p_obj, tkind_ctest_i_t* const p_event)
 {
     sm_event_status_t result = IGNORED;
-/*debug marker uml_c_implement_state_dispatch 2*/
 
-    /*debug marker uml_c_implement_transition_execution 3*/
     bool b_is_completed = sm1_exit_state1(p_obj);
     
     if(b_is_completed)
     {
         sm1_enter_state1(p_obj);
-        /*debug marker uml_c_implement_transition_transit 1*/
         sm1_enter_state7(p_obj);
-        result = CHANGEDSTATE;
         sm_event_status_t temp_status = IGNORED;
         temp_status = sm1_enter_region2(p_obj);
         result = sm_event_resolve_status(result, temp_status);
@@ -1943,15 +1936,12 @@ static sm_event_status_t
 sm1_dispatch_o_state1(Tkind_sm1_t* const p_obj, tkind_ctest_o_t* const p_event)
 {
     sm_event_status_t result = IGNORED;
-/*debug marker uml_c_implement_state_dispatch 2*/
 
-    /*debug marker uml_c_implement_transition_execution 3*/
     bool b_is_completed = sm1_exit_state1(p_obj);
     
     if(b_is_completed)
     {
         sm1_enter_state1(p_obj);
-        /*debug marker uml_c_implement_transition_transit 1*/
         result = sm1_enter_choice1(p_obj);
         sm_event_status_t temp_status = IGNORED;
         temp_status = sm1_enter_region2(p_obj);
@@ -1976,16 +1966,12 @@ static sm_event_status_t
 sm1_dispatch_a_state2(Tkind_sm1_t* const p_obj, tkind_ctest_a_t* const p_event)
 {
     sm_event_status_t result = IGNORED;
-/*debug marker uml_c_implement_state_dispatch 2*/
 
-    /*debug marker uml_c_implement_transition_execution 3*/
     bool b_is_completed = sm1_exit_state2(p_obj);
     
     if(b_is_completed)
     {
-        /*debug marker uml_c_implement_transition_transit 1*/
         sm1_enter_state3(p_obj);
-        result = CHANGEDSTATE;
         sm_event_status_t temp_status = IGNORED;
         temp_status = sm1_enter_region3(p_obj);
         result = sm_event_resolve_status(result, temp_status);
@@ -2009,16 +1995,12 @@ static sm_event_status_t
 sm1_dispatch_b_state2(Tkind_sm1_t* const p_obj, tkind_ctest_b_t* const p_event)
 {
     sm_event_status_t result = IGNORED;
-/*debug marker uml_c_implement_state_dispatch 2*/
 
-    /*debug marker uml_c_implement_transition_execution 3*/
     bool b_is_completed = sm1_exit_state2(p_obj);
     
     if(b_is_completed)
     {
-        /*debug marker uml_c_implement_transition_transit 1*/
         sm1_enter_state4(p_obj);
-        result = CHANGEDSTATE;
         sm_event_status_t temp_status = IGNORED;
         temp_status = sm1_enter_region4(p_obj);
         result = sm_event_resolve_status(result, temp_status);
@@ -2042,17 +2024,13 @@ static sm_event_status_t
 sm1_dispatch_c_state3(Tkind_sm1_t* const p_obj, tkind_ctest_c_t* const p_event)
 {
     sm_event_status_t result = IGNORED;
-/*debug marker uml_c_implement_state_dispatch 2*/
 
-    /*debug marker uml_c_implement_transition_execution 2*/
     bool b_is_completed = sm1_exit_region3(p_obj);
     
     if(b_is_completed)
     {
         printf("c event transition fired!");
-        /*debug marker uml_c_implement_transition_transit 1*/
         sm1_enter_state5(p_obj);
-        result = CHANGEDSTATE;
     }
     else
     {
@@ -2107,17 +2085,13 @@ static sm_event_status_t
 sm1_dispatch_f_state4(Tkind_sm1_t* const p_obj, tkind_ctest_f_t* const p_event)
 {
     sm_event_status_t result = IGNORED;
-/*debug marker uml_c_implement_state_dispatch 2*/
 
-    /*debug marker uml_c_implement_transition_execution 3*/
     bool b_is_completed = sm1_exit_state4(p_obj);
     
     if(b_is_completed)
     {
         sm1_enter_state4(p_obj);
-        /*debug marker uml_c_implement_transition_transit 1*/
         sm1_enter_state6(p_obj);
-        result = CHANGEDSTATE;
     }
     else
     {
@@ -2189,9 +2163,7 @@ static sm_event_status_t
 sm1_dispatch_d_state5(Tkind_sm1_t* const p_obj, tkind_ctest_d_t* const p_event)
 {
     sm_event_status_t result = IGNORED;
-/*debug marker uml_c_implement_state_dispatch 2*/
 
-    /*debug marker uml_c_implement_transition_execution 2*/
     bool b_is_completed = sm1_exit_region3(p_obj);
     
     if(b_is_completed)
@@ -2220,9 +2192,7 @@ static sm_event_status_t
 sm1_dispatch_e_state5(Tkind_sm1_t* const p_obj, tkind_ctest_e_t* const p_event)
 {
     sm_event_status_t result = IGNORED;
-/*debug marker uml_c_implement_state_dispatch 2*/
 
-    /*debug marker uml_c_implement_transition_execution 2*/
     bool b_is_completed = sm1_exit_region2(p_obj);
     
     if(b_is_completed)
@@ -2251,17 +2221,13 @@ static sm_event_status_t
 sm1_dispatch_n_state5(Tkind_sm1_t* const p_obj, tkind_ctest_n_t* const p_event)
 {
     sm_event_status_t result = IGNORED;
-/*debug marker uml_c_implement_state_dispatch 2*/
 
-    /*debug marker uml_c_implement_transition_execution 3*/
     bool b_is_completed = sm1_exit_state3(p_obj);
     
     if(b_is_completed)
     {
         sm1_enter_state4(p_obj);
-        /*debug marker uml_c_implement_transition_transit 1*/
         sm1_enter_state6(p_obj);
-        result = CHANGEDSTATE;
     }
     else
     {
@@ -2282,16 +2248,12 @@ static sm_event_status_t
 sm1_dispatch_g_state6(Tkind_sm1_t* const p_obj, tkind_ctest_g_t* const p_event)
 {
     sm_event_status_t result = IGNORED;
-/*debug marker uml_c_implement_state_dispatch 2*/
 
-    /*debug marker uml_c_implement_transition_execution 3*/
     bool b_is_completed = sm1_exit_state4(p_obj);
     
     if(b_is_completed)
     {
-        /*debug marker uml_c_implement_transition_transit 1*/
         sm1_enter_state4(p_obj);
-        result = CHANGEDSTATE;
         sm_event_status_t temp_status = IGNORED;
         temp_status = sm1_enter_region4(p_obj);
         result = sm_event_resolve_status(result, temp_status);
@@ -2315,16 +2277,12 @@ static sm_event_status_t
 sm1_dispatch_h_state6(Tkind_sm1_t* const p_obj, tkind_ctest_h_t* const p_event)
 {
     sm_event_status_t result = IGNORED;
-/*debug marker uml_c_implement_state_dispatch 2*/
 
-    /*debug marker uml_c_implement_transition_execution 3*/
     bool b_is_completed = sm1_exit_state1(p_obj);
     
     if(b_is_completed)
     {
-        /*debug marker uml_c_implement_transition_transit 1*/
         sm1_enter_state1(p_obj);
-        result = CHANGEDSTATE;
         sm_event_status_t temp_status = IGNORED;
         temp_status = sm1_enter_region2(p_obj);
         result = sm_event_resolve_status(result, temp_status);
@@ -2350,16 +2308,12 @@ static sm_event_status_t
 sm1_dispatch_j_state7(Tkind_sm1_t* const p_obj, tkind_ctest_j_t* const p_event)
 {
     sm_event_status_t result = IGNORED;
-/*debug marker uml_c_implement_state_dispatch 2*/
 
-    /*debug marker uml_c_implement_transition_execution 3*/
     bool b_is_completed = sm1_exit_state7(p_obj);
     
     if(b_is_completed)
     {
-        /*debug marker uml_c_implement_transition_transit 1*/
         sm1_enter_state8(p_obj);
-        result = CHANGEDSTATE;
         sm_event_status_t temp_status = IGNORED;
         temp_status = sm1_enter_region6(p_obj);
         result = sm_event_resolve_status(result, temp_status);
@@ -2417,16 +2371,12 @@ static sm_event_status_t
 sm1_dispatch_m_state8(Tkind_sm1_t* const p_obj, tkind_ctest_m_t* const p_event)
 {
     sm_event_status_t result = IGNORED;
-/*debug marker uml_c_implement_state_dispatch 2*/
 
-    /*debug marker uml_c_implement_transition_execution 3*/
     bool b_is_completed = sm1_exit_state1(p_obj);
     
     if(b_is_completed)
     {
-        /*debug marker uml_c_implement_transition_transit 1*/
         sm1_enter_state1(p_obj);
-        result = CHANGEDSTATE;
         sm_event_status_t temp_status = IGNORED;
         temp_status = sm1_enter_region2(p_obj);
         result = sm_event_resolve_status(result, temp_status);
@@ -2452,16 +2402,12 @@ static sm_event_status_t
 sm1_dispatch_k_state9(Tkind_sm1_t* const p_obj, tkind_ctest_k_t* const p_event)
 {
     sm_event_status_t result = IGNORED;
-/*debug marker uml_c_implement_state_dispatch 2*/
 
-    /*debug marker uml_c_implement_transition_execution 3*/
     bool b_is_completed = sm1_exit_state8(p_obj);
     
     if(b_is_completed)
     {
-        /*debug marker uml_c_implement_transition_transit 1*/
         sm1_enter_state8(p_obj);
-        result = CHANGEDSTATE;
         sm_event_status_t temp_status = IGNORED;
         temp_status = sm1_enter_region6(p_obj);
         result = sm_event_resolve_status(result, temp_status);
@@ -2485,16 +2431,12 @@ static sm_event_status_t
 sm1_dispatch_l_state9(Tkind_sm1_t* const p_obj, tkind_ctest_l_t* const p_event)
 {
     sm_event_status_t result = IGNORED;
-/*debug marker uml_c_implement_state_dispatch 2*/
 
-    /*debug marker uml_c_implement_transition_execution 3*/
     bool b_is_completed = sm1_exit_state1(p_obj);
     
     if(b_is_completed)
     {
-        /*debug marker uml_c_implement_transition_transit 1*/
         sm1_enter_state1(p_obj);
-        result = CHANGEDSTATE;
         sm_event_status_t temp_status = IGNORED;
         temp_status = sm1_enter_region2(p_obj);
         result = sm_event_resolve_status(result, temp_status);
@@ -2520,22 +2462,15 @@ sm1_enter_choice1(Tkind_sm1_t* const p_obj)
 {
     sm_event_status_t result = CHANGEDSTATE;
 
-    /*debug marker uml_c_implement_vertex_transitions 1*/
     if(b_test_condition)
     {
-    /*debug marker uml_c_implement_transition_guard 1*/
-    /*debug marker uml_c_implement_transition_guard 2*/
-        /*debug marker uml_c_implement_transition_transit 1*/
         sm1_enter_state8(p_obj);
-        result = CHANGEDSTATE;
         sm_event_status_t temp_status = IGNORED;
         temp_status = sm1_enter_region6(p_obj);
         result = sm_event_resolve_status(result, temp_status);
     }
-    else 
+    else
     {
-    /*debug marker uml_c_implement_vertex_transitions 2*/
-    /*debug marker uml_c_implement_vertex_transitions 3*/
         result = CHANGEDSTATE;
         sm_event_status_t temp_status = IGNORED;
         temp_status = sm1_enter_region5(p_obj);

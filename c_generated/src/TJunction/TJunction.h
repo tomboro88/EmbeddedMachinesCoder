@@ -269,6 +269,12 @@ extern "C" {
          */
         TJUNCTION_SM1_STATE17,
         /**
+         */
+        TJUNCTION_SM1_STATE29,
+        /**
+         */
+        TJUNCTION_SM1_STATE30,
+        /**
          * @brief The number of all substates of Region1 Region of sm1
          * StateMachine.
          */

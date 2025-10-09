@@ -326,6 +326,50 @@
             </effect>
             <trigger xmi:type="uml:Trigger" xmi:id="_cm79QBz_EfCL28h_BDpjrA" event="_IY2pEAHREfCgXv5ODs4Seg"/>
           </transition>
+          <transition xmi:type="uml:Transition" xmi:id="__6VuQKI6EfCvx517mEM6Vg" source="_pGVoYAHQEfCgXv5ODs4Seg" target="_93RDQKI6EfCvx517mEM6Vg">
+            <effect xmi:type="uml:OpaqueBehavior" xmi:id="_nRQDMKI7EfCvx517mEM6Vg">
+              <language>C</language>
+              <body>printf(&quot;Common c event alternative effect&quot;);</body>
+            </effect>
+            <trigger xmi:type="uml:Trigger" xmi:id="_aCh_IKI7EfCvx517mEM6Vg" event="_IY2pEAHREfCgXv5ODs4Seg"/>
+          </transition>
+          <transition xmi:type="uml:Transition" xmi:id="_E3F8IKI7EfCvx517mEM6Vg" guard="_tWMLsKI8EfCvx517mEM6Vg" source="_93RDQKI6EfCvx517mEM6Vg" target="_6maWgKI6EfCvx517mEM6Vg">
+            <ownedRule xmi:type="uml:Constraint" xmi:id="_tWMLsKI8EfCvx517mEM6Vg">
+              <specification xmi:type="uml:OpaqueExpression" xmi:id="_tWMLsaI8EfCvx517mEM6Vg">
+                <language>C</language>
+                <body>p_obj->b_guard7</body>
+              </specification>
+            </ownedRule>
+            <effect xmi:type="uml:OpaqueBehavior" xmi:id="_0at-YKI8EfCvx517mEM6Vg">
+              <language>C</language>
+              <body>printf(&quot;b_guard7 was true&quot;);</body>
+            </effect>
+          </transition>
+          <transition xmi:type="uml:Transition" xmi:id="_GHVcAKI7EfCvx517mEM6Vg" guard="_6_7-4KI8EfCvx517mEM6Vg" source="_93RDQKI6EfCvx517mEM6Vg" target="_8HzQwKI6EfCvx517mEM6Vg">
+            <ownedRule xmi:type="uml:Constraint" xmi:id="_6_7-4KI8EfCvx517mEM6Vg">
+              <specification xmi:type="uml:OpaqueExpression" xmi:id="_6_7-4aI8EfCvx517mEM6Vg">
+                <language>C</language>
+                <body>p_obj->b_guard8</body>
+              </specification>
+            </ownedRule>
+            <effect xmi:type="uml:OpaqueBehavior" xmi:id="_CavjkKI9EfCvx517mEM6Vg">
+              <language>C</language>
+              <body>printf(&quot;b_guard8 was true&quot;);</body>
+            </effect>
+          </transition>
+          <transition xmi:type="uml:Transition" xmi:id="_AXTE0KOgEfCegZEXnjB60w" guard="_yGifgKOgEfCegZEXnjB60w" source="_xC8o4AHsEfCcqpIlgsjzBA" target="_6maWgKI6EfCvx517mEM6Vg">
+            <ownedRule xmi:type="uml:Constraint" xmi:id="_yGifgKOgEfCegZEXnjB60w">
+              <specification xmi:type="uml:OpaqueExpression" xmi:id="_yGifgaOgEfCegZEXnjB60w">
+                <language>C</language>
+                <body>p_obj->b_guard9</body>
+              </specification>
+            </ownedRule>
+            <effect xmi:type="uml:OpaqueBehavior" xmi:id="_5LzSAKOgEfCegZEXnjB60w">
+              <language>C</language>
+              <body>printf(&quot;b_guard9 was true&quot;);</body>
+            </effect>
+            <trigger xmi:type="uml:Trigger" xmi:id="_qFc98KOgEfCegZEXnjB60w" event="_IY2pEAHREfCgXv5ODs4Seg"/>
+          </transition>
           <subvertex xmi:type="uml:State" xmi:id="_-JOBwAHPEfCgXv5ODs4Seg" name="State1"/>
           <subvertex xmi:type="uml:Pseudostate" xmi:id="__1fWUAHPEfCgXv5ODs4Seg" name="Junction2" kind="junction"/>
           <subvertex xmi:type="uml:State" xmi:id="_BzEdUAHQEfCgXv5ODs4Seg" name="State3"/>
@@ -337,6 +381,9 @@
           <subvertex xmi:type="uml:State" xmi:id="_mdPvIAHkEfCcqpIlgsjzBA" name="State17"/>
           <subvertex xmi:type="uml:Pseudostate" xmi:id="_xC8o4AHsEfCcqpIlgsjzBA" name="Junction20" kind="junction"/>
           <subvertex xmi:type="uml:Pseudostate" xmi:id="_hOhmoBPvEfC-n8t0-A4FlQ" name="Junction24" kind="junction"/>
+          <subvertex xmi:type="uml:State" xmi:id="_6maWgKI6EfCvx517mEM6Vg" name="State29"/>
+          <subvertex xmi:type="uml:State" xmi:id="_8HzQwKI6EfCvx517mEM6Vg" name="State30"/>
+          <subvertex xmi:type="uml:Pseudostate" xmi:id="_93RDQKI6EfCvx517mEM6Vg" name="Junction31" kind="junction"/>
         </region>
       </ownedBehavior>
       <ownedOperation xmi:type="uml:Operation" xmi:id="_WFQkIAHQEfCgXv5ODs4Seg" name="a"/>

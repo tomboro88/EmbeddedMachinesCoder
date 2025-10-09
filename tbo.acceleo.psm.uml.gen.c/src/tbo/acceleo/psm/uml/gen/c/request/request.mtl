@@ -832,3 +832,20 @@ let exitState : State = request_transition_exit_state(aTransition) in
 [query public request_is_static_junction(aVertex:Vertex):Boolean = 
  not aVertex.oclIsUndefined() and aVertex.oclIsKindOf(Pseudostate) 
  and aVertex.oclAsType(Pseudostate).kind = PseudostateKind::junction/]
+
+[**
+ * @brief Checks if the given event is always handled by the given vertex.
+ * This is used to optimize the amount of generated code.
+*/]
+[query public request_is_always_handled(aVertex : Vertex, 
+                                        anEvent : Event) : Boolean = 
+  let transitions: OrderedSet(Transition) = 
+                aVertex.request_outgoing_transitions(anEvent,'') in
+  let guardTransitions : OrderedSet(Transition) =
+                aVertex.request_outgoing_transitions(anEvent, 'Any') in
+  let elseTransitions: OrderedSet(Transition) = 
+                aVertex.request_outgoing_transitions(anEvent,'Else') in
+  transitions->forAll(t:Transition | 
+                                 not t.target.request_is_static_junction())
+                             and (guardTransitions->size() = 0
+                                  or elseTransitions->size() = 1)/]
