@@ -1,6 +1,13 @@
 /**
  * @file 
  * 
+ * @brief A package with state machine diagrams utilizing the Junction
+ * Pseudostate.
+ * @details The state diagrams included in this package are used to validate the
+ * code
+ * generated for Junction Pseudostates, which are advanced choice vertices used 
+ * for static evaluation of a sequence of guard conditions before any transition
+ * is started.
  */
 
 #ifndef TJUNCTION_H

@@ -1,5 +1,6 @@
- .../src/TJunction/TJunction.c                      | 113 [32m+++[m[31m------------------[m
- .../src/TJunction/TJunction.h                      |  19 [32m++[m[31m--[m
- {c_expected => c_generated}/src/Tkind/Tkind.c      |  43 [32m+++[m[31m-----[m
- {c_expected => c_generated}/src/Tkind/Tkind.h      |  22 [32m+[m[31m---[m
- 4 files changed, 36 insertions(+), 161 deletions(-)
+ .../src/TJunction/TJunction.c                      | 111 [32m+[m[31m-------[m
+ .../src/TJunction/TJunction.h                      |  26 [32m+[m[31m-[m
+ {c_expected => c_generated}/src/Tkind/Tkind.c      | 291 [32m++++++++++++++++++[m[31m---[m
+ {c_expected => c_generated}/src/Tkind/Tkind.h      | 178 [32m+++++++++++[m[31m--[m
+ {c_expected => c_generated}/src/umltest.h          |   2 [32m+[m
+ 5 files changed, 448 insertions(+), 160 deletions(-)

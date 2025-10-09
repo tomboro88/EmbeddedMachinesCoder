@@ -1,7 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <uml:Model xmi:version="20131001" xmlns:xmi="http://www.omg.org/spec/XMI/20131001" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:uml="http://www.eclipse.org/uml2/5.0.0/UML" xmi:id="_ye_tMOqeEe2Yz7yVfkC93Q" name="umltest">
+  <ownedComment xmi:type="uml:Comment" xmi:id="_AlcTwKU7EfCJwtlh12_YdQ" annotatedElement="_ye_tMOqeEe2Yz7yVfkC93Q">
+    <body>@brief Top level module of the model.
+@details Contains two example subpackages: Tkind and TJunction.</body>
+  </ownedComment>
   <packagedElement xmi:type="uml:Package" xmi:id="_-IUdANw3Ee-clukbqF5Mtw" name="Tkind">
+    <ownedComment xmi:type="uml:Comment" xmi:id="_se4ncKU1EfCJwtlh12_YdQ" annotatedElement="_F3pgMNw4Ee-clukbqF5Mtw">
+      <body>This is a comment linked 
+to the ctest type</body>
+    </ownedComment>
+    <ownedComment xmi:type="uml:Comment" xmi:id="_jv0wIKU2EfCJwtlh12_YdQ" annotatedElement="_-IUdANw3Ee-clukbqF5Mtw">
+      <body>A Package containing test diagrams for different kinds of transitions: internal, external and local.</body>
+    </ownedComment>
     <packagedElement xmi:type="uml:Class" xmi:id="_F3pgMNw4Ee-clukbqF5Mtw" name="ctest">
+      <generalization xmi:type="uml:Generalization" xmi:id="_IThkwKTCEfCF5Mxlt2zVCg" general="_6-nZIKTBEfCF5Mxlt2zVCg"/>
+      <generalization xmi:type="uml:Generalization" xmi:id="_JIL74KTCEfCF5Mxlt2zVCg" general="_-LTXkKTBEfCF5Mxlt2zVCg"/>
+      <ownedAttribute xmi:type="uml:Property" xmi:id="_pWTlkKU4EfCJwtlh12_YdQ" name="my_name" visibility="private" type="_aw4KEKU0EfCJFuHNEOD_Ew">
+        <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_JLZu4KU5EfCJwtlh12_YdQ" name="MAX_CHAR_NUM" value="20">
+          <ownedComment xmi:type="uml:Comment" xmi:id="_-BvLcKU7EfCJwtlh12_YdQ" annotatedElement="_JLZu4KU5EfCJwtlh12_YdQ">
+            <body>@brief The size of the internal name string.
+@details This constant is defined internally in the model as an upper limit of the number of characters in the my_name property of ctest class.
+It is automatically detected by the generator and included as a literal constant in the package header.</body>
+          </ownedComment>
+        </upperValue>
+      </ownedAttribute>
+      <ownedAttribute xmi:type="uml:Property" xmi:id="_-ZDxMKU5EfCJwtlh12_YdQ" name="pi" type="_5MrL4KU5EfCJwtlh12_YdQ">
+        <defaultValue xmi:type="uml:LiteralReal" xmi:id="_PIx20KU6EfCJwtlh12_YdQ" name="PI_LITERAL_CONSTANT" value="3.14"/>
+      </ownedAttribute>
       <ownedBehavior xmi:type="uml:StateMachine" xmi:id="_nbBJMNw4Ee-clukbqF5Mtw" name="sm1">
         <region xmi:type="uml:Region" xmi:id="_vunXENw4Ee-clukbqF5Mtw" name="Region1">
           <transition xmi:type="uml:Transition" xmi:id="_kVUYANxCEe-clukbqF5Mtw" source="_xRPncNw4Ee-clukbqF5Mtw" target="_MQR5Ydw8Ee-clukbqF5Mtw">
@@ -190,6 +215,32 @@
           <subvertex xmi:type="uml:Pseudostate" xmi:id="_gwLpwN21Ee-8CKMu-ENa-A" name="Initial1"/>
         </region>
       </ownedBehavior>
+      <ownedBehavior xmi:type="uml:OpaqueBehavior" xmi:id="_Tar_EKTFEfCF5Mxlt2zVCg" name="set_uint_incr" visibility="private" specification="_gs_NgKTDEfCF5Mxlt2zVCg">
+        <language>C</language>
+        <body>p_obj->Property1 = param1 + 1u;</body>
+      </ownedBehavior>
+      <ownedBehavior xmi:type="uml:OpaqueBehavior" xmi:id="_OJTvkKTGEfCF5Mxlt2zVCg" name="get_flt_from_uint" visibility="private" specification="_Xd0SwKTEEfCF5Mxlt2zVCg">
+        <ownedComment xmi:type="uml:Comment" xmi:id="_JKBN0KVEEfCJwtlh12_YdQ" annotatedElement="_OJTvkKTGEfCF5Mxlt2zVCg">
+          <body>@brief Implementation of virtual function GetFloatProp () from the cbase2 class.
+@details It shows how a pointer to a base class can be converted to a pointer to a child class.
+After the pointer conversion, it returns the Property1 value of the another base class (cbase1).</body>
+        </ownedComment>
+        <language>C</language>
+        <body>float result = 0.0f;
+Tkind_ctest_t* p_ctest = NULL;
+/* Check if this is really ctest class object by checking the specialized 
+    virtual function table which was assigned by ctest class constructor.*/
+if((&amp;Tkind_ctest_vtable.cbase2== p_obj->p_vtable)
+    &amp;&amp; TKIND_CHILD_FROM_BASE(Tkind_ctest_t, cbase2, &amp;p_ctest))
+{
+    /*Here the p_ctest pointer has the correct value.*/
+    /*Intentionally get the value of Property1 from the other base class
+       (cbase1).*/
+    result = (float)p_ctest->cbase1.Property1;
+}
+
+return result;</body>
+      </ownedBehavior>
       <ownedOperation xmi:type="uml:Operation" xmi:id="_CMSiQN24Ee-8CKMu-ENa-A" name="a"/>
       <ownedOperation xmi:type="uml:Operation" xmi:id="_Ot7d4N24Ee-8CKMu-ENa-A" name="b"/>
       <ownedOperation xmi:type="uml:Operation" xmi:id="_SjgL0N25Ee-8CKMu-ENa-A" name="c"/>
@@ -221,9 +272,64 @@
     <packagedElement xmi:type="uml:CallEvent" xmi:id="_iePp4N28Ee-8CKMu-ENa-A" name="m" operation="_gM9jwN28Ee-8CKMu-ENa-A"/>
     <packagedElement xmi:type="uml:CallEvent" xmi:id="_Cf5OAOAZEe-Dn89-xPPa6w" name="n" operation="_CMnssOAZEe-Dn89-xPPa6w"/>
     <packagedElement xmi:type="uml:CallEvent" xmi:id="_SJivUPh2Ee-9W4mcsGdJGQ" name="o" operation="_RWp50Ph2Ee-9W4mcsGdJGQ"/>
-    <packagedElement xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_51O44G2PEfCUtIW8tiOy3A" name="CTEST_I_CNT" value="2"/>
+    <packagedElement xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_51O44G2PEfCUtIW8tiOy3A" name="CTEST_I_CNT" value="2">
+      <ownedComment xmi:type="uml:Comment" xmi:id="_Q5x9kKU-EfCJwtlh12_YdQ" annotatedElement="_51O44G2PEfCUtIW8tiOy3A">
+        <body>@brief The maximum number of I events stored in the I event queue.
+@details This (and other) constant must be included by the creator inside of the model. This way it provides an elastic way to specify the queue size for each event.
+A missing (unspecified explicitly in the model) constant will result in the C-compiler error, since the queue buffers use these names as the internal array sizes.
+The specified size of 2 is not a random number. This is the minimum recommended size of the created event queue. Although it may seem obvious for a queue, the number of two
+events in the queue means, that when one ovent is being processed by the state machine, there will still be place for at least one new event in the queue.
+This is important for critical events, that are sent only ocassionally, and cannot be missed just because the event queue was filled with other more frequent event types.</body>
+      </ownedComment>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Class" xmi:id="_6-nZIKTBEfCF5Mxlt2zVCg" name="cbase1">
+      <ownedComment xmi:type="uml:Comment" xmi:id="_USxr8KU5EfCJwtlh12_YdQ" annotatedElement="_6-nZIKTBEfCF5Mxlt2zVCg">
+        <body>@brief An example base class with one uint32 property.</body>
+      </ownedComment>
+      <ownedAttribute xmi:type="uml:Property" xmi:id="_YsO4kKTCEfCF5Mxlt2zVCg" name="Property1" visibility="private" type="_TqTI8KU0EfCJFuHNEOD_Ew"/>
+      <ownedBehavior xmi:type="uml:OpaqueBehavior" xmi:id="_z8RQYKTEEfCF5Mxlt2zVCg" name="set_uint_default" visibility="package" specification="_gs_NgKTDEfCF5Mxlt2zVCg">
+        <language>C</language>
+        <body>p_obj->Property1 = param1;</body>
+      </ownedBehavior>
+      <ownedBehavior xmi:type="uml:OpaqueBehavior" xmi:id="_fUQOEKTFEfCF5Mxlt2zVCg" name="get_uint_default" visibility="private" specification="_PHfhAKTEEfCF5Mxlt2zVCg">
+        <language>C</language>
+        <body>return p_obj->Property1;</body>
+      </ownedBehavior>
+      <ownedOperation xmi:type="uml:Operation" xmi:id="_gs_NgKTDEfCF5Mxlt2zVCg" name="SetUintProp" method="_z8RQYKTEEfCF5Mxlt2zVCg _Tar_EKTFEfCF5Mxlt2zVCg">
+        <ownedParameter xmi:type="uml:Parameter" xmi:id="_vmEhoKTDEfCF5Mxlt2zVCg" name="param1" type="_TqTI8KU0EfCJFuHNEOD_Ew"/>
+      </ownedOperation>
+      <ownedOperation xmi:type="uml:Operation" xmi:id="_PHfhAKTEEfCF5Mxlt2zVCg" name="GetUintProp" method="_fUQOEKTFEfCF5Mxlt2zVCg">
+        <ownedParameter xmi:type="uml:Parameter" xmi:id="_WJ7B8KTEEfCF5Mxlt2zVCg" name="result" type="_TqTI8KU0EfCJFuHNEOD_Ew" direction="return"/>
+      </ownedOperation>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Class" xmi:id="_-LTXkKTBEfCF5Mxlt2zVCg" name="cbase2">
+      <ownedComment xmi:type="uml:Comment" xmi:id="_YtyesKU5EfCJwtlh12_YdQ" annotatedElement="_-LTXkKTBEfCF5Mxlt2zVCg">
+        <body>@brief An example base class with one float property.</body>
+      </ownedComment>
+      <ownedAttribute xmi:type="uml:Property" xmi:id="_ESp64KTDEfCF5Mxlt2zVCg" name="Property1" visibility="private" type="_XDi8sKU0EfCJFuHNEOD_Ew"/>
+      <ownedBehavior xmi:type="uml:OpaqueBehavior" xmi:id="_uroAsKTFEfCF5Mxlt2zVCg" name="set_flt_dflt" visibility="private" specification="_1iJegKTDEfCF5Mxlt2zVCg">
+        <language>C</language>
+        <body>p_obj->Property1 = param1;</body>
+      </ownedBehavior>
+      <ownedBehavior xmi:type="uml:OpaqueBehavior" xmi:id="_frDgUKTMEfCF5Mxlt2zVCg" name="get_flt_dflt" visibility="private" specification="_Xd0SwKTEEfCF5Mxlt2zVCg">
+        <language>C</language>
+        <body>return p_obj->Property1;</body>
+      </ownedBehavior>
+      <ownedOperation xmi:type="uml:Operation" xmi:id="_1iJegKTDEfCF5Mxlt2zVCg" name="SetFloatProp" method="_uroAsKTFEfCF5Mxlt2zVCg">
+        <ownedParameter xmi:type="uml:Parameter" xmi:id="_7aACsKTDEfCF5Mxlt2zVCg" name="param1" type="_XDi8sKU0EfCJFuHNEOD_Ew"/>
+      </ownedOperation>
+      <ownedOperation xmi:type="uml:Operation" xmi:id="_Xd0SwKTEEfCF5Mxlt2zVCg" name="GetFloatProp" method="_frDgUKTMEfCF5Mxlt2zVCg _OJTvkKTGEfCF5Mxlt2zVCg">
+        <ownedParameter xmi:type="uml:Parameter" xmi:id="_djpokKTEEfCF5Mxlt2zVCg" name="result" type="_XDi8sKU0EfCJFuHNEOD_Ew" direction="return"/>
+      </ownedOperation>
+    </packagedElement>
   </packagedElement>
   <packagedElement xmi:type="uml:Package" xmi:id="_tzRuEAHPEfCgXv5ODs4Seg" name="TJunction">
+    <ownedComment xmi:type="uml:Comment" xmi:id="_krpNQKU4EfCJwtlh12_YdQ" annotatedElement="_tzRuEAHPEfCgXv5ODs4Seg">
+      <body>@brief A package with state machine diagrams utilizing the Junction Pseudostate.
+@details The state diagrams included in this package are used to validate the code
+generated for Junction Pseudostates, which are advanced choice vertices used 
+for static evaluation of a sequence of guard conditions before any transition is started.</body>
+    </ownedComment>
     <packagedElement xmi:type="uml:Class" xmi:id="_0eQ_YAHPEfCgXv5ODs4Seg" name="Jtest">
       <ownedBehavior xmi:type="uml:StateMachine" xmi:id="_5YXh4AHPEfCgXv5ODs4Seg" name="sm1">
         <region xmi:type="uml:Region" xmi:id="_9FNnEAHPEfCgXv5ODs4Seg" name="Region1">
@@ -396,6 +502,14 @@
     <packagedElement xmi:type="uml:CallEvent" xmi:id="_IY2pEAHREfCgXv5ODs4Seg" name="c" operation="_IKL68AHREfCgXv5ODs4Seg"/>
     <packagedElement xmi:type="uml:CallEvent" xmi:id="_zJ3CIAHYEfCkTbNMLPdxiA" name="d" operation="_y1_D4AHYEfCkTbNMLPdxiA"/>
   </packagedElement>
+  <packagedElement xmi:type="uml:PrimitiveType" xmi:id="_XDi8sKU0EfCJFuHNEOD_Ew" name="float"/>
+  <packagedElement xmi:type="uml:PrimitiveType" xmi:id="_ZIVe8KU0EfCJFuHNEOD_Ew" name="bool"/>
+  <packagedElement xmi:type="uml:PrimitiveType" xmi:id="_aw4KEKU0EfCJFuHNEOD_Ew" name="char"/>
+  <packagedElement xmi:type="uml:PrimitiveType" xmi:id="_TqTI8KU0EfCJFuHNEOD_Ew" name="uint32_t"/>
+  <packagedElement xmi:type="uml:PrimitiveType" xmi:id="_cuxaIKU0EfCJFuHNEOD_Ew" name="uint16_t"/>
+  <packagedElement xmi:type="uml:PrimitiveType" xmi:id="_fZ0EEKU0EfCJFuHNEOD_Ew" name="uint8_t"/>
+  <packagedElement xmi:type="uml:PrimitiveType" xmi:id="_0AIOgKU5EfCJwtlh12_YdQ" name="int32_t"/>
+  <packagedElement xmi:type="uml:PrimitiveType" xmi:id="_5MrL4KU5EfCJwtlh12_YdQ" name="double"/>
   <profileApplication xmi:type="uml:ProfileApplication" xmi:id="_svVXgOqlEe2Yz7yVfkC93Q">
     <eAnnotations xmi:type="ecore:EAnnotation" xmi:id="_svYa0OqlEe2Yz7yVfkC93Q" source="http://www.eclipse.org/uml2/2.0.0/UML">
       <references xmi:type="ecore:EPackage" href="http://www.eclipse.org/uml2/5.0.0/UML/Profile/Standard#/"/>

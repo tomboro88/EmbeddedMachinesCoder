@@ -192,8 +192,12 @@ static inline bool
     if((NULL != pp_specific) && (NULL != p_base) 
             && (base_offset <= PTRDIFF_MAX))
     {
-        *pp_specific = (&p_base['['/]-((ptrdiff_t)base_offset)[']'/]);
-        b_is_copied = true;
+        *pp_specific = (p_base-((ptrdiff_t)base_offset));
+
+        if(NULL != *pp_specific)
+        {
+            b_is_copied = true;
+        }
     }
 
     return b_is_copied;
