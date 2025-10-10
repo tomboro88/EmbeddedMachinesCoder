@@ -1,0 +1,23 @@
+# Set LF for all text files in repository.
+* text=auto eol=lf
+
+# Set the files, that should always use LF line ending
+*.c text eol=lf
+*.h text eol=lf
+*.mtl text eol=lf
+*.java text eol=lf
+*.properties text eol=lf
+*.uml text eol=lf
+*.di text eol=lf
+*.notation text eol=lf
+*.md text eol=lf
+*.sh text eol=lf
+*.project text eol=lf
+*.cproject text eol=lf
+
+# binary files whould not be modified
+*.png binary
+*.jpg binary
+*.emtl binary
+*.class binary
+
