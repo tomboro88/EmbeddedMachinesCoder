@@ -370,7 +370,6 @@ sm1_enter_region3(Tkind_sm1_t* const p_obj)
     return result;
 }
 
-
 /**
  * @brief Implements entry of the Region4 region of the sm1 state machine.
  * @param [in] p_obj The pointer to the self object.
@@ -384,7 +383,6 @@ sm1_enter_region4(Tkind_sm1_t* const p_obj)
     result = CHANGEDSTATE;
     return result;
 }
-
 
 /**
  * @brief Implements entry of the Region2 region of the sm1 state machine.
@@ -401,7 +399,6 @@ sm1_enter_region2(Tkind_sm1_t* const p_obj)
     return result;
 }
 
-
 /**
  * @brief Implements entry of the Region6 region of the sm1 state machine.
  * @param [in] p_obj The pointer to the self object.
@@ -417,7 +414,6 @@ sm1_enter_region6(Tkind_sm1_t* const p_obj)
     return result;
 }
 
-
 /**
  * @brief Implements entry of the Region5 region of the sm1 state machine.
  * @param [in] p_obj The pointer to the self object.
@@ -431,7 +427,6 @@ sm1_enter_region5(Tkind_sm1_t* const p_obj)
     result = CHANGEDSTATE;
     return result;
 }
-
 
 /**
  * @brief Implements entry of the Region1 region of the sm1 state machine.
@@ -452,7 +447,6 @@ sm1_enter_region1(Tkind_sm1_t* const p_obj)
     result = sm_event_resolve_status(result, temp_status);
     return result;
 }
-
 
 /**
  * @brief Exits the State1 state of the sm1 state machine.
@@ -671,7 +665,6 @@ Tkind_cbase1_GetUintProp(Tkind_cbase1_t* const p_obj)
     return p_obj->Property1;
 }
 
-
 /**
  * @param [in] p_obj The pointer to the self object.
  * @param [in] param1 
@@ -707,7 +700,6 @@ Tkind_cbase2_GetFloatProp(Tkind_cbase2_t* const p_obj)
 
     return result;
 }
-
 
 /**
  * @param [in] p_obj The pointer to the self object.
@@ -828,7 +820,6 @@ void
 Tkind_ctest_o(Tkind_ctest_t* const p_obj)
 {
 }
-
 
 /*******************************************************************************
  * 

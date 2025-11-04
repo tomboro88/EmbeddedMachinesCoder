@@ -215,7 +215,7 @@ It is automatically detected by the generator and included as a literal constant
           <subvertex xmi:type="uml:Pseudostate" xmi:id="_gwLpwN21Ee-8CKMu-ENa-A" name="Initial1"/>
         </region>
       </ownedBehavior>
-      <ownedBehavior xmi:type="uml:OpaqueBehavior" xmi:id="_Tar_EKTFEfCF5Mxlt2zVCg" name="set_uint_incr" visibility="private" specification="_gs_NgKTDEfCF5Mxlt2zVCg">
+      <ownedBehavior xmi:type="uml:OpaqueBehavior" xmi:id="_Tar_EKTFEfCF5Mxlt2zVCg" name="set_uint_incr" visibility="public" specification="_gs_NgKTDEfCF5Mxlt2zVCg">
         <language>C</language>
         <body>p_obj->Property1 = param1 + 1u;</body>
       </ownedBehavior>
@@ -476,7 +476,33 @@ for static evaluation of a sequence of guard conditions before any transition is
             </effect>
             <trigger xmi:type="uml:Trigger" xmi:id="_qFc98KOgEfCegZEXnjB60w" event="_IY2pEAHREfCgXv5ODs4Seg"/>
           </transition>
-          <subvertex xmi:type="uml:State" xmi:id="_-JOBwAHPEfCgXv5ODs4Seg" name="State1"/>
+          <transition xmi:type="uml:Transition" xmi:id="_Z0JoMLkhEfC-keoHQ33Mgw" source="_hOhmoBPvEfC-n8t0-A4FlQ" target="_Q05OMLkhEfC-keoHQ33Mgw">
+            <trigger xmi:type="uml:Trigger" xmi:id="_CADEYLkiEfC-keoHQ33Mgw" event="_WdHqgAHQEfCgXv5ODs4Seg"/>
+          </transition>
+          <transition xmi:type="uml:Transition" xmi:id="_cxIWsLkhEfC-keoHQ33Mgw" guard="_PimDYLkiEfC-keoHQ33Mgw" source="_Q05OMLkhEfC-keoHQ33Mgw" target="_E387ELkhEfC-keoHQ33Mgw">
+            <ownedRule xmi:type="uml:Constraint" xmi:id="_PimDYLkiEfC-keoHQ33Mgw">
+              <specification xmi:type="uml:OpaqueExpression" xmi:id="_PimDYbkiEfC-keoHQ33Mgw">
+                <language>C</language>
+                <body>p_obj->b_guard4</body>
+              </specification>
+            </ownedRule>
+            <effect xmi:type="uml:OpaqueBehavior" xmi:id="_ZCCZULkiEfC-keoHQ33Mgw">
+              <language>C</language>
+              <body>printf(&quot;Exit junction 37&quot;);</body>
+            </effect>
+          </transition>
+          <transition xmi:type="uml:Transition" xmi:id="_p11jILkhEfC-keoHQ33Mgw" source="__1fWUAHPEfCgXv5ODs4Seg" target="_Q05OMLkhEfC-keoHQ33Mgw">
+            <trigger xmi:type="uml:Trigger" xmi:id="_5Sb0ALkhEfC-keoHQ33Mgw" event="_IY2pEAHREfCgXv5ODs4Seg"/>
+          </transition>
+          <transition xmi:type="uml:Transition" xmi:id="_xiA5wLkjEfC-keoHQ33Mgw" source="_pk0ZsLkjEfC-keoHQ33Mgw" target="_8HzQwKI6EfCvx517mEM6Vg">
+            <trigger xmi:type="uml:Trigger" xmi:id="_18ruQLkjEfC-keoHQ33Mgw" event="_WdHqgAHQEfCgXv5ODs4Seg"/>
+          </transition>
+          <subvertex xmi:type="uml:State" xmi:id="_-JOBwAHPEfCgXv5ODs4Seg" name="State1">
+            <exit xmi:type="uml:OpaqueBehavior" xmi:id="_uHz5MLkiEfC-keoHQ33Mgw">
+              <language>C</language>
+              <body>printf(&quot;Exit State1&quot;);</body>
+            </exit>
+          </subvertex>
           <subvertex xmi:type="uml:Pseudostate" xmi:id="__1fWUAHPEfCgXv5ODs4Seg" name="Junction2" kind="junction"/>
           <subvertex xmi:type="uml:State" xmi:id="_BzEdUAHQEfCgXv5ODs4Seg" name="State3"/>
           <subvertex xmi:type="uml:State" xmi:id="_CTAhoAHQEfCgXv5ODs4Seg" name="State4"/>
@@ -490,6 +516,47 @@ for static evaluation of a sequence of guard conditions before any transition is
           <subvertex xmi:type="uml:State" xmi:id="_6maWgKI6EfCvx517mEM6Vg" name="State29"/>
           <subvertex xmi:type="uml:State" xmi:id="_8HzQwKI6EfCvx517mEM6Vg" name="State30"/>
           <subvertex xmi:type="uml:Pseudostate" xmi:id="_93RDQKI6EfCvx517mEM6Vg" name="Junction31" kind="junction"/>
+          <subvertex xmi:type="uml:State" xmi:id="_povXwLkgEfC-keoHQ33Mgw" name="State36">
+            <entry xmi:type="uml:OpaqueBehavior" xmi:id="_lpBvALkiEfC-keoHQ33Mgw">
+              <language>C</language>
+              <body>printf(&quot;Enter State36);</body>
+            </entry>
+            <region xmi:type="uml:Region" xmi:id="_qcxcwLkgEfC-keoHQ33Mgw" name="Region36">
+              <transition xmi:type="uml:Transition" xmi:id="_IW7jYLkhEfC-keoHQ33Mgw" guard="_Js8pMLkjEfC-keoHQ33Mgw" source="_E387ELkhEfC-keoHQ33Mgw" target="_rMS1MLkgEfC-keoHQ33Mgw">
+                <ownedRule xmi:type="uml:Constraint" xmi:id="_Js8pMLkjEfC-keoHQ33Mgw">
+                  <specification xmi:type="uml:OpaqueExpression" xmi:id="_Js8pMbkjEfC-keoHQ33Mgw">
+                    <language>C</language>
+                    <body>p_obj->b_guard5</body>
+                  </specification>
+                </ownedRule>
+              </transition>
+              <transition xmi:type="uml:Transition" xmi:id="_JlH00LkhEfC-keoHQ33Mgw" guard="_iKyRELkjEfC-keoHQ33Mgw" source="_E387ELkhEfC-keoHQ33Mgw" target="_DUb54LkhEfC-keoHQ33Mgw">
+                <ownedRule xmi:type="uml:Constraint" xmi:id="_iKyRELkjEfC-keoHQ33Mgw">
+                  <specification xmi:type="uml:OpaqueExpression" xmi:id="_iKyREbkjEfC-keoHQ33Mgw">
+                    <language>C</language>
+                    <body>p_obj->b_guard6</body>
+                  </specification>
+                </ownedRule>
+              </transition>
+              <transition xmi:type="uml:Transition" xmi:id="_vbbnwLkjEfC-keoHQ33Mgw" source="_rMS1MLkgEfC-keoHQ33Mgw" target="_pk0ZsLkjEfC-keoHQ33Mgw"/>
+              <transition xmi:type="uml:Transition" xmi:id="_wHnYULkjEfC-keoHQ33Mgw" source="_DUb54LkhEfC-keoHQ33Mgw" target="_pk0ZsLkjEfC-keoHQ33Mgw"/>
+              <subvertex xmi:type="uml:State" xmi:id="_rMS1MLkgEfC-keoHQ33Mgw" name="State36_1">
+                <exit xmi:type="uml:OpaqueBehavior" xmi:id="_8yvnILkjEfC-keoHQ33Mgw">
+                  <language>C</language>
+                  <body>printf(&quot;Exit State36_1&quot;);</body>
+                </exit>
+              </subvertex>
+              <subvertex xmi:type="uml:State" xmi:id="_DUb54LkhEfC-keoHQ33Mgw" name="State36_2">
+                <exit xmi:type="uml:OpaqueBehavior" xmi:id="_GMNQ4LkkEfC-keoHQ33Mgw">
+                  <language>C</language>
+                  <body>printf(&quot;Exit State36_2&quot;);</body>
+                </exit>
+              </subvertex>
+              <subvertex xmi:type="uml:Pseudostate" xmi:id="_E387ELkhEfC-keoHQ33Mgw" name="Junction361" kind="junction"/>
+            </region>
+          </subvertex>
+          <subvertex xmi:type="uml:Pseudostate" xmi:id="_Q05OMLkhEfC-keoHQ33Mgw" name="Junction37" kind="junction"/>
+          <subvertex xmi:type="uml:Pseudostate" xmi:id="_pk0ZsLkjEfC-keoHQ33Mgw" name="Junction41" kind="junction"/>
         </region>
       </ownedBehavior>
       <ownedOperation xmi:type="uml:Operation" xmi:id="_WFQkIAHQEfCgXv5ODs4Seg" name="a"/>
@@ -501,6 +568,26 @@ for static evaluation of a sequence of guard conditions before any transition is
     <packagedElement xmi:type="uml:CallEvent" xmi:id="_hL0o4AHQEfCgXv5ODs4Seg" name="b" operation="_g9YkQAHQEfCgXv5ODs4Seg"/>
     <packagedElement xmi:type="uml:CallEvent" xmi:id="_IY2pEAHREfCgXv5ODs4Seg" name="c" operation="_IKL68AHREfCgXv5ODs4Seg"/>
     <packagedElement xmi:type="uml:CallEvent" xmi:id="_zJ3CIAHYEfCkTbNMLPdxiA" name="d" operation="_y1_D4AHYEfCkTbNMLPdxiA"/>
+    <packagedElement xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_AsyRYLeQEfCYkYHbB_5Hqw" name="JTEST_A_CNT" value="4">
+      <ownedComment xmi:type="uml:Comment" xmi:id="_MO83kLeREfCYkYHbB_5Hqw" annotatedElement="_AsyRYLeQEfCYkYHbB_5Hqw">
+        <body>@brief The size of the A event queue. Specified directly in the UML model.</body>
+      </ownedComment>
+    </packagedElement>
+    <packagedElement xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_JH3AQLeQEfCYkYHbB_5Hqw" name="JTEST_B_CNT" value="10">
+      <ownedComment xmi:type="uml:Comment" xmi:id="_byRbgLeREfCYkYHbB_5Hqw" annotatedElement="_JH3AQLeQEfCYkYHbB_5Hqw">
+        <body>@brief The size of the B event queue. Specified individually in the UML model.</body>
+      </ownedComment>
+    </packagedElement>
+    <packagedElement xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_Rcd6wLeQEfCYkYHbB_5Hqw" name="JTEST_C_CNT" value="8">
+      <ownedComment xmi:type="uml:Comment" xmi:id="_fib6cLeREfCYkYHbB_5Hqw" annotatedElement="_Rcd6wLeQEfCYkYHbB_5Hqw">
+        <body>@brief The size of the C event queue. Specified explicitly in the UML model.</body>
+      </ownedComment>
+    </packagedElement>
+    <packagedElement xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_U3LHELeQEfCYkYHbB_5Hqw" name="JTEST_D_CNT" value="2">
+      <ownedComment xmi:type="uml:Comment" xmi:id="_h9WdsLeREfCYkYHbB_5Hqw" annotatedElement="_U3LHELeQEfCYkYHbB_5Hqw">
+        <body>@brief The size of the A event queue. Specified manually in the UML model.</body>
+      </ownedComment>
+    </packagedElement>
   </packagedElement>
   <packagedElement xmi:type="uml:PrimitiveType" xmi:id="_XDi8sKU0EfCJFuHNEOD_Ew" name="float"/>
   <packagedElement xmi:type="uml:PrimitiveType" xmi:id="_ZIVe8KU0EfCJFuHNEOD_Ew" name="bool"/>

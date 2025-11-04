@@ -24,6 +24,30 @@ extern "C" {
 //End of user code
 
     /**
+     * @brief The size of the A event queue. Specified directly in the UML
+     * model.
+     */
+#    define TJUNCTION_JTEST_A_CNT 4u
+
+    /**
+     * @brief The size of the B event queue. Specified individually in the UML
+     * model.
+     */
+#    define TJUNCTION_JTEST_B_CNT 10u
+
+    /**
+     * @brief The size of the C event queue. Specified explicitly in the UML
+     * model.
+     */
+#    define TJUNCTION_JTEST_C_CNT 8u
+
+    /**
+     * @brief The size of the A event queue. Specified manually in the UML
+     * model.
+     */
+#    define TJUNCTION_JTEST_D_CNT 2u
+
+    /**
      * @brief The type representing the TJunction_Jtest_s struct.
      */
     typedef struct TJunction_Jtest_s \
@@ -282,11 +306,37 @@ extern "C" {
          */
         TJUNCTION_SM1_STATE30,
         /**
+         */
+        TJUNCTION_SM1_STATE36,
+        /**
          * @brief The number of all substates of Region1 Region of sm1
          * StateMachine.
          */
         TJUNCTION_SM1_REGION1_SIZE
     }tjunction_sm1_region1_t;
+    
+    /**
+     * @brief The enumeration of all substates of Region36 Region of sm1
+     * StateMachine.
+     */
+    typedef enum{
+        /**
+         * @brief The default substate of the Region36 Region of sm1
+         * StateMachine.
+         */
+        TJUNCTION_SM1_REGION36_INL,
+        /**
+         */
+        TJUNCTION_SM1_STATE36_1,
+        /**
+         */
+        TJUNCTION_SM1_STATE36_2,
+        /**
+         * @brief The number of all substates of Region36 Region of sm1
+         * StateMachine.
+         */
+        TJUNCTION_SM1_REGION36_SIZE
+    }tjunction_sm1_region36_t;
     
     /**
      */
@@ -295,6 +345,9 @@ extern "C" {
         /**
          */
         tjunction_sm1_region1_t         region1;
+        /**
+         */
+        tjunction_sm1_region36_t        region36;
     };
 
     void TJunction_Jtest_a(TJunction_Jtest_t* const p_obj);

@@ -162,6 +162,8 @@
 [if sm.request_state_machine_choices()->notEmpty() ]
 [uml_c_declare_choices(sm, 0)/]
 [/if]
+[if sm.request_state_machine_junctions()->notEmpty() ]
+[uml_c_declare_junctions(sm, 0)/][/if]
 [/let]
 [/for]
 /*******************************************************************************
@@ -229,8 +231,8 @@ static inline bool
        ->notEmpty()
        or aClassifier
                 .request_has_standalone_behaviors(Set{VisibilityKind::public}))]
-[uml_c_define_operations(aClassifier, Set{VisibilityKind::public}, 0)/]
-[let bc:BehavioredClassifier=aClassifier]
+[uml_c_define_operations(aClassifier, Set{VisibilityKind::public}, 0)
+/][let bc:BehavioredClassifier=aClassifier]
 [uml_c_define_behaviors(bc,Set{VisibilityKind::public}, 0)/]
 [/let]
 [/for]
@@ -270,8 +272,7 @@ static inline bool
 [uml_c_implement_choices(sm, 0)/]
 [/if]
 [if sm.request_state_machine_junctions()->notEmpty() ]
-[uml_c_implement_junctions(sm, 0)/]
-[/if]
+[uml_c_implement_junctions(sm, 0)/][/if]
 [/let]
 [/for]
 /*** end of file ***/

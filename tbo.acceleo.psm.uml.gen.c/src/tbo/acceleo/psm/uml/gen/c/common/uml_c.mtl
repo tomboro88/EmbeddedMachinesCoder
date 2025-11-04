@@ -1967,10 +1967,16 @@ static [uml_c_get_event_status_type()/]
  * @brief Implements the transition execution after the guard is fulfilled 
  * to true. 
  * @param aTransition The Transition that should be implemented.
+ * @param aSeq The sequence of previous transitions thet need to be executed
+ *             before the aTransition in case the source is a static junction.
+ * @param b_is_always_handled true if the transition doesn't have to return
+ *        the status if it was executed, because at the top level there is 
+ *        always a transition that will handle the event. 
  * @param indentation The indentation means the sum of all previous code 
  * indentations.
  */]
 [template public uml_c_implement_transition_execution(aTransition:Transition,
+                                               aSeq:Sequence(Transition),
                                                b_is_always_handled : Boolean,
                                                       indentation : Integer)
     {aState:State = aTransition.request_transition_exit_state();
@@ -2007,7 +2013,7 @@ static [uml_c_get_event_status_type()/]
 
 if(b_is_completed)
 {
-[spaces/][uml_c_implement_transition_transit(aTransition, 
+[spaces/][uml_c_implement_transition_transit(aTransition, aSeq,
                         not b_is_always_handled, spaces.size() + indentation)/]
 }
 else
@@ -2016,7 +2022,7 @@ else
                                      /] = [request_transition_transit_state()/];
 }[else]
 [debug_marker('uml_c_implement_transition_execution 4')
-/][uml_c_implement_transition_transit(aTransition, not b_is_always_handled,
+/][uml_c_implement_transition_transit(aTransition, aSeq, not b_is_always_handled,
                                              spaces.size() + indentation)/][/if]
 [/if]
 [/template]
@@ -2026,6 +2032,11 @@ else
  * completed.
  * @param aTransition The transition that should be implemented.
  * @details
+ * @param aSeq The sequence of previous transitions thet need to be executed
+ *             before the aTransition in case the source is a static junction.
+ * @param b_should_assign_result true if the transition doesn't have to return
+ *        the status if it was executed, because at the top level there is 
+ *        always a transition that will handle the event. 
  * @param indentation The indentation means the sum of all previous code 
  * indentations.
  * The following variables are initialized:
@@ -2043,6 +2054,7 @@ else
  *                 state entry chain.
  */]
 [template public uml_c_implement_transition_transit(aTransition:Transition,
+                                          aSeq:Sequence(Transition),
                                           b_should_assign_result : Boolean,
                                                    indentation : Integer)
    ?(not aTransition.oclIsUndefined())
@@ -2056,10 +2068,13 @@ else
     temp_name : String = request_temp_dispatch_result_name();
     assign_temp_status : String = temp_name + ' = ';
     sync_vertices : OrderedSet(Vertex) = 
-                 request_transition_target_sync_vertices(aTransition);}]
-[if not aTransition.effect.oclIsUndefined()]
-[uml_c_implement_transition_effect(aTransition, indentation)/]
-[/if]
+                 request_transition_target_sync_vertices(aTransition);
+    effectSeq : Sequence(Transition) = aSeq->append(aTransition)
+                      ->select(t:Transition | not t.effect.oclIsUndefined());}]
+[debug_marker('uml_c_implement_transition_transit 0')
+/][for (t:Transition|effectSeq)]
+[uml_c_implement_transition_effect(t, indentation)/]
+[/for]
 [if not aTransition.effect.request_behavior_needs_async_call()]
 [comment first enter all states that are directly entered by the transition/]
 [for (aVertex:Vertex | sync_vertices)]
@@ -2250,7 +2265,7 @@ typedef enum {
                                           indentation : Integer)
  {spaces : String = utils_get_indent_string();}]
 [for (aRegion : Region | sm.request_all_regions()->request_sort_regions()) 
-     separator(utils_newline())  ]
+     separator(utils_newline()) ]
 [uml_c_implement_initial_transition(aRegion, indentation)/]
 [/for]
 [/template]
@@ -2296,15 +2311,14 @@ may not complete synchronously. /]
 [if aRegion.request_region_has_one_initial_pseudostate()
     and (aRegion.request_region_initial_pseudostate().outgoing->size() = 1)]
 [spaces/][uml_c_implement_transition_transit(aRegion
-       .request_region_initial_pseudostate().outgoing->any(true), true,
-                      spaces.size() + indentation)/]
+       .request_region_initial_pseudostate().outgoing->any(true), Sequence{}, 
+                                           true, spaces.size() + indentation)/]
 [else]
 [spaces/][utils_dispatch_result_name()
                                      /] = [request_transition_changed_state()/];
 [/if]
 [spaces/]return [utils_dispatch_result_name()/];
-}
-[/if]
+}[/if]
 [/template]
 
 [**
@@ -2417,54 +2431,134 @@ static [uml_c_get_event_status_type()/]
 [template public uml_c_implement_junction(aJunction : Pseudostate,
                                           indentation : Integer)
  ?(aJunction.kind = PseudostateKind::junction)]
-[uml_c_implement_junction_seq(aJunction, Sequence{}, indentation)/]
+[uml_c_insert_junction_seq(aJunction, Sequence{}, true, indentation)/]
+[/template]
+
+[**
+ * @brief Declares all Junction Pseudostate entry functions for 
+ * a StateMachine.
+ * @param sm The StateMachine for which all junction-type Pseudostates should 
+ * be declared. 
+ * @param indentation The indentation means the sum of all previous code 
+ * indentations.
+ */]
+[template public uml_c_declare_junctions(sm : StateMachine, 
+                                         indentation : Integer)
+ ?(sm.request_state_machine_junctions()->notEmpty())]
+[for (aJunction : Pseudostate | request_state_machine_junctions(sm))]
+[uml_c_declare_junction(aJunction, indentation)/]
+[/for]
+[/template]
+
+[**
+ * @brief Declares all junction-type pseudostate functions handling all 
+ * compound transitions originating from this Pseudostate.
+ * @param aJunction The junction-type Pseudostate for which all the transition 
+ * handling functions should be generated.
+ * @param indentation The indentation means the sum of all previous code 
+ * indentations.
+*/]
+[template public uml_c_declare_junction(aJunction : Pseudostate,
+                                          indentation : Integer)
+ ?(aJunction.kind = PseudostateKind::junction)]
+[uml_c_insert_junction_seq(aJunction, Sequence{}, false, indentation)/]
 [/template]
 
 [**
  * @brief The recursive template for all junction-type pseudostate functions 
  * handling all compound transitions originating from this Pseudostate.
+ * 
+ * @details This template is used for both implementation and declaration of 
+ * junction functions because of its recursive nature - this allows to have the
+ * same logic bor both of them.
  * @param aJunction The junction-type Pseudostate for which all the transition 
  * handling functions should be generated.
  * @param aSeq The sequence of the transitions in the incoming compound 
  * transition path for which the function(s) should be implemented. Used for
  * the template recursion.
+ * @param b_include_body If true then full function implementation should be inserted,
+ * otherwise only declaration will be generated.
  * @param indentation The indentation means the sum of all previous code 
  * indentations.
 */]
-[template public uml_c_implement_junction_seq(aJunction : Pseudostate,
-                                              aSeq:Sequence(Transition), 
+[template public uml_c_insert_junction_seq(aJunction : Pseudostate,
+                                              aSeq:Sequence(Transition),
+                                              b_include_body : Boolean, 
                                               indentation : Integer)
  {spaces : String = utils_get_indent_string();}]
 [for (aTransition:Transition|if aSeq->isEmpty() then aJunction 
 else aSeq->first().source endif.request_incoming_transitions())
-     separator(utils_newline())]
+     separator(if b_include_body then utils_newline() else '' endif)]
 [if aTransition.source.request_is_static_junction()]
 [comment this template must be nested since the junction implementation requires
  the list of all Junction Pseudostates in a path until a non-Junction-type 
  Vertex to call all actions required then the transition is executed./]
-[uml_c_implement_junction_seq(aJunction, aSeq->prepend(aTransition),
-                                                                  indentation)/]
-[else]
+[uml_c_insert_junction_seq(aJunction, aSeq->prepend(aTransition), 
+                              b_include_body, indentation)/][else]
 [comment If we know the full path from the source State to the current Junction
  Pseudostate, then we need to also know all transitions following this Junction
  for which a trigger is specified. A separate function for each following Event
  is required./]
-[if aJunction.request_vertex_events()->notEmpty()]
+[if (aJunction.request_vertex_events()->notEmpty())]
 [for (anEvent : Event | aJunction.request_vertex_events())
-     separator(utils_newline())]
-[uml_c_implement_junction_func(aJunction, aSeq->prepend(aTransition), 
-                               anEvent, indentation)/]
+     separator(if b_include_body then utils_newline() else '' endif)]
+[uml_c_insert_junction_func(aJunction, aSeq->prepend(aTransition),
+                               anEvent, b_include_body, indentation)/]
 [/for]
 [/if]
 [if aJunction.request_outgoing_transitions(null,'')->notEmpty()]
 [if aJunction.request_vertex_events()->notEmpty()]
 
 [/if]
-[uml_c_implement_junction_func(aJunction, aSeq->prepend(aTransition), 
-                               null, indentation)/]
-[/if]
-[/if]
+[uml_c_insert_junction_func(aJunction, aSeq->prepend(aTransition),
+                               null, b_include_body, indentation)/]
+[/if][/if]
 [/for]
+[/template]
+
+[**
+ * @brief Inserts Junction function declaration or implementation
+ * @param aJunction The junction-type Pseudostate for which all the transition 
+ * handling functions should be generated.
+ * @param aSeq The sequence of the transitions in the incoming compound 
+ * transition path for which the function(s) should be implemented. Used for
+ * the template recursion.
+ * @param b_include_body If true then full function implementation should be inserted.
+ * otherwise only declaration will be generated.
+ * @param indentation The indentation means the sum of all previous code 
+ * indentations.
+*/]
+[template public uml_c_insert_junction_func(aJunction : Pseudostate,
+                                               aSeq:Sequence(Transition),
+                                               anEvent : Event,
+                                               b_include_body : Boolean,
+                                               indentation : Integer)
+ ?(aSeq->notEmpty() and aSeq->last().target=aJunction)]
+[if (b_include_body)]
+[uml_c_implement_junction_func(aJunction, aSeq, anEvent, indentation)/][else]
+[uml_c_declare_junction_func(aJunction, aSeq, anEvent, indentation)/][/if]
+[/template]
+
+[**
+ * @brief Declares the junction entry function for the given source
+ * transition sequence and handled event.
+ * @param aJunction The junction-type Pseudostate for which the function should
+ * be declared.
+ * @param aSeq The sequence of the previous transitions path in a compound 
+ * transition. 
+ * @param The event for which the function should be declared. Each event
+ * must have separate function due to the way the guards are executed.
+ * @param indentation The indentation means the sum of all previous code 
+ * indentations.
+ */]
+[template public uml_c_declare_junction_func(aJunction : Pseudostate,
+                                               aSeq:Sequence(Transition),
+                                               anEvent : Event,
+                                               indentation : Integer)
+?(aSeq->notEmpty() and aSeq->last().target=aJunction)]
+[uml_c_format_param_list('static bool ' + uml_c_get_junction_entry_name(aSeq, anEvent),
+                        aJunction.uml_c_get_junction_entry_params(),
+                        indentation+1)/];
 [/template]
 
 [**
@@ -2482,7 +2576,7 @@ else aSeq->first().source endif.request_incoming_transitions())
 [template public uml_c_implement_junction_func(aJunction : Pseudostate,
                                                aSeq:Sequence(Transition),
                                                anEvent : Event,
-                                              indentation : Integer)
+                                               indentation : Integer)
  ?(aSeq->notEmpty() and aSeq->last().target=aJunction)
  {transitions: OrderedSet(Transition) = 
                    aJunction.request_outgoing_transitions(anEvent,'');
@@ -2581,7 +2675,7 @@ static bool
                                   /] = [request_transition_ignored_state()/];
 }[else]
 [debug_marker('uml_c_implement_vertex_transitions 0')
-/][uml_c_implement_transition_execution(transitions->first(), 
+/][uml_c_implement_transition_execution(transitions->first(), aSeq,
                                              b_is_always_handled, indentation)
 /][/if][/if][elseif guardTransitions->notEmpty()]
 [debug_marker('uml_c_implement_vertex_transitions 1')
@@ -2601,7 +2695,7 @@ static bool
 /][if elseTransitions->notEmpty() 
    and not elseTransitions->first().target.request_is_static_junction()]
 [debug_marker('uml_c_implement_vertex_transitions 4')
-/][spaces/][uml_c_implement_transition_execution(elseTransitions->first(), 
+/][spaces/][uml_c_implement_transition_execution(elseTransitions->first(), aSeq,
                              b_is_always_handled, indentation + spaces.size())/]
 [elseif aVertex.oclIsKindOf(Pseudostate) 
         and aVertex.oclAsType(Pseudostate).kind = PseudostateKind::choice]
@@ -2645,7 +2739,7 @@ if([uml_c_implement_guard_expression(aTransition, aSeq, anEvent,
 [/if]
 [else]
 [debug_marker('uml_c_implement_transition_guard 4')
-/][spaces/][uml_c_implement_transition_execution(aTransition, 
+/][spaces/][uml_c_implement_transition_execution(aTransition, aSeq,
                              b_is_always_handled, indentation + spaces.size())/]
 [if aTransition.source.request_is_static_junction() 
      and (not b_is_always_handled)]

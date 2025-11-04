@@ -1,6 +1,13 @@
 /**
  * @file 
  * 
+ * @brief A package with state machine diagrams utilizing the Junction
+ * Pseudostate.
+ * @details The state diagrams included in this package are used to validate the
+ * code
+ * generated for Junction Pseudostates, which are advanced choice vertices used 
+ * for static evaluation of a sequence of guard conditions before any transition
+ * is started.
  */
 
 #ifndef TJUNCTION_H
@@ -17,10 +24,30 @@ extern "C" {
 #    include <stdbool.h>
 //Start of user code includes bottom
 //End of user code
-#    define TJUNCTION_JTEST_A_CNT 2
-#    define TJUNCTION_JTEST_B_CNT 2
-#    define TJUNCTION_JTEST_C_CNT 2
-#    define TJUNCTION_JTEST_D_CNT 2
+
+    /**
+     * @brief The size of the A event queue. Specified directly in the UML
+     * model.
+     */
+#    define TJUNCTION_JTEST_A_CNT 4u
+
+    /**
+     * @brief The size of the B event queue. Specified individually in the UML
+     * model.
+     */
+#    define TJUNCTION_JTEST_B_CNT 10u
+
+    /**
+     * @brief The size of the C event queue. Specified explicitly in the UML
+     * model.
+     */
+#    define TJUNCTION_JTEST_C_CNT 8u
+
+    /**
+     * @brief The size of the A event queue. Specified manually in the UML
+     * model.
+     */
+#    define TJUNCTION_JTEST_D_CNT 2u
 
     /**
      * @brief The type representing the TJunction_Jtest_s struct.
@@ -274,6 +301,12 @@ extern "C" {
         /**
          */
         TJUNCTION_SM1_STATE17,
+        /**
+         */
+        TJUNCTION_SM1_STATE29,
+        /**
+         */
+        TJUNCTION_SM1_STATE30,
         /**
          * @brief The number of all substates of Region1 Region of sm1
          * StateMachine.

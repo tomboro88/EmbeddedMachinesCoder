@@ -72,20 +72,18 @@ static bool sm1_enter_junction2_a_1(TJunction_sm1_t* const p_obj,\
                                     sm_event_status_t* const p_result);
 static bool sm1_enter_junction2_b_1(TJunction_sm1_t* const p_obj,\
                                     sm_event_status_t* const p_result);
+
 static bool sm1_enter_junction8_c_4(TJunction_sm1_t* const p_obj,\
-                                    sm_event_status_t* const p_result);
-static bool sm1_enter_junction8_c_5(TJunction_sm1_t* const p_obj,\
                                     sm_event_status_t* const p_result);
 static bool sm1_enter_junction8_d_4(TJunction_sm1_t* const p_obj,\
                                     sm_event_status_t* const p_result);
+static bool sm1_enter_junction8_c_5(TJunction_sm1_t* const p_obj,\
+                                    sm_event_status_t* const p_result);
 static bool sm1_enter_junction8_d_5(TJunction_sm1_t* const p_obj,\
                                     sm_event_status_t* const p_result);
+
 static bool sm1_enter_junction11_4_6(TJunction_sm1_t* const p_obj,\
                                      sm_event_status_t* const p_result);
-static bool sm1_enter_junction11_16(TJunction_sm1_t* const p_obj,\
-                                    sm_event_status_t* const p_result);
-static bool sm1_enter_junction11_17(TJunction_sm1_t* const p_obj,\
-                                    sm_event_status_t* const p_result);
 static bool sm1_enter_junction11_5_6(TJunction_sm1_t* const p_obj,\
                                      sm_event_status_t* const p_result);
 static bool sm1_enter_junction11_13_12(TJunction_sm1_t* const p_obj,\
@@ -94,20 +92,28 @@ static bool sm1_enter_junction11_11_15_12(TJunction_sm1_t* const p_obj,\
                                           sm_event_status_t* const p_result);
 static bool sm1_enter_junction11_14_15_12(TJunction_sm1_t* const p_obj,\
                                           sm_event_status_t* const p_result);
+static bool sm1_enter_junction11_16(TJunction_sm1_t* const p_obj,\
+                                    sm_event_status_t* const p_result);
+static bool sm1_enter_junction11_17(TJunction_sm1_t* const p_obj,\
+                                    sm_event_status_t* const p_result);
+
 static bool sm1_enter_junction20_c_13(TJunction_sm1_t* const p_obj,\
                                       sm_event_status_t* const p_result);
 static bool sm1_enter_junction20_c_11_15(TJunction_sm1_t* const p_obj,\
                                          sm_event_status_t* const p_result);
 static bool sm1_enter_junction20_c_14_15(TJunction_sm1_t* const p_obj,\
                                          sm_event_status_t* const p_result);
+
 static bool sm1_enter_junction24_c_11(TJunction_sm1_t* const p_obj,\
                                       sm_event_status_t* const p_result);
 static bool sm1_enter_junction24_c_14(TJunction_sm1_t* const p_obj,\
                                       sm_event_status_t* const p_result);
+
 static bool sm1_enter_junction31_4_18(TJunction_sm1_t* const p_obj,\
                                       sm_event_status_t* const p_result);
 static bool sm1_enter_junction31_5_18(TJunction_sm1_t* const p_obj,\
                                       sm_event_status_t* const p_result);
+
 /*******************************************************************************
  * 
  * Inline functions.
@@ -207,7 +213,6 @@ sm1_enter_region1(TJunction_sm1_t* const p_obj)
     return result;
 }
 
-
 /*******************************************************************************
  * 
  * Static data declarations.
@@ -250,7 +255,6 @@ void
 TJunction_Jtest_d(TJunction_Jtest_t* const p_obj)
 {
 }
-
 
 /*******************************************************************************
  * 
@@ -750,7 +754,7 @@ sm1_enter_junction8_d_5(TJunction_sm1_t* const p_obj,\
                         sm_event_status_t* const p_result)
 {
     bool b_is_handled = true;
-    
+
     printf("State3 handles event");
     sm1_enter_state17(p_obj);
 
@@ -772,20 +776,21 @@ sm1_enter_junction11_4_6(TJunction_sm1_t* const p_obj,\
                          sm_event_status_t* const p_result)
 {
     bool b_is_handled = true;
-    
-    printf("State4 handles event");
-    printf("Common c event effect");
-        
+
     if(p_obj->b_guard3)
     {
+        printf("State4 handles event");
+        printf("Common c event effect");
         printf("b_guard3 was true");
         sm1_enter_state12(p_obj);
     }
     else
     {
+        printf("State4 handles event");
+        printf("Common c event effect");
         sm1_enter_state13(p_obj);
     }
-    
+
     *p_result = CHANGEDSTATE;
 
     return b_is_handled;
@@ -804,20 +809,21 @@ sm1_enter_junction11_5_6(TJunction_sm1_t* const p_obj,\
                          sm_event_status_t* const p_result)
 {
     bool b_is_handled = true;
-    
-    printf("State3 handles event");
-    printf("Common c event effect");
-    
+
     if(p_obj->b_guard3)
     {
+        printf("State3 handles event");
+        printf("Common c event effect");
         printf("b_guard3 was true");
         sm1_enter_state12(p_obj);
     }
     else
     {
+        printf("State3 handles event");
+        printf("Common c event effect");
         sm1_enter_state13(p_obj);
     }
-    
+
     *p_result = CHANGEDSTATE;
 
     return b_is_handled;
@@ -848,7 +854,7 @@ sm1_enter_junction11_13_12(TJunction_sm1_t* const p_obj,\
     }
 
     *p_result = CHANGEDSTATE;
-    
+
     return b_is_handled;
 }
 
@@ -875,7 +881,7 @@ sm1_enter_junction11_11_15_12(TJunction_sm1_t* const p_obj,\
     {
         sm1_enter_state13(p_obj);
     }
-    
+
     *p_result = CHANGEDSTATE;
 
     return b_is_handled;
@@ -906,7 +912,7 @@ sm1_enter_junction11_14_15_12(TJunction_sm1_t* const p_obj,\
     }
 
     *p_result = CHANGEDSTATE;
-    
+
     return b_is_handled;
 }
 
@@ -955,11 +961,13 @@ sm1_enter_junction11_17(TJunction_sm1_t* const p_obj,\
 
     if(p_obj->b_guard3)
     {
+        printf("Action for b_guard6");
         printf("b_guard3 was true");
         sm1_enter_state12(p_obj);
     }
     else
     {
+        printf("Action for b_guard6");
         sm1_enter_state13(p_obj);
     }
 
@@ -1069,7 +1077,6 @@ sm1_enter_junction20_c_14_15(TJunction_sm1_t* const p_obj,\
 
     return b_is_handled;
 }
-
 
 /**
  * @brief Implements entry of the Junction24 junction Pseudostate of the sm1
@@ -1202,4 +1209,5 @@ sm1_enter_junction31_5_18(TJunction_sm1_t* const p_obj,\
 
     return b_is_handled;
 }
+
 /*** end of file ***/
